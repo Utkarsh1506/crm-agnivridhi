@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 20px; text-align: center; }
+        .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .info-box { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #ef4444; }
+        .warning { color: #ef4444; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>❌ Payment Rejected</h1>
+        </div>
+        <div class="content">
+            <p>Hello {{ payment.received_by.get_full_name|default:payment.received_by.username }},</p>
+            
+            <p class="warning">Your recorded payment has been rejected.</p>
+            
+            <div class="info-box">
+                <h3>Payment Details:</h3>
+                <p><strong>Amount:</strong> ₹{{ payment.amount }}</p>
+                <p><strong>Client:</strong> {{ client.company_name }}</p>
+                {% if booking %}
+                <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
+                {% endif %}
+                <p><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+                {% if payment.reference_id %}
+                <p><strong>Reference ID:</strong> {{ payment.reference_id }}</p>
+                {% endif %}
+                <p><strong>Rejected By:</strong> {{ rejected_by.get_full_name|default:rejected_by.username }}</p>
+                {% if reason %}
+                <p><strong>Reason:</strong> {{ reason }}</p>
+                {% endif %}
+            </div>
+            
+            <p>Please review the payment details and contact your manager if you have any questions.</p>
+            
+            <p>You may need to re-record this payment with corrected information.</p>
+        </div>
+        <div class="footer">
+            <p>© 2025 Agnivridhi India. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

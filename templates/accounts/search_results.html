@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results - Agnivridhi CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-search"></i> Search Results</h2>
+                <form method="get" action="{% url 'global_search' %}" class="d-flex">
+                    <input type="text" name="q" class="form-control me-2" placeholder="Search..." value="{{ query }}" autofocus>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </form>
+            </div>
+
+            {% if query %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Found <strong>{{ total_results }}</strong> results for "<strong>{{ query }}</strong>"
+                </div>
+
+                <!-- Clients Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-building"></i> Clients ({{ clients|length }})
+                    </div>
+                    <div class="card-body">
+                        {% if clients %}
+                            <div class="list-group">
+                                {% for client in clients %}
+                                <a href="/admin/clients/client/{{ client.id }}/change/" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ client.company_name }}</h6>
+                                        <small class="text-muted">{{ client.get_status_display }}</small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <small>
+                                            <i class="bi bi-person"></i> {{ client.contact_person }} | 
+                                            <i class="bi bi-envelope"></i> {{ client.contact_email }} | 
+                                            <i class="bi bi-telephone"></i> {{ client.contact_phone }}
+                                        </small>
+                                    </p>
+                                    <small class="text-muted">
+                                        <span class="badge bg-info">{{ client.get_business_type_display }}</span>
+                                        <span class="badge bg-secondary">{{ client.get_sector_display }}</span>
+                                        {% if client.pan_number %}<span class="badge bg-light text-dark">PAN: {{ client.pan_number }}</span>{% endif %}
+                                    </small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">No clients found.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Bookings Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-calendar-check"></i> Bookings ({{ bookings|length }})
+                    </div>
+                    <div class="card-body">
+                        {% if bookings %}
+                            <div class="list-group">
+                                {% for booking in bookings %}
+                                <a href="/admin/bookings/booking/{{ booking.id }}/change/" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ booking.booking_id }}</h6>
+                                        <small>
+                                            <span class="badge bg-{{ booking.status|lower }}">{{ booking.get_status_display }}</span>
+                                        </small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <small>
+                                            <i class="bi bi-building"></i> {{ booking.client.company_name }} | 
+                                            <i class="bi bi-briefcase"></i> {{ booking.service.name }} | 
+                                            <i class="bi bi-currency-rupee"></i> {{ booking.final_amount }}
+                                        </small>
+                                    </p>
+                                    <small class="text-muted">
+                                        Date: {{ booking.booking_date|date:"M d, Y" }}
+                                        {% if booking.assigned_to %}| Assigned to: {{ booking.assigned_to.get_full_name }}{% endif %}
+                                    </small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">No bookings found.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Applications Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-file-earmark-text"></i> Applications ({{ applications|length }})
+                    </div>
+                    <div class="card-body">
+                        {% if applications %}
+                            <div class="list-group">
+                                {% for app in applications %}
+                                <a href="/admin/applications/application/{{ app.id }}/change/" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ app.application_id }}</h6>
+                                        <small>
+                                            <span class="badge bg-{{ app.status|lower }}">{{ app.get_status_display }}</span>
+                                        </small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <small>
+                                            <i class="bi bi-building"></i> {{ app.client.company_name }} | 
+                                            <i class="bi bi-award"></i> {{ app.scheme.name }} | 
+                                            <i class="bi bi-currency-rupee"></i> {{ app.applied_amount }} Lakhs
+                                        </small>
+                                    </p>
+                                    <small class="text-muted">
+                                        Date: {{ app.application_date|date:"M d, Y" }}
+                                        {% if app.assigned_to %}| Assigned to: {{ app.assigned_to.get_full_name }}{% endif %}
+                                    </small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">No applications found.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="alert alert-secondary text-center">
+                    <i class="bi bi-search"></i> Enter a search term to find clients, bookings, or applications.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

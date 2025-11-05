@@ -1,0 +1,636 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'admin_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'reports_dashboard' %}">
+                    <i class="bi bi-graph-up"></i>Reports & Analytics
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/clients/client/">
+                    <i class="bi bi-building"></i>Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/bookings/booking/">
+                    <i class="bi bi-calendar-check"></i>Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/applications/application/">
+                    <i class="bi bi-file-earmark-text"></i>Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/schemes/scheme/">
+                    <i class="bi bi-award"></i>Schemes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/payments/payment/">
+                    <i class="bi bi-credit-card"></i>Payments
+                    {% if pending_payments_count > 0 %}
+                        <span class="badge bg-warning ms-2">{{ pending_payments_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/edit_requests/editrequest/">
+                    <i class="bi bi-pencil-square"></i>Edit Requests
+                    {% if pending_edit_requests > 0 %}
+                        <span class="badge bg-danger ms-2">{{ pending_edit_requests }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/documents/document/">
+                    <i class="bi bi-file-pdf"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/accounts/user/">
+                    <i class="bi bi-people"></i>Users
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/notifications/notification/">
+                    <i class="bi bi-bell"></i>Notifications
+                </a>
+            </li>
+        </ul>
+        
+        <hr class="my-3">
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/">
+                    <i class="bi bi-gear"></i>Django Admin
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-speedometer2"></i> Admin Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download"></i> Export
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'export_clients' %}"><i class="bi bi-building"></i> Clients</a></li>
+                <li><a class="dropdown-item" href="{% url 'export_bookings' %}"><i class="bi bi-calendar-check"></i> Bookings</a></li>
+                <li><a class="dropdown-item" href="{% url 'export_payments' %}"><i class="bi bi-credit-card"></i> Payments</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'export_dashboard_data' %}?method={{ selected_method }}&salesperson={{ selected_salesperson }}&date_from={{ date_from }}&date_to={{ date_to }}">
+                    <i class="bi bi-graph-up"></i> Filtered Revenue Data
+                </a></li>
+            </ul>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+    </div>
+</div>
+
+<!-- Advanced Filter Panel -->
+<div class="collapse mb-3" id="filterPanel">
+    <div class="card card-body">
+        <form method="get" action="">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="method" class="form-label small">Payment Method</label>
+                    <select name="method" id="method" class="form-select form-select-sm">
+                        <option value="" {% if not selected_method %}selected{% endif %}>All Methods</option>
+                        <option value="UPI_QR" {% if selected_method == 'UPI_QR' %}selected{% endif %}>UPI / QR</option>
+                        <option value="BANK_TRANSFER" {% if selected_method == 'BANK_TRANSFER' %}selected{% endif %}>Bank Transfer</option>
+                        <option value="CASH" {% if selected_method == 'CASH' %}selected{% endif %}>Cash</option>
+                        <option value="CARD" {% if selected_method == 'CARD' %}selected{% endif %}>Card</option>
+                        <option value="OTHER" {% if selected_method == 'OTHER' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="salesperson" class="form-label small">Salesperson</label>
+                    <select name="salesperson" id="salesperson" class="form-select form-select-sm">
+                        <option value="" {% if not selected_salesperson %}selected{% endif %}>All Sales</option>
+                        {% for sp in sales_team %}
+                        <option value="{{ sp.id }}" {% if selected_salesperson == sp.id|stringformat:'s' %}selected{% endif %}>
+                            {{ sp.get_full_name|default:sp.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="date_from" class="form-label small">From Date</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control form-control-sm" value="{{ date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="date_to" class="form-label small">To Date</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control form-control-sm" value="{{ date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Apply Filters</button>
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-sm btn-outline-secondary w-100 mt-1">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Analytics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Clients
+                        </div>
+                        <div class="h3 mb-0 font-weight-bold">{{ total_clients }}</div>
+                        <small class="text-success"><i class="bi bi-arrow-up"></i> {{ active_clients }} active</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-building fs-2 text-primary opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Total Bookings
+                        </div>
+                        <div class="h3 mb-0 font-weight-bold">{{ total_bookings }}</div>
+                        <small class="text-warning"><i class="bi bi-clock"></i> {{ pending_bookings }} pending</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-check fs-2 text-success opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-info border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Applications
+                        </div>
+                        <div class="h3 mb-0 font-weight-bold">{{ total_applications }}</div>
+                        <small class="text-info"><i class="bi bi-hourglass-split"></i> {{ pending_applications }} pending</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-file-earmark-text fs-2 text-info opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-warning border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Total Revenue
+                        </div>
+                        <div class="h3 mb-0 font-weight-bold">₹{{ total_revenue|floatformat:0 }}</div>
+                        <small class="text-muted">Successful payments</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-currency-rupee fs-2 text-warning opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Pending Payments (Approvals) -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cash-coin"></i> Pending Payments</span>
+                <span class="badge bg-warning">{{ pending_payments_count }}</span>
+            </div>
+            <div class="card-body">
+                {% if pending_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Booking</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Ref</th>
+                                    <th>By</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in pending_payments %}
+                                <tr>
+                                    <td>{{ p.client.company_name }}</td>
+                                    <td>{{ p.booking.booking_id }}</td>
+                                    <td>₹{{ p.amount }}</td>
+                                    <td>{{ p.get_payment_method_display }}</td>
+                                    <td>{{ p.reference_id|default:'-' }}</td>
+                                    <td>{{ p.received_by.get_full_name|default:p.received_by.username }}</td>
+                                    <td>
+                                        <a href="{% url 'approve_payment' p.id %}" class="btn btn-sm btn-success">Approve</a>
+                                        <a href="{% url 'reject_payment' p.id %}" class="btn btn-sm btn-outline-danger ms-1">Reject</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No pending payments</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-graph-up"></i> Revenue (Last 6 Months)</div>
+            <div class="card-body">
+                {{ chart_labels|json_script:"chart-labels" }}
+                {{ chart_revenue|json_script:"chart-revenue" }}
+                <canvas id="revenueChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Method Breakdown and Last 7 Days -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-pie-chart"></i> Revenue by Method</div>
+            <div class="card-body">
+                {{ method_labels|json_script:"method-labels" }}
+                {{ method_values|json_script:"method-values" }}
+                <canvas id="methodChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-graph-up-arrow"></i> Last 7 Days (Revenue)</div>
+            <div class="card-body">
+                {{ daily_labels|json_script:"daily-labels" }}
+                {{ daily_values|json_script:"daily-values" }}
+                <canvas id="dailyChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- Pending Edit Requests -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-pencil-square"></i> Pending Edit Requests</span>
+                <span class="badge bg-danger">{{ pending_edit_requests }}</span>
+            </div>
+            <div class="card-body">
+                {% if pending_edits %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Entity</th>
+                                    <th>Field</th>
+                                    <th>Requested By</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for edit in pending_edits %}
+                                <tr>
+                                    <td>
+                                        <small>{{ edit.entity_type }} #{{ edit.entity_id }}</small>
+                                    </td>
+                                    <td><strong>{{ edit.field_name }}</strong></td>
+                                    <td>{{ edit.requested_by.username }}</td>
+                                    <td>
+                                        <a href="/admin/edit_requests/editrequest/{{ edit.id }}/change/" class="btn btn-sm btn-primary">
+                                            Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No pending edit requests</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Clients -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-building"></i> Recent Clients
+            </div>
+            <div class="card-body">
+                {% if recent_clients %}
+                    <div class="list-group list-group-flush">
+                        {% for client in recent_clients %}
+                        <a href="/admin/clients/client/{{ client.id }}/change/" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ client.company_name }}</h6>
+                                <small class="text-muted">{{ client.created_at|date:"M d" }}</small>
+                            </div>
+                            <p class="mb-1 small">
+                                <span class="badge bg-info">{{ client.get_business_type_display }}</span>
+                                <span class="badge bg-secondary">{{ client.get_sector_display }}</span>
+                            </p>
+                            <small class="text-muted">
+                                ₹{{ client.funding_required }} lakhs required
+                            </small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No recent clients</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Top Sales and Salesperson Status -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-trophy"></i> Top Sales (by revenue)</div>
+            <div class="card-body">
+                {% if top_sales %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Salesperson</th>
+                                <th class="text-end">Revenue (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in top_sales %}
+                            <tr>
+                                <td>{{ s.name }}</td>
+                                <td class="text-end">{{ s.total|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-muted mb-0">No data.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-bar-chart-steps"></i> By Salesperson: Approved vs Pending</div>
+            <div class="card-body">
+                {{ status_sales_labels|json_script:"status-sales-labels" }}
+                {{ status_sales_pending|json_script:"status-sales-pending" }}
+                {{ status_sales_approved|json_script:"status-sales-approved" }}
+                <canvas id="salesStatusChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-check"></i> Recent Bookings
+            </div>
+            <div class="card-body">
+                {% if recent_bookings %}
+                    <div class="list-group list-group-flush">
+                        {% for booking in recent_bookings %}
+                        <a href="/admin/bookings/booking/{{ booking.id }}/change/" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ booking.client.company_name }}</h6>
+                                <small>₹{{ booking.final_amount }}</small>
+                            </div>
+                            <p class="mb-1 small">{{ booking.service.name }}</p>
+                            <small class="text-muted">
+                                <span class="badge bg-{{ booking.status|lower }}">{{ booking.get_status_display }}</span>
+                                {{ booking.booking_date|date:"M d, Y" }}
+                            </small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No recent bookings</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Applications -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-earmark-text"></i> Recent Applications
+            </div>
+            <div class="card-body">
+                {% if recent_applications %}
+                    <div class="list-group list-group-flush">
+                        {% for app in recent_applications %}
+                        <a href="/admin/applications/application/{{ app.id }}/change/" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ app.client.company_name }}</h6>
+                                <small>₹{{ app.applied_amount }} L</small>
+                            </div>
+                            <p class="mb-1 small">{{ app.scheme.name }}</p>
+                            <small class="text-muted">
+                                <span class="badge bg-{{ app.status|lower }}">{{ app.get_status_display }}</span>
+                                {{ app.application_date|date:"M d, Y" }}
+                            </small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No recent applications</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Log -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history"></i> Recent Activity
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% if recent_activities %}
+                    <div class="list-group list-group-flush">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <small class="text-muted">
+                                    <i class="bi bi-person-circle"></i> {{ activity.user.get_full_name|default:activity.user.username }}
+                                </small>
+                                <small class="text-muted">{{ activity.timestamp|date:"M d, H:i" }}</small>
+                            </div>
+                            <p class="mb-0 small">
+                                <span class="badge bg-primary">{{ activity.get_action_display }}</span>
+                                {% if activity.entity_type %}
+                                    <span class="badge bg-secondary">{{ activity.get_entity_type_display }}</span>
+                                {% endif %}
+                                {{ activity.description }}
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-2">
+                        <a href="/admin/activity_logs/activitylog/" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No recent activity</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function(){
+        // Revenue line chart (6 months)
+        const labels = JSON.parse(document.getElementById('chart-labels').textContent || '[]');
+        const data = JSON.parse(document.getElementById('chart-revenue').textContent || '[]');
+        const ctx = document.getElementById('revenueChart');
+        if (ctx && labels && data) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue (INR)',
+                        data: data,
+                        borderColor: '#0891b2',
+                        backgroundColor: 'rgba(8,145,178,0.15)',
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Method breakdown (doughnut)
+        const methodLabelsEl = document.getElementById('method-labels');
+        const methodValuesEl = document.getElementById('method-values');
+        const methodCtx = document.getElementById('methodChart');
+        if (methodCtx && methodLabelsEl && methodValuesEl) {
+            const mLabels = JSON.parse(methodLabelsEl.textContent || '[]');
+            const mValues = JSON.parse(methodValuesEl.textContent || '[]');
+            new Chart(methodCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: mLabels,
+                    datasets: [{
+                        data: mValues,
+                        backgroundColor: ['#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // Daily revenue (last 7 days)
+        const dailyLabelsEl = document.getElementById('daily-labels');
+        const dailyValuesEl = document.getElementById('daily-values');
+        const dailyCtx = document.getElementById('dailyChart');
+        if (dailyCtx && dailyLabelsEl && dailyValuesEl) {
+            const dLabels = JSON.parse(dailyLabelsEl.textContent || '[]');
+            const dValues = JSON.parse(dailyValuesEl.textContent || '[]');
+            new Chart(dailyCtx, {
+                type: 'bar',
+                data: {
+                    labels: dLabels,
+                    datasets: [{
+                        label: 'Revenue (INR)',
+                        data: dValues,
+                        backgroundColor: 'rgba(34,197,94,0.3)',
+                        borderColor: '#22c55e'
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Salesperson: approved vs pending (stacked)
+        const sLabelsEl = document.getElementById('status-sales-labels');
+        const sPendingEl = document.getElementById('status-sales-pending');
+        const sApprovedEl = document.getElementById('status-sales-approved');
+        const sCtx = document.getElementById('salesStatusChart');
+        if (sCtx && sLabelsEl && sPendingEl && sApprovedEl) {
+            const sLabels = JSON.parse(sLabelsEl.textContent || '[]');
+            const sPending = JSON.parse(sPendingEl.textContent || '[]');
+            const sApproved = JSON.parse(sApprovedEl.textContent || '[]');
+            new Chart(sCtx, {
+                type: 'bar',
+                data: {
+                    labels: sLabels,
+                    datasets: [
+                        { label: 'Approved', data: sApproved, backgroundColor: '#06b6d4' },
+                        { label: 'Pending', data: sPending, backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+        }
+    })();
+    </script>
+{% endblock %}

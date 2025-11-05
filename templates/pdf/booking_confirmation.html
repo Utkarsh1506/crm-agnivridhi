@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmation - Agnivridhi India</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #1976d2;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 5px;
+        }
+        .document-title {
+            font-size: 20px;
+            color: #0d47a1;
+            margin-top: 10px;
+        }
+        .booking-number {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1976d2;
+            border-bottom: 2px solid #1976d2;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-table td:first-child {
+            width: 35%;
+            font-weight: bold;
+            color: #555;
+        }
+        .service-box {
+            background-color: #e3f2fd;
+            border: 2px solid #1976d2;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .service-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .service-amount {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0d47a1;
+            margin-top: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #1976d2;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .note-box {
+            background-color: #fff9c4;
+            border-left: 4px solid #fbc02d;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .generated-date {
+            font-size: 11px;
+            color: #999;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">{{ company_name }}</div>
+        <div>{{ company_address }}</div>
+        <div>Email: {{ company_email }} | Phone: {{ company_phone }}</div>
+        <div class="document-title">BOOKING CONFIRMATION</div>
+        <div class="booking-number">Booking ID: #{{ booking.id }}</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Client Information</div>
+        <table class="info-table">
+            <tr>
+                <td>Company Name:</td>
+                <td>{{ client.company_name }}</td>
+            </tr>
+            <tr>
+                <td>Contact Person:</td>
+                <td>{{ client.contact_name }}</td>
+            </tr>
+            <tr>
+                <td>Email:</td>
+                <td>{{ client.contact_email }}</td>
+            </tr>
+            <tr>
+                <td>Phone:</td>
+                <td>{{ client.contact_phone }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="service-box">
+        <div class="service-name">{{ service.name }}</div>
+        <div style="color: #666; margin: 10px 0;">{{ service.description }}</div>
+        <div class="service-amount">₹{{ booking.amount|floatformat:2 }}</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Booking Details</div>
+        <table class="info-table">
+            <tr>
+                <td>Booking Date:</td>
+                <td>{{ booking.booking_date|date:"d M Y" }}</td>
+            </tr>
+            <tr>
+                <td>Status:</td>
+                <td><span class="status-badge">{{ booking.get_status_display }}</span></td>
+            </tr>
+            {% if booking.salesperson %}
+            <tr>
+                <td>Assigned To:</td>
+                <td>{{ booking.salesperson.get_full_name }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td>Service Category:</td>
+                <td>{{ service.get_category_display }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {% if booking.notes %}
+    <div class="note-box">
+        <strong>Notes:</strong><br>
+        {{ booking.notes }}
+    </div>
+    {% endif %}
+
+    <div class="note-box">
+        <strong>Important Information:</strong><br>
+        • Please keep this confirmation for your records.<br>
+        • Our team will contact you shortly to schedule the service.<br>
+        • For any queries, please contact us at {{ company_email }}<br>
+        • Booking ID: {{ booking.id }} (Please quote this in all communications)
+    </div>
+
+    <div class="footer">
+        <p>Thank you for choosing {{ company_name }}!</p>
+        <p>We look forward to serving you.</p>
+        <div class="generated-date">Generated on: {{ generated_date|date:"d M Y H:i" }}</div>
+    </div>
+</body>
+</html>

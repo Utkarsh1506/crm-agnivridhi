@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Superuser Console - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'superuser_dashboard' %}">
+                    <i class="bi bi-shield-lock"></i> Superuser Console
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Admin Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/">
+                    <i class="bi bi-gear"></i> Django Admin
+                </a>
+            </li>
+        </ul>
+        <hr class="my-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/accounts/user/">
+                    <i class="bi bi-people"></i> Manage Users
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/clients/client/">
+                    <i class="bi bi-building"></i> Manage Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/schemes/scheme/">
+                    <i class="bi bi-award"></i> Manage Schemes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/payments/payment/">
+                    <i class="bi bi-credit-card"></i> Manage Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-shield-lock"></i> Superuser Console</h1>
+</div>
+
+<!-- System Overview Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-dark border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Total Users</div>
+                        <div class="h3 mb-0">{{ total_users }}</div>
+                        <small class="text-muted">Staff: {{ staff_count }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fs-2 text-dark opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Admins</div>
+                        <div class="h3 mb-0">{{ admins }}</div>
+                        <small class="text-muted">Managers: {{ managers }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-gear fs-2 text-primary opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Sales</div>
+                        <div class="h3 mb-0">{{ sales }}</div>
+                        <small class="text-muted">Clients: {{ clients_count }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-lines-fill fs-2 text-success opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-warning border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Revenue</div>
+                        <div class="h3 mb-0">₹{{ total_revenue|floatformat:0 }}</div>
+                        <small class="text-muted">Successful payments</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-currency-rupee fs-2 text-warning opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-tools"></i> Maintenance Shortcuts</span>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action" href="/admin/">
+                        <i class="bi bi-gear"></i> Open Django Admin
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/accounts/user/">
+                        <i class="bi bi-person-plus"></i> Add/Manage Users
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="{% url 'admin_dashboard' %}">
+                        <i class="bi bi-speedometer2"></i> View Admin Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clipboard-check"></i> Pending Items
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Pending Edit Requests
+                        <span class="badge bg-danger">{{ pending_edit_requests }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Clients
+                        <span class="badge bg-primary">{{ total_clients }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Bookings
+                        <span class="badge bg-success">{{ total_bookings }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Applications
+                        <span class="badge bg-info">{{ total_applications }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

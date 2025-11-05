@@ -1,0 +1,291 @@
+from django.db import models
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
+import secrets
+import string
+
+class Client(models.Model):
+    """
+    Client/Company model for businesses seeking funding and consultancy services
+    """
+    
+    class BusinessType(models.TextChoices):
+        PVT_LTD = 'PVT_LTD', _('Pvt Ltd Company')
+        LLP = 'LLP', _('LLP')
+        PROPRIETORSHIP = 'PROPRIETORSHIP', _('Proprietorship')
+        PARTNERSHIP = 'PARTNERSHIP', _('Partnership Firm')
+        OPC = 'OPC', _('One Person Company')
+        STARTUP = 'STARTUP', _('Startup')
+        NGO = 'NGO', _('NGO')
+        SECTION_8 = 'SECTION_8', _('Section 8 (Schools, Hospitals, etc.)')
+        OTHER = 'OTHER', _('Other')
+    
+    class Sector(models.TextChoices):
+        MANUFACTURING = 'MANUFACTURING', _('Manufacturing')
+        SERVICE = 'SERVICE', _('Service')
+        RETAIL = 'RETAIL', _('Retail/Trading')
+        IT_SOFTWARE = 'IT_SOFTWARE', _('IT/Software')
+        AGRICULTURE = 'AGRICULTURE', _('Agriculture')
+        HEALTHCARE = 'HEALTHCARE', _('Healthcare')
+        EDUCATION = 'EDUCATION', _('Education')
+        FOOD_BEVERAGE = 'FOOD_BEVERAGE', _('Food & Beverage')
+        CONSTRUCTION = 'CONSTRUCTION', _('Construction')
+        TEXTILE = 'TEXTILE', _('Textile')
+        CHEMICAL = 'CHEMICAL', _('Chemical')
+        PHARMA = 'PHARMA', _('Pharma')
+        LOGISTICS = 'LOGISTICS', _('Logistics')
+        OTHER = 'OTHER', _('Other')
+    
+    class Status(models.TextChoices):
+        ACTIVE = 'ACTIVE', _('Active')
+        INACTIVE = 'INACTIVE', _('Inactive')
+        PENDING_DOCS = 'PENDING_DOCS', _('Pending Documents')
+        ON_HOLD = 'ON_HOLD', _('On Hold')
+        COMPLETED = 'COMPLETED', _('Completed')
+    
+    # User account
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='client_profile',
+        help_text=_('Associated user account for client login')
+    )
+    
+    # Client ID
+    client_id = models.CharField(
+        max_length=20,
+        unique=True,
+        editable=False,
+        help_text=_('Auto-generated unique client ID')
+    )
+    
+    # Company Information
+    company_name = models.CharField(
+        max_length=200,
+        help_text=_('Registered company/business name')
+    )
+    
+    business_type = models.CharField(
+        max_length=20,
+        choices=BusinessType.choices,
+        help_text=_('Type of business entity')
+    )
+    
+    sector = models.CharField(
+        max_length=20,
+        choices=Sector.choices,
+        help_text=_('Primary business sector')
+    )
+    
+    company_age = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text=_('Age of company in years')
+    )
+    
+    registration_number = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text=_('Company registration number (CIN/LLPIN/etc.)')
+    )
+    
+    gst_number = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        help_text=_('GST registration number')
+    )
+    
+    pan_number = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text=_('Company PAN number')
+    )
+    
+    # Financial Information
+    annual_turnover = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text=_('Annual turnover in lakhs')
+    )
+    
+    funding_required = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text=_('Total funding required in lakhs')
+    )
+    
+    existing_loans = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Existing loan amount in lakhs')
+    )
+    
+    # Contact Information
+    contact_person = models.CharField(
+        max_length=200,
+        help_text=_('Primary contact person name')
+    )
+    
+    contact_email = models.EmailField(
+        help_text=_('Primary contact email')
+    )
+    
+    contact_phone = models.CharField(
+        max_length=15,
+        help_text=_('Primary contact phone')
+    )
+    
+    alternate_phone = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        help_text=_('Alternate contact phone')
+    )
+    
+    # Address
+    address_line1 = models.CharField(
+        max_length=200,
+        help_text=_('Address line 1')
+    )
+    
+    address_line2 = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text=_('Address line 2')
+    )
+    
+    city = models.CharField(
+        max_length=100,
+        help_text=_('City')
+    )
+    
+    state = models.CharField(
+        max_length=100,
+        help_text=_('State')
+    )
+    
+    pincode = models.CharField(
+        max_length=6,
+        help_text=_('Pincode')
+    )
+    
+    # Assignment
+    assigned_sales = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='assigned_clients_sales',
+        limit_choices_to={'role': 'SALES'},
+        help_text=_('Sales employee assigned to this client')
+    )
+    
+    assigned_manager = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_clients_manager',
+        limit_choices_to={'role__in': ['ADMIN', 'MANAGER']},
+        help_text=_('Manager overseeing this client')
+    )
+    
+    # Status
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.ACTIVE,
+        help_text=_('Current client status')
+    )
+    
+    # Additional Information
+    business_description = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_('Brief description of business activities')
+    )
+    
+    funding_purpose = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_('Purpose of funding requirement')
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_('Internal notes (not visible to client)')
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text=_('Date when client was registered')
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text=_('Last update timestamp')
+    )
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='clients_created',
+        help_text=_('User who created this client record')
+    )
+    
+    class Meta:
+        verbose_name = _('Client')
+        verbose_name_plural = _('Clients')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['client_id']),
+            models.Index(fields=['company_name']),
+            models.Index(fields=['assigned_sales', 'status']),
+            models.Index(fields=['sector', 'annual_turnover']),
+        ]
+    
+    def __str__(self):
+        return f"{self.company_name} ({self.client_id})"
+    
+    def save(self, *args, **kwargs):
+        """Generate unique client ID if not exists"""
+        if not self.client_id:
+            self.client_id = self.generate_client_id()
+        super().save(*args, **kwargs)
+    
+    @staticmethod
+    def generate_client_id():
+        """Generate unique client ID: CLI-YYYYMMDD-XXXX"""
+        from datetime import datetime
+        date_str = datetime.now().strftime('%Y%m%d')
+        random_str = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+        return f"CLI-{date_str}-{random_str}"
+    
+    def get_absolute_url(self):
+        """Get URL for client detail page"""
+        from django.urls import reverse
+        return reverse('client_detail', kwargs={'pk': self.pk})
+    
+    def get_total_applications(self):
+        """Get count of all applications"""
+        return self.applications.count()
+    
+    def get_total_bookings(self):
+        """Get count of all bookings"""
+        return self.bookings.count()
+    
+    def get_total_paid(self):
+        """Get total amount paid by client"""
+        from payments.models import Payment
+        return Payment.objects.filter(
+            booking__client=self,
+            status__in=['AUTHORIZED', 'CAPTURED']
+        ).aggregate(models.Sum('amount'))['amount__sum'] or 0

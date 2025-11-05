@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #0891b2, #2dd4bf); color: white; padding: 20px; text-align: center; }
+        .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        .info-box { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #22c55e; }
+        .success { color: #22c55e; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Booking Confirmed</h1>
+        </div>
+        <div class="content">
+            <p>Dear {{ client.contact_person }},</p>
+            
+            <p class="success">Your booking has been confirmed!</p>
+            
+            <div class="info-box">
+                <h3>Booking Details:</h3>
+                <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
+                <p><strong>Service:</strong> {{ service.name }}</p>
+                <p><strong>Amount:</strong> ₹{{ booking.amount }}</p>
+                {% if booking.discount > 0 %}
+                <p><strong>Discount:</strong> ₹{{ booking.discount }}</p>
+                {% endif %}
+                <p><strong>Final Amount:</strong> ₹{{ booking.final_amount }}</p>
+                <p><strong>Booking Date:</strong> {{ booking.booking_date|date:"F d, Y" }}</p>
+                <p><strong>Status:</strong> {{ booking.get_status_display }}</p>
+            </div>
+            
+            <p>Our team will contact you shortly to discuss the next steps.</p>
+            
+            <p>If you have any questions, please feel free to reach out to us.</p>
+            
+            <p>Thank you for choosing Agnivridhi India!</p>
+        </div>
+        <div class="footer">
+            <p>© 2025 Agnivridhi India. All rights reserved.</p>
+            <p>Website: agnivridhiindia.com | Email: info@agnivridhiindia.com</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Dashboard - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'sales_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-building"></i>My Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-calendar-check"></i>My Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-earmark-text"></i>My Applications
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="h2 mb-4"><i class="bi bi-graph-up"></i> Sales Dashboard</h1>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card stats-card">
+            <div class="card-body">
+                <h6 class="text-muted">My Clients</h6>
+                <h2>{{ total_clients }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card stats-card">
+            <div class="card-body">
+                <h6 class="text-muted">My Bookings</h6>
+                <h2>{{ total_bookings }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card stats-card">
+            <div class="card-body">
+                <h6 class="text-muted">My Applications</h6>
+                <h2>{{ total_applications }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Clients -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-building"></i> My Assigned Clients
+    </div>
+    <div class="card-body">
+        {% if assigned_clients %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Client ID</th>
+                            <th>Company</th>
+                            <th>Sector</th>
+                            <th>Turnover</th>
+                            <th>Funding Required</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in assigned_clients %}
+                        <tr>
+                            <td>{{ client.client_id }}</td>
+                            <td>{{ client.company_name }}</td>
+                            <td>{{ client.get_sector_display }}</td>
+                            <td>₹{{ client.annual_turnover }} L</td>
+                            <td>₹{{ client.funding_required }} L</td>
+                            <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted text-center">No clients assigned yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- My Bookings with Payment Action -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-calendar-check"></i> My Bookings
+    </div>
+    <div class="card-body">
+        {% if my_bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Client</th>
+                            <th>Service</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in my_bookings %}
+                        <tr>
+                            <td>{{ booking.booking_id }}</td>
+                            <td>{{ booking.client.company_name }}</td>
+                            <td>{{ booking.service.name }}</td>
+                            <td>₹{{ booking.final_amount|default:booking.amount }}</td>
+                            <td><span class="badge bg-secondary">{{ booking.get_status_display }}</span></td>
+                            <td>
+                                <a href="{% url 'record_payment' booking.id %}" class="btn btn-sm btn-success">
+                                    <i class="bi bi-cash-coin"></i> Record Payment
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted text-center">No bookings yet</p>
+        {% endif %}
+    </div>
+ </div>
+{% endblock %}

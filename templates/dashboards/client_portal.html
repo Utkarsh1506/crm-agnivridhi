@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Client Portal - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'client_portal' %}">
+                    <i class="bi bi-house"></i>Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-earmark-text"></i>My Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-award"></i>Schemes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-pdf"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-credit-card"></i>Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="h2 mb-4">Welcome, {{ client.company_name }}!</h1>
+
+<!-- Company Info Card -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-building"></i> Company Information
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Business Type:</strong> {{ client.get_business_type_display }}</p>
+                <p><strong>Sector:</strong> {{ client.get_sector_display }}</p>
+                <p><strong>Company Age:</strong> {{ client.company_age }} years</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Annual Turnover:</strong> ₹{{ client.annual_turnover }} lakhs</p>
+                <p><strong>Funding Required:</strong> ₹{{ client.funding_required }} lakhs</p>
+                <p><strong>Status:</strong> <span class="badge bg-success">{{ client.get_status_display }}</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Recommended Schemes -->
+{% if recommended_schemes %}
+<div class="card mb-4">
+    <div class="card-header" style="background: linear-gradient(135deg, var(--agni-cyan), var(--agni-teal)); color: white;">
+        <i class="bi bi-stars"></i> AI Recommended Schemes for You
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for rec in recommended_schemes %}
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 {% if rec.is_eligible %}border-success{% else %}border-warning{% endif %}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title">{{ rec.scheme.name }}</h5>
+                            <span class="badge bg-primary">{{ rec.score }}% Match</span>
+                        </div>
+                        <p class="card-text small">{{ rec.scheme.description|truncatewords:20 }}</p>
+                        <ul class="list-unstyled small">
+                            <li><i class="bi bi-currency-rupee"></i> ₹{{ rec.scheme.min_funding }} - ₹{{ rec.scheme.max_funding }} lakhs</li>
+                            <li><i class="bi bi-clock"></i> {{ rec.scheme.processing_time_days }} days</li>
+                        </ul>
+                        {% if rec.is_eligible %}
+                            <span class="badge bg-success w-100"><i class="bi bi-check-circle"></i> You're Eligible!</span>
+                        {% else %}
+                            <details>
+                                <summary class="text-warning"><i class="bi bi-info-circle"></i> Eligibility Issues</summary>
+                                <ul class="small mt-2">
+                                    {% for reason in rec.reasons %}
+                                        <li>{{ reason }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </details>
+                        {% endif %}
+                        <button class="btn btn-primary btn-sm w-100 mt-2">Apply Now</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- My Applications -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-earmark-text"></i> My Applications
+            </div>
+            <div class="card-body">
+                {% if applications %}
+                    <div class="list-group list-group-flush">
+                        {% for app in applications %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ app.scheme.name }}</h6>
+                                <small>{{ app.application_date|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="mb-1 small">Amount: ₹{{ app.applied_amount }} lakhs</p>
+                            <span class="badge bg-{% if app.status == 'APPROVED' %}success{% elif app.status == 'REJECTED' %}danger{% else %}warning{% endif %}">
+                                {{ app.get_status_display }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No applications yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Documents -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-pdf"></i> My Documents
+            </div>
+            <div class="card-body">
+                {% if documents %}
+                    <div class="list-group list-group-flush">
+                        {% for doc in documents %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-pdf-fill text-danger"></i> {{ doc.title }}
+                                <br><small class="text-muted">{{ doc.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <button class="btn btn-sm btn-primary">
+                                <i class="bi bi-download"></i> Download
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No documents available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Bookings -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-calendar-check"></i> My Service Bookings
+    </div>
+    <div class="card-body">
+        {% if bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Service</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td>{{ booking.booking_id }}</td>
+                            <td>{{ booking.service.name }}</td>
+                            <td>₹{{ booking.final_amount }}</td>
+                            <td>{{ booking.booking_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge bg-{% if booking.status == 'COMPLETED' %}success{% elif booking.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
+                                    {{ booking.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if booking.status == 'PENDING' %}
+                                    <button class="btn btn-sm btn-success">Pay Now</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted text-center">No service bookings yet</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

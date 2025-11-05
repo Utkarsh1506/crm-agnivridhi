@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Receipt - Agnivridhi India</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #00796b;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00796b;
+            margin-bottom: 5px;
+        }
+        .document-title {
+            font-size: 20px;
+            color: #004d40;
+            margin-top: 10px;
+        }
+        .receipt-number {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #00796b;
+            border-bottom: 2px solid #00796b;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-table td:first-child {
+            width: 35%;
+            font-weight: bold;
+            color: #555;
+        }
+        .amount-box {
+            background-color: #e0f2f1;
+            border: 2px solid #00796b;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .amount-label {
+            font-size: 14px;
+            color: #555;
+        }
+        .amount-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00796b;
+            margin: 10px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-approved {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        .status-pending {
+            background-color: #fff9c4;
+            color: #f57f17;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #00796b;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .signature-section {
+            margin-top: 60px;
+            text-align: right;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 200px;
+            display: inline-block;
+            margin-top: 40px;
+        }
+        .generated-date {
+            font-size: 11px;
+            color: #999;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">{{ company_name }}</div>
+        <div>{{ company_address }}</div>
+        <div>Email: {{ company_email }} | Phone: {{ company_phone }}</div>
+        <div class="document-title">PAYMENT RECEIPT</div>
+        <div class="receipt-number">Receipt #: {{ payment.reference_id|default:payment.id }}</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Client Information</div>
+        <table class="info-table">
+            <tr>
+                <td>Company Name:</td>
+                <td>{{ client.company_name }}</td>
+            </tr>
+            <tr>
+                <td>Contact Person:</td>
+                <td>{{ client.contact_name }}</td>
+            </tr>
+            <tr>
+                <td>Email:</td>
+                <td>{{ client.contact_email }}</td>
+            </tr>
+            <tr>
+                <td>Phone:</td>
+                <td>{{ client.contact_phone }}</td>
+            </tr>
+            {% if client.gst_number %}
+            <tr>
+                <td>GST Number:</td>
+                <td>{{ client.gst_number }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Payment Details</div>
+        <table class="info-table">
+            <tr>
+                <td>Payment Date:</td>
+                <td>{{ payment.payment_date|date:"d M Y" }}</td>
+            </tr>
+            <tr>
+                <td>Payment Method:</td>
+                <td>{{ payment.get_payment_method_display }}</td>
+            </tr>
+            {% if payment.transaction_id %}
+            <tr>
+                <td>Transaction ID:</td>
+                <td>{{ payment.transaction_id }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td>Status:</td>
+                <td>
+                    <span class="status-badge status-{{ payment.status|lower }}">
+                        {{ payment.get_status_display }}
+                    </span>
+                </td>
+            </tr>
+            {% if booking %}
+            <tr>
+                <td>Service:</td>
+                <td>{{ booking.service.name }}</td>
+            </tr>
+            <tr>
+                <td>Booking ID:</td>
+                <td>{{ booking.id }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <div class="amount-box">
+        <div class="amount-label">Amount Received</div>
+        <div class="amount-value">₹{{ payment.amount|floatformat:2 }}</div>
+        <div class="amount-label">{{ payment.amount|floatformat:0 }} Rupees</div>
+    </div>
+
+    {% if payment.notes %}
+    <div class="section">
+        <div class="section-title">Notes</div>
+        <p>{{ payment.notes }}</p>
+    </div>
+    {% endif %}
+
+    <div class="signature-section">
+        <div>Authorized Signatory</div>
+        <div class="signature-line"></div>
+        <div style="margin-top: 10px;">{{ company_name }}</div>
+    </div>
+
+    <div class="footer">
+        <p>This is a computer-generated receipt and does not require a signature.</p>
+        <p>Thank you for your business!</p>
+        <div class="generated-date">Generated on: {{ generated_date|date:"d M Y H:i" }}</div>
+    </div>
+</body>
+</html>

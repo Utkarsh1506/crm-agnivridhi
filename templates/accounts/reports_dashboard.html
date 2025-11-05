@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports & Analytics - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'reports_dashboard' %}">
+                    <i class="bi bi-graph-up"></i> Reports
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/">
+                    <i class="bi bi-gear"></i> Django Admin
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-graph-up"></i> Reports & Analytics</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="?period=7" class="btn btn-sm btn-outline-secondary {% if period_days == 7 %}active{% endif %}">7 Days</a>
+            <a href="?period=30" class="btn btn-sm btn-outline-secondary {% if period_days == 30 %}active{% endif %}">30 Days</a>
+            <a href="?period=90" class="btn btn-sm btn-outline-secondary {% if period_days == 90 %}active{% endif %}">90 Days</a>
+            <a href="?period=365" class="btn btn-sm btn-outline-secondary {% if period_days == 365 %}active{% endif %}">1 Year</a>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Overview -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Total Revenue</div>
+                        <div class="h3 mb-0">₹{{ revenue_data.total|default:0|floatformat:0 }}</div>
+                        <small class="text-muted">{{ revenue_data.count }} payments</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-currency-rupee fs-2 text-success opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-info border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Average Payment</div>
+                        <div class="h3 mb-0">₹{{ revenue_data.average|default:0|floatformat:0 }}</div>
+                        <small class="text-muted">Per transaction</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-up fs-2 text-info opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-warning border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">New Clients</div>
+                        <div class="h3 mb-0">{{ total_clients }}</div>
+                        <small class="text-muted">Last {{ period_days }} days</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fs-2 text-warning opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Conversion Rate</div>
+                        <div class="h3 mb-0">{{ booking_to_payment_rate }}%</div>
+                        <small class="text-muted">Booking to Payment</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-trophy fs-2 text-primary opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-bar-chart-line"></i> Monthly Revenue Trend (Last 12 Months)</div>
+            <div class="card-body">
+                {{ monthly_labels|json_script:"monthly-labels" }}
+                {{ monthly_values|json_script:"monthly-values" }}
+                <canvas id="monthlyRevenueChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-pie-chart"></i> Revenue by Method</div>
+            <div class="card-body">
+                {% if revenue_by_method %}
+                <canvas id="methodPieChart" height="200"></canvas>
+                {% else %}
+                <p class="text-muted text-center">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Performance & Bookings -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-trophy"></i> Top Sales Performance</div>
+            <div class="card-body">
+                {% if sales_performance %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Salesperson</th>
+                                <th class="text-end">Revenue</th>
+                                <th class="text-end">Payments</th>
+                                <th class="text-end">Avg</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sp in sales_performance %}
+                            <tr>
+                                <td>{{ sp.received_by__first_name }} {{ sp.received_by__last_name }}</td>
+                                <td class="text-end">₹{{ sp.total_revenue|floatformat:0 }}</td>
+                                <td class="text-end">{{ sp.total_payments }}</td>
+                                <td class="text-end">₹{{ sp.avg_payment|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-calendar-check"></i> Booking Statistics</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="text-muted small">Total Bookings</div>
+                        <div class="h4">{{ booking_stats.total }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted small">Total Value</div>
+                        <div class="h4">₹{{ booking_stats.total_value|default:0|floatformat:0 }}</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-muted small">Status Breakdown</div>
+                        <small>
+                            <span class="badge bg-warning">Pending: {{ booking_stats.pending }}</span>
+                            <span class="badge bg-info">Confirmed: {{ booking_stats.confirmed }}</span>
+                            <span class="badge bg-success">Paid: {{ booking_stats.paid }}</span>
+                        </small>
+                    </div>
+                    <div class="col-6">
+                        <small>
+                            <span class="badge bg-primary">Completed: {{ booking_stats.completed }}</span>
+                            <span class="badge bg-danger">Cancelled: {{ booking_stats.cancelled }}</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Applications & Schemes -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-file-earmark-text"></i> Application Statistics</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="text-muted small">Total Applications</div>
+                        <div class="h4">{{ app_stats.total }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted small">Total Amount</div>
+                        <div class="h4">₹{{ app_stats.total_amount|default:0|floatformat:0 }}L</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="text-muted small">Status Distribution</div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-secondary" style="width: {{ app_stats.draft|default:0 }}%">Draft: {{ app_stats.draft }}</div>
+                            <div class="progress-bar bg-warning" style="width: {{ app_stats.under_review|default:0 }}%">Review: {{ app_stats.under_review }}</div>
+                            <div class="progress-bar bg-success" style="width: {{ app_stats.approved|default:0 }}%">Approved: {{ app_stats.approved }}</div>
+                            <div class="progress-bar bg-danger" style="width: {{ app_stats.rejected|default:0 }}%">Rejected: {{ app_stats.rejected }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-award"></i> Top Schemes</div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% if top_schemes %}
+                <div class="list-group list-group-flush">
+                    {% for scheme in top_schemes %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ scheme.scheme__name }}</h6>
+                            <small>{{ scheme.app_count }} apps</small>
+                        </div>
+                        <small class="text-muted">
+                            Approved: {{ scheme.approved_count }} | Amount: ₹{{ scheme.total_amount|default:0|floatformat:0 }}L
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Client Acquisition & Sector Analysis -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-people"></i> Weekly Client Acquisition</div>
+            <div class="card-body">
+                {{ weekly_labels|json_script:"weekly-labels" }}
+                {{ weekly_values|json_script:"weekly-values" }}
+                <canvas id="weeklyClientsChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-diagram-3"></i> Clients by Sector</div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% if clients_by_sector %}
+                {% for sector in clients_by_sector %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ sector.sector|default:"Unknown" }}</span>
+                    <span>
+                        <span class="badge bg-primary">{{ sector.count }}</span>
+                        <span class="badge bg-success">{{ sector.active_count }} active</span>
+                    </span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center mb-0">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function(){
+    // Monthly Revenue Chart
+    const monthlyLabels = JSON.parse(document.getElementById('monthly-labels').textContent || '[]');
+    const monthlyValues = JSON.parse(document.getElementById('monthly-values').textContent || '[]');
+    if (monthlyLabels.length > 0) {
+        new Chart(document.getElementById('monthlyRevenueChart'), {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: monthlyValues,
+                    borderColor: '#0891b2',
+                    backgroundColor: 'rgba(8,145,178,0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+    
+    // Method Pie Chart
+    {% if revenue_by_method %}
+    new Chart(document.getElementById('methodPieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: [{% for m in revenue_by_method %}'{{ m.payment_method }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                data: [{% for m in revenue_by_method %}{{ m.total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: ['#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6']
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+    {% endif %}
+    
+    // Weekly Clients Chart
+    const weeklyLabels = JSON.parse(document.getElementById('weekly-labels').textContent || '[]');
+    const weeklyValues = JSON.parse(document.getElementById('weekly-values').textContent || '[]');
+    if (weeklyLabels.length > 0) {
+        new Chart(document.getElementById('weeklyClientsChart'), {
+            type: 'bar',
+            data: {
+                labels: weeklyLabels,
+                datasets: [{
+                    label: 'New Clients',
+                    data: weeklyValues,
+                    backgroundColor: 'rgba(34,197,94,0.5)',
+                    borderColor: '#22c55e',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

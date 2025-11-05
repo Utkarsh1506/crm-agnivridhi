@@ -1,0 +1,1183 @@
+from django.shortcuts import render
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.urls import reverse
+from functools import wraps
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from .forms import ProfileForm
+
+
+def role_required(*roles):
+    """
+    Decorator to check if user has required role
+    Usage: @role_required('ADMIN', 'MANAGER')
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+            
+            if hasattr(request.user, 'role'):
+                if request.user.role in roles:
+                    return view_func(request, *args, **kwargs)
+            
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect('dashboard')
+        return wrapper
+    return decorator
+
+
+def admin_required(view_func):
+    """Decorator for admin-only views"""
+    return role_required('ADMIN')(view_func)
+
+
+def staff_required(view_func):
+    """Decorator for staff (Admin, Manager, Sales) views"""
+    return role_required('ADMIN', 'MANAGER', 'SALES')(view_func)
+
+
+def manager_required(view_func):
+    """Decorator for manager-only views"""
+    return role_required('ADMIN', 'MANAGER')(view_func)
+
+
+def sales_required(view_func):
+    """Decorator for sales-only views"""
+    return role_required('SALES')(view_func)
+
+
+def client_required(view_func):
+    """Decorator for client-only views"""
+    return role_required('CLIENT')(view_func)
+
+
+def login_view(request):
+    """
+    Custom login view with role-based redirect
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
+            
+            # Role-based redirect
+            # Route Owner Admins to the Owner Dashboard
+            if getattr(user, 'is_owner', False) and getattr(user, 'role', None) == 'ADMIN':
+                return redirect('owner_dashboard')
+            # Superuser gets dedicated dashboard
+            if user.is_superuser:
+                return redirect('superuser_dashboard')
+
+            role = getattr(user, 'role', None)
+            if role:
+                if role == 'CLIENT':
+                    return redirect('client_portal')
+                else:
+                    # Admin, Manager, Sales go to their respective dashboards
+                    return redirect('dashboard')
+            
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    
+    return render(request, 'accounts/login.html')
+
+
+@login_required
+def logout_view(request):
+    """
+    Logout view
+    """
+    logout(request)
+    messages.success(request, 'You have been logged out successfully.')
+    return redirect('login')
+
+
+@login_required
+def dashboard_view(request):
+    """
+    Main dashboard with role-based routing
+    """
+    user = request.user
+    
+    # Owner Admin gets Owner Dashboard
+    if getattr(user, 'is_owner', False) and getattr(user, 'role', None) == 'ADMIN':
+        return redirect('owner_dashboard')
+    # Superuser gets dedicated dashboard
+    if user.is_superuser:
+        return redirect('superuser_dashboard')
+
+    role = getattr(user, 'role', None)
+    if role:
+        if role == 'ADMIN':
+            return redirect('admin_dashboard')
+        elif role == 'MANAGER':
+            return redirect('manager_dashboard')
+        elif role == 'SALES':
+            return redirect('sales_dashboard')
+        elif role == 'CLIENT':
+            return redirect('client_portal')
+    
+    # Fallback generic dashboard (shouldn't generally hit)
+    return render(request, 'accounts/dashboard.html', {'user': user})
+
+
+@admin_required
+def admin_dashboard(request):
+    """
+    Admin dashboard with analytics
+    """
+    from clients.models import Client
+    from bookings.models import Booking
+    from applications.models import Application
+    from payments.models import Payment
+    from edit_requests.models import EditRequest
+    from django.db.models import Sum, Count, Q
+    from accounts.models import User
+    
+    # Analytics
+    total_clients = Client.objects.count()
+    active_clients = Client.objects.filter(status='ACTIVE').count()
+    
+    total_bookings = Booking.objects.count()
+    pending_bookings = Booking.objects.filter(status='PENDING').count()
+    
+    total_applications = Application.objects.count()
+    pending_applications = Application.objects.filter(status__in=['DRAFT', 'SUBMITTED', 'UNDER_REVIEW']).count()
+    
+    # Filters
+    method_filter = request.GET.get('method')
+    salesperson_filter = request.GET.get('salesperson')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    base_success = Payment.objects.filter(status__in=['AUTHORIZED', 'CAPTURED'])
+    if method_filter:
+        base_success = base_success.filter(payment_method=method_filter)
+    if salesperson_filter:
+        base_success = base_success.filter(received_by_id=salesperson_filter)
+    if date_from:
+        from django.utils.dateparse import parse_date
+        parsed_from = parse_date(date_from)
+        if parsed_from:
+            base_success = base_success.filter(payment_date__date__gte=parsed_from)
+    if date_to:
+        from django.utils.dateparse import parse_date
+        parsed_to = parse_date(date_to)
+        if parsed_to:
+            base_success = base_success.filter(payment_date__date__lte=parsed_to)
+    
+    total_revenue = base_success.aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    pending_edit_requests = EditRequest.objects.filter(status='PENDING').count()
+
+    # Pending payments (awaiting approval)
+    pending_payments = Payment.objects.filter(status='PENDING').order_by('-created_at')[:10]
+    pending_payments_count = Payment.objects.filter(status='PENDING').count()
+    
+    # Recent items
+    recent_clients = Client.objects.order_by('-created_at')[:5]
+    recent_bookings = Booking.objects.order_by('-booking_date')[:5]
+    recent_applications = Application.objects.order_by('-application_date')[:5]
+    pending_edits = EditRequest.objects.filter(status='PENDING').order_by('-created_at')[:10]
+    
+    # Revenue by month (last 6 months)
+    from django.utils import timezone
+    from datetime import timedelta
+    now = timezone.now()
+    labels = []
+    revenue_series = []
+    from payments.models import Payment as _P
+    for i in range(5, -1, -1):
+        start = (now.replace(day=1) - timedelta(days=30*i)).replace(day=1)
+        # Compute end by moving to next month start
+        if start.month == 12:
+            end = start.replace(year=start.year+1, month=1, day=1)
+        else:
+            end = start.replace(month=start.month+1, day=1)
+        month_qs = base_success.filter(payment_date__gte=start, payment_date__lt=end)
+        month_sum = month_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+        labels.append(start.strftime('%b %Y'))
+        revenue_series.append(float(month_sum))
+
+    # Revenue by method
+    method_breakdown_qs = Payment.objects.filter(status__in=['AUTHORIZED','CAPTURED']).values('payment_method').annotate(total=Sum('amount')).order_by('-total')
+    method_labels = [row['payment_method'] or 'UNKNOWN' for row in method_breakdown_qs]
+    method_values = [float(row['total'] or 0) for row in method_breakdown_qs]
+
+    # Top sales by revenue
+    top_sales_qs = Payment.objects.filter(status__in=['AUTHORIZED','CAPTURED'], received_by__isnull=False).values('received_by__username', 'received_by__first_name', 'received_by__last_name').annotate(total=Sum('amount')).order_by('-total')[:5]
+    top_sales = [
+        {
+            'name': (f"{r['received_by__first_name']} {r['received_by__last_name']}").strip() or r['received_by__username'],
+            'total': float(r['total'] or 0)
+        }
+        for r in top_sales_qs
+    ]
+
+    # Daily totals last 7 days
+    daily_labels = []
+    daily_values = []
+    for i in range(6, -1, -1):
+        day = now.date() - timedelta(days=i)
+        day_sum = base_success.filter(payment_date__date=day).aggregate(total=Sum('amount'))['total'] or 0
+        daily_labels.append(day.strftime('%b %d'))
+        daily_values.append(float(day_sum))
+
+    # Pending vs approved by salesperson
+    status_by_sales = Payment.objects.values('received_by__username').annotate(
+        pending=Count('id', filter=Q(status='PENDING')),
+        approved=Count('id', filter=Q(status__in=['AUTHORIZED','CAPTURED']))
+    ).order_by('-approved', '-pending')
+    status_sales_labels = [row['received_by__username'] or 'Unassigned' for row in status_by_sales]
+    status_sales_pending = [row['pending'] for row in status_by_sales]
+    status_sales_approved = [row['approved'] for row in status_by_sales]
+
+    # Sales team for filter dropdown
+    sales_team = User.objects.filter(role='SALES').order_by('first_name', 'last_name')
+
+    # Recent activity logs
+    from activity_logs.models import ActivityLog
+    recent_activities = ActivityLog.objects.select_related('user').order_by('-timestamp')[:15]
+
+    context = {
+        'total_clients': total_clients,
+        'active_clients': active_clients,
+        'total_bookings': total_bookings,
+        'pending_bookings': pending_bookings,
+        'total_applications': total_applications,
+        'pending_applications': pending_applications,
+        'total_revenue': total_revenue,
+        'pending_edit_requests': pending_edit_requests,
+        'pending_payments': pending_payments,
+        'pending_payments_count': pending_payments_count,
+        'recent_clients': recent_clients,
+        'recent_bookings': recent_bookings,
+        'recent_applications': recent_applications,
+        'pending_edits': pending_edits,
+        'chart_labels': labels,
+        'chart_revenue': revenue_series,
+        'method_labels': method_labels,
+        'method_values': method_values,
+        'top_sales': top_sales,
+        'daily_labels': daily_labels,
+        'daily_values': daily_values,
+        'status_sales_labels': status_sales_labels,
+        'status_sales_pending': status_sales_pending,
+        'status_sales_approved': status_sales_approved,
+        'selected_method': method_filter or '',
+        'selected_salesperson': salesperson_filter or '',
+        'date_from': date_from or '',
+        'date_to': date_to or '',
+        'sales_team': sales_team,
+        'recent_activities': recent_activities,
+    }
+    
+    return render(request, 'dashboards/admin_dashboard.html', context)
+
+
+@manager_required
+def manager_dashboard(request):
+    """
+    Manager dashboard with team metrics
+    """
+    from clients.models import Client
+    from bookings.models import Booking
+    from accounts.models import User
+    
+    # Team members under this manager
+    team_members = User.objects.filter(manager=request.user, role='SALES')
+    
+    # Clients assigned to team
+    team_clients = Client.objects.filter(assigned_manager=request.user)
+    
+    # Bookings
+    team_bookings = Booking.objects.filter(client__assigned_manager=request.user)
+    
+    context = {
+        'team_members': team_members,
+        'team_clients': team_clients,
+        'team_bookings': team_bookings,
+        'total_team_members': team_members.count(),
+        'total_clients': team_clients.count(),
+        'total_bookings': team_bookings.count(),
+    }
+    
+    return render(request, 'dashboards/manager_dashboard.html', context)
+
+
+@sales_required
+def sales_dashboard(request):
+    """
+    Sales dashboard with assigned clients
+    """
+    from clients.models import Client
+    from bookings.models import Booking
+    from applications.models import Application
+    
+    # Assigned clients
+    assigned_clients = Client.objects.filter(assigned_sales=request.user)
+    
+    # Bookings
+    my_bookings = Booking.objects.filter(assigned_to=request.user)
+    
+    # Applications
+    my_applications = Application.objects.filter(assigned_to=request.user)
+    
+    context = {
+        'assigned_clients': assigned_clients,
+        'my_bookings': my_bookings,
+        'my_applications': my_applications,
+        'total_clients': assigned_clients.count(),
+        'total_bookings': my_bookings.count(),
+        'total_applications': my_applications.count(),
+    }
+    
+    return render(request, 'dashboards/sales_dashboard.html', context)
+
+
+@sales_required
+def record_payment(request, booking_id):
+    """Sales can record an offline payment for a booking"""
+    from django.shortcuts import get_object_or_404
+    from bookings.models import Booking
+    from payments.models import Payment
+    from decimal import Decimal
+
+    booking = get_object_or_404(Booking, id=booking_id)
+
+    # permission: booking must be assigned to this sales or user is manager/admin
+    if getattr(booking, 'assigned_to_id', None) != request.user.id and not (getattr(request.user, 'is_manager', False) or getattr(request.user, 'is_admin', False)):
+        messages.error(request, 'You are not allowed to record payment for this booking.')
+        return redirect('sales_dashboard')
+
+    # Prefill defaults
+    default_amount = getattr(booking, 'final_amount', None) or getattr(booking, 'amount', None) or Decimal('0.00')
+
+    if request.method == 'POST':
+        amount = request.POST.get('amount')
+        payment_method = request.POST.get('payment_method')
+        reference_id = request.POST.get('reference_id')
+        notes = request.POST.get('notes')
+        proof = request.FILES.get('proof')
+
+        # Create or update payment
+        payment, created = Payment.objects.get_or_create(booking=booking, defaults={
+            'client': booking.client,
+            'amount': amount or default_amount,
+            'currency': 'INR',
+        })
+        payment.client = booking.client
+        payment.amount = amount or default_amount
+        payment.payment_method = payment_method or 'UPI_QR'
+        payment.reference_id = reference_id
+        payment.received_by = request.user
+        payment.notes = notes
+        if proof:
+            payment.proof = proof
+        from django.utils import timezone
+        payment.payment_date = timezone.now()
+        # Mark as PENDING for manager/admin approval
+        payment.status = 'PENDING'
+        payment.save()
+
+        # Log activity
+        from activity_logs.models import ActivityLog
+        ActivityLog.log_action(
+            user=request.user,
+            action='PAYMENT',
+            entity_type='PAYMENT',
+            entity_id=payment.pk,
+            description=f'Recorded payment for booking {booking.booking_id} - Amount: ₹{amount or default_amount} - Method: {payment_method}',
+            request=request
+        )
+
+        messages.success(request, 'Payment recorded and sent for approval.')
+        # Do not change booking status until approval
+        return redirect('sales_dashboard')
+
+    return render(request, 'payments/record_payment.html', {
+        'booking': booking,
+        'default_amount': default_amount,
+    })
+
+
+@login_required
+def approve_payment(request, payment_id):
+    """Manager/Admin can approve recorded payments"""
+    if not (getattr(request.user, 'is_manager', False) or getattr(request.user, 'is_admin', False) or request.user.is_superuser):
+        messages.error(request, 'Permission denied.')
+        return redirect('dashboard')
+    from django.shortcuts import get_object_or_404
+    from payments.models import Payment
+    from activity_logs.models import ActivityLog
+    from .email_utils import send_payment_approval_email
+    
+    payment = get_object_or_404(Payment, id=payment_id)
+    old_status = payment.status
+    payment.status = 'CAPTURED'
+    payment.save(update_fields=['status'])
+    
+    # Log activity
+    ActivityLog.log_action(
+        user=request.user,
+        action='APPROVE',
+        entity_type='PAYMENT',
+        entity_id=payment.id,
+        description=f'Approved payment #{payment.id} for {payment.client.company_name} - Amount: ₹{payment.amount}',
+        old_value=old_status,
+        new_value='CAPTURED',
+        request=request
+    )
+    
+    # Send email notification
+    try:
+        send_payment_approval_email(payment, request.user)
+    except Exception as e:
+        print(f"Email notification failed: {e}")
+    
+    try:
+        booking = payment.booking
+        old_booking_status = booking.status
+        booking.status = 'PAID'
+        booking.save(update_fields=['status'])
+        
+        # Log booking status change
+        ActivityLog.log_action(
+            user=request.user,
+            action='STATUS_CHANGE',
+            entity_type='BOOKING',
+            entity_id=booking.id,
+            description=f'Changed booking {booking.booking_id} status to PAID due to payment approval',
+            old_value=old_booking_status,
+            new_value='PAID',
+            request=request
+        )
+    except Exception:
+        pass
+    
+    messages.success(request, 'Payment approved and notification sent.')
+    return redirect('admin_dashboard')
+
+
+@login_required
+def reject_payment(request, payment_id):
+    """Manager/Admin can reject recorded payments"""
+    if not (getattr(request.user, 'is_manager', False) or getattr(request.user, 'is_admin', False) or request.user.is_superuser):
+        messages.error(request, 'Permission denied.')
+        return redirect('dashboard')
+    from django.shortcuts import get_object_or_404
+    from payments.models import Payment
+    from activity_logs.models import ActivityLog
+    from .email_utils import send_payment_rejection_email
+    
+    payment = get_object_or_404(Payment, id=payment_id)
+    old_status = payment.status
+    payment.status = 'FAILED'
+    payment.save(update_fields=['status'])
+    
+    # Log activity
+    ActivityLog.log_action(
+        user=request.user,
+        action='REJECT',
+        entity_type='PAYMENT',
+        entity_id=payment.id,
+        description=f'Rejected payment #{payment.id} for {payment.client.company_name} - Amount: ₹{payment.amount}',
+        old_value=old_status,
+        new_value='FAILED',
+        request=request
+    )
+    
+    # Send email notification
+    try:
+        send_payment_rejection_email(payment, request.user)
+    except Exception as e:
+        print(f"Email notification failed: {e}")
+    
+    messages.success(request, 'Payment rejected and notification sent.')
+    return redirect('admin_dashboard')
+
+
+@client_required
+def client_portal(request):
+    """
+    Client portal with applications and documents
+    """
+    from applications.models import Application
+    from documents.models import Document
+    from bookings.models import Booking
+    from schemes.models import Scheme
+    
+    # Get client profile
+    try:
+        client = request.user.client_profile
+    except:
+        messages.error(request, 'Client profile not found.')
+        return redirect('dashboard')
+    
+    # Client data
+    applications = Application.objects.filter(client=client).order_by('-application_date')
+    documents = Document.objects.filter(client=client).order_by('-created_at')
+    bookings = Booking.objects.filter(client=client).order_by('-booking_date')
+    
+    # Recommended schemes (AI)
+    all_schemes = Scheme.objects.filter(status='ACTIVE')
+    recommended_schemes = []
+    for scheme in all_schemes:
+        score = scheme.get_recommended_for_client(client)
+        if score > 50:  # Only show schemes with >50% match
+            is_eligible, reasons = scheme.check_client_eligibility(client)
+            recommended_schemes.append({
+                'scheme': scheme,
+                'score': score,
+                'is_eligible': is_eligible,
+                'reasons': reasons
+            })
+    
+    # Sort by score descending
+    recommended_schemes.sort(key=lambda x: x['score'], reverse=True)
+    recommended_schemes = recommended_schemes[:3]  # Top 3
+    
+    context = {
+        'client': client,
+        'applications': applications,
+        'documents': documents,
+        'bookings': bookings,
+        'recommended_schemes': recommended_schemes,
+    }
+    
+    return render(request, 'dashboards/client_portal.html', context)
+
+
+@login_required
+def superuser_dashboard(request):
+    """
+    Dedicated dashboard for superuser (site owner) distinct from Admin role users.
+    """
+    if not request.user.is_superuser:
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('dashboard')
+
+    # Reuse admin analytics plus include system/user metrics
+    from clients.models import Client
+    from bookings.models import Booking
+    from applications.models import Application
+    from payments.models import Payment
+    from edit_requests.models import EditRequest
+    from django.db.models import Sum
+    from accounts.models import User
+
+    total_clients = Client.objects.count()
+    total_bookings = Booking.objects.count()
+    total_applications = Application.objects.count()
+    total_revenue = Payment.objects.filter(status__in=['AUTHORIZED', 'CAPTURED']).aggregate(Sum('amount'))['amount__sum'] or 0
+    pending_edit_requests = EditRequest.objects.filter(status='PENDING').count()
+
+    # User metrics
+    total_users = User.objects.count()
+    admins = User.objects.filter(role='ADMIN').count()
+    managers = User.objects.filter(role='MANAGER').count()
+    sales = User.objects.filter(role='SALES').count()
+    clients_count = User.objects.filter(role='CLIENT').count()
+    staff_count = User.objects.filter(is_staff=True).count()
+
+    context = {
+        'total_clients': total_clients,
+        'total_bookings': total_bookings,
+        'total_applications': total_applications,
+        'total_revenue': total_revenue,
+        'pending_edit_requests': pending_edit_requests,
+        'total_users': total_users,
+        'admins': admins,
+        'managers': managers,
+        'sales': sales,
+        'clients_count': clients_count,
+        'staff_count': staff_count,
+    }
+
+    return render(request, 'dashboards/superuser_dashboard.html', context)
+
+
+@admin_required
+def owner_dashboard(request):
+    """
+    Owner Dashboard: accessible only to Admin role users flagged as is_owner.
+    Distinct from superuser dashboard; focuses on business KPIs.
+    """
+    if not getattr(request.user, 'is_owner', False):
+        messages.error(request, 'Only the company owner can access this dashboard.')
+        return redirect('admin_dashboard')
+
+    from clients.models import Client
+    from bookings.models import Booking
+    from applications.models import Application
+    from payments.models import Payment
+    from django.db.models import Sum, Count, Q
+    from django.utils import timezone
+    from datetime import timedelta
+
+    total_clients = Client.objects.count()
+    active_clients = Client.objects.filter(status='ACTIVE').count()
+    total_bookings = Booking.objects.count()
+    total_applications = Application.objects.count()
+    
+    # Filter support
+    method_filter = request.GET.get('method')
+    base_success = Payment.objects.filter(status__in=['AUTHORIZED', 'CAPTURED'])
+    if method_filter:
+        base_success = base_success.filter(payment_method=method_filter)
+    total_revenue = base_success.aggregate(Sum('amount'))['amount__sum'] or 0
+
+    top_sectors = Client.objects.values('sector').annotate(c=Count('id')).order_by('-c')[:5]
+
+    # Revenue by month (last 6 months)
+    now = timezone.now()
+    labels = []
+    revenue_series = []
+    for i in range(5, -1, -1):
+        start = (now.replace(day=1) - timedelta(days=30*i)).replace(day=1)
+        if start.month == 12:
+            end = start.replace(year=start.year+1, month=1, day=1)
+        else:
+            end = start.replace(month=start.month+1, day=1)
+        month_qs = base_success.filter(payment_date__gte=start, payment_date__lt=end)
+        month_sum = month_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+        labels.append(start.strftime('%b %Y'))
+        revenue_series.append(float(month_sum))
+
+    # Revenue by method
+    method_breakdown_qs = Payment.objects.filter(status__in=['AUTHORIZED','CAPTURED']).values('payment_method').annotate(total=Sum('amount')).order_by('-total')
+    method_labels = [row['payment_method'] or 'UNKNOWN' for row in method_breakdown_qs]
+    method_values = [float(row['total'] or 0) for row in method_breakdown_qs]
+
+    # Top sales by revenue
+    top_sales_qs = Payment.objects.filter(status__in=['AUTHORIZED','CAPTURED'], received_by__isnull=False).values('received_by__username', 'received_by__first_name', 'received_by__last_name').annotate(total=Sum('amount')).order_by('-total')[:5]
+    top_sales = [
+        {
+            'name': (f"{r['received_by__first_name']} {r['received_by__last_name']}").strip() or r['received_by__username'],
+            'total': float(r['total'] or 0)
+        }
+        for r in top_sales_qs
+    ]
+
+    # Daily totals last 7 days
+    daily_labels = []
+    daily_values = []
+    for i in range(6, -1, -1):
+        day = now.date() - timedelta(days=i)
+        day_sum = base_success.filter(payment_date__date=day).aggregate(total=Sum('amount'))['total'] or 0
+        daily_labels.append(day.strftime('%b %d'))
+        daily_values.append(float(day_sum))
+
+    # Pending vs approved by salesperson
+    status_by_sales = Payment.objects.values('received_by__username').annotate(
+        pending=Count('id', filter=Q(status='PENDING')),
+        approved=Count('id', filter=Q(status__in=['AUTHORIZED','CAPTURED']))
+    ).order_by('-approved', '-pending')
+    status_sales_labels = [row['received_by__username'] or 'Unassigned' for row in status_by_sales]
+    status_sales_pending = [row['pending'] for row in status_by_sales]
+    status_sales_approved = [row['approved'] for row in status_by_sales]
+
+    # Pending payments summary for owner view
+    pending_payments_count = Payment.objects.filter(status='PENDING').count()
+
+    context = {
+        'total_clients': total_clients,
+        'active_clients': active_clients,
+        'total_bookings': total_bookings,
+        'total_applications': total_applications,
+        'total_revenue': total_revenue,
+        'top_sectors': top_sectors,
+        'chart_labels': labels,
+        'chart_revenue': revenue_series,
+        'method_labels': method_labels,
+        'method_values': method_values,
+        'top_sales': top_sales,
+        'daily_labels': daily_labels,
+        'daily_values': daily_values,
+        'status_sales_labels': status_sales_labels,
+        'status_sales_pending': status_sales_pending,
+        'status_sales_approved': status_sales_approved,
+        'pending_payments_count': pending_payments_count,
+        'selected_method': method_filter or '',
+    }
+
+    return render(request, 'dashboards/owner_dashboard.html', context)
+
+
+@login_required
+def profile_view(request):
+    """View/update current user's profile"""
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('profile')
+    else:
+        form = ProfileForm(instance=request.user)
+    return render(request, 'accounts/profile.html', {'form': form})
+
+
+@login_required
+def change_password(request):
+    """Allow logged-in users to change password"""
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Keep user logged in after password change
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password changed successfully.')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'accounts/change_password.html', {'form': form})
+
+
+# Export Views
+@staff_required
+def export_clients(request):
+    """Export clients to CSV"""
+    from clients.models import Client
+    from .utils import export_to_csv
+    
+    queryset = Client.objects.all().select_related('assigned_manager', 'assigned_sales')
+    
+    # Apply filters if provided
+    status_filter = request.GET.get('status')
+    sector_filter = request.GET.get('sector')
+    if status_filter:
+        queryset = queryset.filter(status=status_filter)
+    if sector_filter:
+        queryset = queryset.filter(sector=sector_filter)
+    
+    fields = [
+        {'name': 'id', 'label': 'ID'},
+        {'name': 'company_name', 'label': 'Company Name'},
+        {'name': 'contact_person', 'label': 'Contact Person'},
+        {'name': 'email', 'label': 'Email'},
+        {'name': 'phone', 'label': 'Phone'},
+        {'name': 'get_business_type_display', 'label': 'Business Type'},
+        {'name': 'get_sector_display', 'label': 'Sector'},
+        {'name': 'funding_required', 'label': 'Funding Required (Lakhs)'},
+        {'name': 'get_status_display', 'label': 'Status'},
+        {'name': 'assigned_manager', 'label': 'Manager', 'accessor': lambda obj: obj.assigned_manager.get_full_name() if obj.assigned_manager else 'N/A'},
+        {'name': 'assigned_sales', 'label': 'Sales', 'accessor': lambda obj: obj.assigned_sales.get_full_name() if obj.assigned_sales else 'N/A'},
+        {'name': 'created_at', 'label': 'Created Date', 'accessor': lambda obj: obj.created_at.strftime('%Y-%m-%d %H:%M')},
+    ]
+    
+    return export_to_csv(queryset, fields, 'clients')
+
+
+@staff_required
+def export_bookings(request):
+    """Export bookings to CSV"""
+    from bookings.models import Booking
+    from .utils import export_to_csv
+    
+    queryset = Booking.objects.all().select_related('client', 'service', 'assigned_to')
+    
+    # Apply filters
+    status_filter = request.GET.get('status')
+    if status_filter:
+        queryset = queryset.filter(status=status_filter)
+    
+    fields = [
+        {'name': 'booking_id', 'label': 'Booking ID'},
+        {'name': 'client', 'label': 'Client', 'accessor': lambda obj: obj.client.company_name},
+        {'name': 'service', 'label': 'Service', 'accessor': lambda obj: obj.service.name},
+        {'name': 'amount', 'label': 'Amount'},
+        {'name': 'discount', 'label': 'Discount'},
+        {'name': 'final_amount', 'label': 'Final Amount'},
+        {'name': 'get_status_display', 'label': 'Status'},
+        {'name': 'assigned_to', 'label': 'Assigned To', 'accessor': lambda obj: obj.assigned_to.get_full_name() if obj.assigned_to else 'N/A'},
+        {'name': 'booking_date', 'label': 'Booking Date', 'accessor': lambda obj: obj.booking_date.strftime('%Y-%m-%d')},
+        {'name': 'created_at', 'label': 'Created Date', 'accessor': lambda obj: obj.created_at.strftime('%Y-%m-%d %H:%M')},
+    ]
+    
+    return export_to_csv(queryset, fields, 'bookings')
+
+
+@staff_required
+def export_payments(request):
+    """Export payments to CSV"""
+    from payments.models import Payment
+    from .utils import export_to_csv
+    
+    queryset = Payment.objects.all().select_related('client', 'booking', 'received_by')
+    
+    # Apply filters
+    status_filter = request.GET.get('status')
+    method_filter = request.GET.get('method')
+    if status_filter:
+        queryset = queryset.filter(status=status_filter)
+    if method_filter:
+        queryset = queryset.filter(payment_method=method_filter)
+    
+    fields = [
+        {'name': 'id', 'label': 'Payment ID'},
+        {'name': 'client', 'label': 'Client', 'accessor': lambda obj: obj.client.company_name},
+        {'name': 'booking', 'label': 'Booking', 'accessor': lambda obj: obj.booking.booking_id if obj.booking else 'N/A'},
+        {'name': 'amount', 'label': 'Amount'},
+        {'name': 'currency', 'label': 'Currency'},
+        {'name': 'get_payment_method_display', 'label': 'Payment Method'},
+        {'name': 'get_status_display', 'label': 'Status'},
+        {'name': 'reference_id', 'label': 'Reference ID'},
+        {'name': 'received_by', 'label': 'Received By', 'accessor': lambda obj: obj.received_by.get_full_name() if obj.received_by else 'N/A'},
+        {'name': 'payment_date', 'label': 'Payment Date', 'accessor': lambda obj: obj.payment_date.strftime('%Y-%m-%d %H:%M') if obj.payment_date else 'N/A'},
+        {'name': 'notes', 'label': 'Notes'},
+    ]
+    
+    return export_to_csv(queryset, fields, 'payments')
+
+
+@admin_required
+def export_dashboard_data(request):
+    """Export filtered dashboard revenue data to CSV"""
+    from payments.models import Payment
+    from django.http import HttpResponse
+    import csv
+    from datetime import datetime
+    
+    # Get filters from request
+    method_filter = request.GET.get('method')
+    salesperson_filter = request.GET.get('salesperson')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    # Build queryset
+    queryset = Payment.objects.filter(status__in=['AUTHORIZED', 'CAPTURED']).select_related('client', 'booking', 'received_by')
+    
+    if method_filter:
+        queryset = queryset.filter(payment_method=method_filter)
+    if salesperson_filter:
+        queryset = queryset.filter(received_by_id=salesperson_filter)
+    if date_from:
+        from django.utils.dateparse import parse_date
+        parsed_from = parse_date(date_from)
+        if parsed_from:
+            queryset = queryset.filter(payment_date__date__gte=parsed_from)
+    if date_to:
+        from django.utils.dateparse import parse_date
+        parsed_to = parse_date(date_to)
+        if parsed_to:
+            queryset = queryset.filter(payment_date__date__lte=parsed_to)
+    
+    # Create CSV
+    response = HttpResponse(content_type='text/csv')
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    response['Content-Disposition'] = f'attachment; filename="dashboard_revenue_{timestamp}.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Payment ID', 'Client', 'Booking', 'Amount', 'Method', 'Salesperson', 'Payment Date', 'Status'])
+    
+    for payment in queryset:
+        writer.writerow([
+            payment.id,
+            payment.client.company_name,
+            payment.booking.booking_id if payment.booking else 'N/A',
+            payment.amount,
+            payment.get_payment_method_display(),
+            payment.received_by.get_full_name() if payment.received_by else 'N/A',
+            payment.payment_date.strftime('%Y-%m-%d %H:%M') if payment.payment_date else 'N/A',
+            payment.get_status_display(),
+        ])
+    
+    return response
+
+
+@staff_required
+def global_search(request):
+    """Global search across clients, bookings, and applications"""
+    from clients.models import Client
+    from bookings.models import Booking
+    from applications.models import Application
+    from django.db.models import Q
+    
+    query = request.GET.get('q', '').strip()
+    
+    if not query:
+        return render(request, 'accounts/search_results.html', {
+            'query': '',
+            'clients': [],
+            'bookings': [],
+            'applications': [],
+        })
+    
+    # Search clients
+    clients = Client.objects.filter(
+        Q(company_name__icontains=query) |
+        Q(contact_person__icontains=query) |
+        Q(contact_email__icontains=query) |
+        Q(contact_phone__icontains=query) |
+        Q(pan_number__icontains=query) |
+        Q(gst_number__icontains=query)
+    ).select_related('assigned_manager', 'assigned_sales')[:10]
+    
+    # Search bookings
+    bookings = Booking.objects.filter(
+        Q(booking_id__icontains=query) |
+        Q(client__company_name__icontains=query) |
+        Q(service__name__icontains=query)
+    ).select_related('client', 'service', 'assigned_to')[:10]
+    
+    # Search applications
+    applications = Application.objects.filter(
+        Q(application_id__icontains=query) |
+        Q(client__company_name__icontains=query) |
+        Q(scheme__name__icontains=query)
+    ).select_related('client', 'scheme', 'assigned_to')[:10]
+    
+    context = {
+        'query': query,
+        'clients': clients,
+        'bookings': bookings,
+        'applications': applications,
+        'total_results': clients.count() + bookings.count() + applications.count(),
+    }
+    
+    return render(request, 'accounts/search_results.html', context)
+
+
+@admin_required
+def reports_dashboard(request):
+    """Advanced reporting dashboard"""
+    from clients.models import Client
+    from bookings.models import Booking
+    from applications.models import Application
+    from payments.models import Payment
+    from django.db.models import Sum, Count, Avg, Q
+    from django.db.models.functions import TruncMonth, TruncWeek
+    from django.utils import timezone
+    from datetime import timedelta
+    from collections import defaultdict
+    
+    # Date range filter
+    period = request.GET.get('period', '30')  # Default 30 days
+    try:
+        days = int(period)
+    except:
+        days = 30
+    
+    start_date = timezone.now() - timedelta(days=days)
+    
+    # Revenue Analysis
+    revenue_data = Payment.objects.filter(
+        status__in=['AUTHORIZED', 'CAPTURED'],
+        payment_date__gte=start_date
+    ).aggregate(
+        total=Sum('amount'),
+        count=Count('id'),
+        average=Avg('amount')
+    )
+    
+    # Revenue by method
+    revenue_by_method = Payment.objects.filter(
+        status__in=['AUTHORIZED', 'CAPTURED'],
+        payment_date__gte=start_date
+    ).values('payment_method').annotate(
+        total=Sum('amount'),
+        count=Count('id')
+    ).order_by('-total')
+    
+    # Monthly revenue trend (last 12 months)
+    monthly_revenue = Payment.objects.filter(
+        status__in=['AUTHORIZED', 'CAPTURED'],
+        payment_date__gte=timezone.now() - timedelta(days=365)
+    ).annotate(
+        month=TruncMonth('payment_date')
+    ).values('month').annotate(
+        total=Sum('amount'),
+        count=Count('id')
+    ).order_by('month')
+    
+    # Sales Performance
+    sales_performance = Payment.objects.filter(
+        status__in=['AUTHORIZED', 'CAPTURED'],
+        payment_date__gte=start_date,
+        received_by__isnull=False
+    ).values(
+        'received_by__username',
+        'received_by__first_name',
+        'received_by__last_name'
+    ).annotate(
+        total_revenue=Sum('amount'),
+        total_payments=Count('id'),
+        avg_payment=Avg('amount')
+    ).order_by('-total_revenue')[:10]
+    
+    # Client Acquisition
+    new_clients = Client.objects.filter(
+        created_at__gte=start_date
+    ).annotate(
+        week=TruncWeek('created_at')
+    ).values('week').annotate(
+        count=Count('id')
+    ).order_by('week')
+    
+    # Client by sector
+    clients_by_sector = Client.objects.values('sector').annotate(
+        count=Count('id'),
+        active_count=Count('id', filter=Q(status='ACTIVE'))
+    ).order_by('-count')
+    
+    # Booking Statistics
+    booking_stats = Booking.objects.filter(
+        created_at__gte=start_date
+    ).aggregate(
+        total=Count('id'),
+        pending=Count('id', filter=Q(status='PENDING')),
+        confirmed=Count('id', filter=Q(status='CONFIRMED')),
+        paid=Count('id', filter=Q(status='PAID')),
+        completed=Count('id', filter=Q(status='COMPLETED')),
+        cancelled=Count('id', filter=Q(status='CANCELLED')),
+        total_value=Sum('final_amount')
+    )
+    
+    # Application Statistics
+    app_stats = Application.objects.filter(
+        created_at__gte=start_date
+    ).aggregate(
+        total=Count('id'),
+        draft=Count('id', filter=Q(status='DRAFT')),
+        submitted=Count('id', filter=Q(status='SUBMITTED')),
+        under_review=Count('id', filter=Q(status='UNDER_REVIEW')),
+        approved=Count('id', filter=Q(status='APPROVED')),
+        rejected=Count('id', filter=Q(status='REJECTED')),
+        total_amount=Sum('applied_amount')
+    )
+    
+    # Top schemes by applications
+    top_schemes = Application.objects.filter(
+        created_at__gte=start_date
+    ).values(
+        'scheme__name'
+    ).annotate(
+        app_count=Count('id'),
+        approved_count=Count('id', filter=Q(status='APPROVED')),
+        total_amount=Sum('applied_amount')
+    ).order_by('-app_count')[:10]
+    
+    # Conversion rates
+    total_clients = Client.objects.filter(created_at__gte=start_date).count()
+    total_bookings = Booking.objects.filter(created_at__gte=start_date).count()
+    paid_bookings = Booking.objects.filter(created_at__gte=start_date, status='PAID').count()
+    
+    client_to_booking_rate = (total_bookings / total_clients * 100) if total_clients > 0 else 0
+    booking_to_payment_rate = (paid_bookings / total_bookings * 100) if total_bookings > 0 else 0
+    
+    # Format data for charts
+    monthly_labels = [item['month'].strftime('%b %Y') for item in monthly_revenue]
+    monthly_values = [float(item['total'] or 0) for item in monthly_revenue]
+    
+    weekly_labels = [item['week'].strftime('%b %d') for item in new_clients]
+    weekly_values = [item['count'] for item in new_clients]
+    
+    context = {
+        'period_days': days,
+        'revenue_data': revenue_data,
+        'revenue_by_method': revenue_by_method,
+        'sales_performance': sales_performance,
+        'booking_stats': booking_stats,
+        'app_stats': app_stats,
+        'top_schemes': top_schemes,
+        'clients_by_sector': clients_by_sector,
+        'client_to_booking_rate': round(client_to_booking_rate, 1),
+        'booking_to_payment_rate': round(booking_to_payment_rate, 1),
+        'monthly_labels': monthly_labels,
+        'monthly_values': monthly_values,
+        'weekly_labels': weekly_labels,
+        'weekly_values': weekly_values,
+        'total_clients': total_clients,
+        'total_bookings': total_bookings,
+        'paid_bookings': paid_bookings,
+    }
+    
+    return render(request, 'accounts/reports_dashboard.html', context)
+
+
+# =============================================================================
+# PDF Generation Views
+# =============================================================================
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def download_payment_receipt_pdf(request, payment_id):
+    """Download payment receipt PDF"""
+    from payments.models import Payment
+    from .pdf_utils import generate_payment_receipt_pdf
+    
+    try:
+        payment = Payment.objects.select_related('client', 'booking').get(id=payment_id)
+        
+        # Check permission
+        if not request.user.is_staff and payment.client.salesperson != request.user:
+            messages.error(request, 'You do not have permission to view this receipt.')
+            return redirect('dashboard')
+        
+        return generate_payment_receipt_pdf(payment)
+    
+    except Payment.DoesNotExist:
+        messages.error(request, 'Payment not found.')
+        return redirect('admin_dashboard')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def download_booking_confirmation_pdf(request, booking_id):
+    """Download booking confirmation PDF"""
+    from bookings.models import Booking
+    from .pdf_utils import generate_booking_confirmation_pdf
+    
+    try:
+        booking = Booking.objects.select_related('client', 'service').get(id=booking_id)
+        
+        # Check permission
+        if not request.user.is_staff and booking.client.salesperson != request.user:
+            messages.error(request, 'You do not have permission to view this booking.')
+            return redirect('dashboard')
+        
+        return generate_booking_confirmation_pdf(booking)
+    
+    except Booking.DoesNotExist:
+        messages.error(request, 'Booking not found.')
+        return redirect('admin_dashboard')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def download_application_form_pdf(request, application_id):
+    """Download application form PDF"""
+    from applications.models import Application
+    from .pdf_utils import generate_application_form_pdf
+    
+    try:
+        application = Application.objects.select_related('client', 'scheme').get(id=application_id)
+        
+        # Check permission
+        if not request.user.is_staff and application.client.salesperson != request.user:
+            messages.error(request, 'You do not have permission to view this application.')
+            return redirect('dashboard')
+        
+        return generate_application_form_pdf(application)
+    
+    except Application.DoesNotExist:
+        messages.error(request, 'Application not found.')
+        return redirect('admin_dashboard')

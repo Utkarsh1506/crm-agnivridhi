@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+
+{% block title %}Owner Dashboard - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'owner_dashboard' %}">
+                    <i class="bi bi-trophy"></i> Owner Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Admin Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/">
+                    <i class="bi bi-gear"></i> Django Admin
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-trophy"></i> Owner Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <form class="d-flex align-items-center" method="get" action="">
+            <label for="method" class="me-2 small text-muted">Filter by method:</label>
+            <select name="method" id="method" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+                <option value="" {% if not selected_method %}selected{% endif %}>All</option>
+                <option value="UPI_QR" {% if selected_method == 'UPI_QR' %}selected{% endif %}>UPI / QR</option>
+                <option value="BANK_TRANSFER" {% if selected_method == 'BANK_TRANSFER' %}selected{% endif %}>Bank Transfer</option>
+                <option value="CASH" {% if selected_method == 'CASH' %}selected{% endif %}>Cash</option>
+                <option value="CARD" {% if selected_method == 'CARD' %}selected{% endif %}>Card</option>
+                <option value="OTHER" {% if selected_method == 'OTHER' %}selected{% endif %}>Other</option>
+            </select>
+            <a href="{% url 'owner_dashboard' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Total Clients</div>
+                        <div class="h3 mb-0">{{ total_clients }}</div>
+                        <small class="text-success">{{ active_clients }} active</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-building fs-2 text-primary opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Bookings</div>
+                        <div class="h3 mb-0">{{ total_bookings }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-check fs-2 text-success opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-info border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Applications</div>
+                        <div class="h3 mb-0">{{ total_applications }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-file-earmark-text fs-2 text-info opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-warning border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Revenue</div>
+                        <div class="h3 mb-0">₹{{ total_revenue|floatformat:0 }}</div>
+                        <small class="text-muted">Pending approvals: {{ pending_payments_count }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-currency-rupee fs-2 text-warning opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-graph-up"></i> Revenue (Last 6 Months)</div>
+            <div class="card-body">
+                {{ chart_labels|json_script:"owner-chart-labels" }}
+                {{ chart_revenue|json_script:"owner-chart-revenue" }}
+                <canvas id="ownerRevenueChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Method Breakdown and Last 7 Days -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-pie-chart"></i> Revenue by Method</div>
+            <div class="card-body">
+                {{ method_labels|json_script:"owner-method-labels" }}
+                {{ method_values|json_script:"owner-method-values" }}
+                <canvas id="ownerMethodChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-graph-up-arrow"></i> Last 7 Days (Revenue)</div>
+            <div class="card-body">
+                {{ daily_labels|json_script:"owner-daily-labels" }}
+                {{ daily_values|json_script:"owner-daily-values" }}
+                <canvas id="ownerDailyChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Sales and Salesperson Status -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-trophy"></i> Top Sales (by revenue)</div>
+            <div class="card-body">
+                {% if top_sales %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Salesperson</th>
+                                <th class="text-end">Revenue (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in top_sales %}
+                            <tr>
+                                <td>{{ s.name }}</td>
+                                <td class="text-end">{{ s.total|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-muted mb-0">No data.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-bar-chart-steps"></i> By Salesperson: Approved vs Pending</div>
+            <div class="card-body">
+                {{ status_sales_labels|json_script:"owner-status-sales-labels" }}
+                {{ status_sales_pending|json_script:"owner-status-sales-pending" }}
+                {{ status_sales_approved|json_script:"owner-status-sales-approved" }}
+                <canvas id="ownerSalesStatusChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Top Sectors (by Clients)
+            </div>
+            <div class="card-body">
+                {% if top_sectors %}
+                    <ul class="list-group list-group-flush">
+                        {% for s in top_sectors %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ s.sector|default:"Unknown" }}</span>
+                            <span class="badge bg-primary">{{ s.c }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">No data yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clipboard-data"></i> Quick Links
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action" href="/admin/clients/client/">
+                        <i class="bi bi-building"></i> Manage Clients
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/payments/payment/">
+                        <i class="bi bi-credit-card"></i> Review Payments
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/applications/application/">
+                        <i class="bi bi-file-text"></i> Review Applications
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function(){
+        // Revenue line chart (6 months)
+        const labels = JSON.parse(document.getElementById('owner-chart-labels').textContent || '[]');
+        const data = JSON.parse(document.getElementById('owner-chart-revenue').textContent || '[]');
+        const ctx = document.getElementById('ownerRevenueChart');
+        if (ctx && labels && data) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Revenue (INR)', data, backgroundColor: 'rgba(45,212,191,0.3)', borderColor: '#2dd4bf', borderWidth: 1 }] },
+                options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // Method breakdown (doughnut)
+        const methodLabelsEl = document.getElementById('owner-method-labels');
+        const methodValuesEl = document.getElementById('owner-method-values');
+        const methodCtx = document.getElementById('ownerMethodChart');
+        if (methodCtx && methodLabelsEl && methodValuesEl) {
+            const mLabels = JSON.parse(methodLabelsEl.textContent || '[]');
+            const mValues = JSON.parse(methodValuesEl.textContent || '[]');
+            new Chart(methodCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: mLabels,
+                    datasets: [{
+                        data: mValues,
+                        backgroundColor: ['#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // Daily revenue (last 7 days)
+        const dailyLabelsEl = document.getElementById('owner-daily-labels');
+        const dailyValuesEl = document.getElementById('owner-daily-values');
+        const dailyCtx = document.getElementById('ownerDailyChart');
+        if (dailyCtx && dailyLabelsEl && dailyValuesEl) {
+            const dLabels = JSON.parse(dailyLabelsEl.textContent || '[]');
+            const dValues = JSON.parse(dailyValuesEl.textContent || '[]');
+            new Chart(dailyCtx, {
+                type: 'bar',
+                data: {
+                    labels: dLabels,
+                    datasets: [{
+                        label: 'Revenue (INR)',
+                        data: dValues,
+                        backgroundColor: 'rgba(34,197,94,0.3)',
+                        borderColor: '#22c55e'
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Salesperson: approved vs pending (stacked)
+        const sLabelsEl = document.getElementById('owner-status-sales-labels');
+        const sPendingEl = document.getElementById('owner-status-sales-pending');
+        const sApprovedEl = document.getElementById('owner-status-sales-approved');
+        const sCtx = document.getElementById('ownerSalesStatusChart');
+        if (sCtx && sLabelsEl && sPendingEl && sApprovedEl) {
+            const sLabels = JSON.parse(sLabelsEl.textContent || '[]');
+            const sPending = JSON.parse(sPendingEl.textContent || '[]');
+            const sApproved = JSON.parse(sApprovedEl.textContent || '[]');
+            new Chart(sCtx, {
+                type: 'bar',
+                data: {
+                    labels: sLabels,
+                    datasets: [
+                        { label: 'Approved', data: sApproved, backgroundColor: '#06b6d4' },
+                        { label: 'Pending', data: sPending, backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+        }
+    })();
+</script>
+{% endblock %}
