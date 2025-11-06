@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error | Agnivridhi CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-cyan: #0891b2;
+            --secondary-cyan: #2dd4bf;
+            --danger-red: #dc2626;
+            --gray-50: #f9fafb;
+            --gray-800: #1f2937;
+        }
+        body {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #f97316 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .error-container {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+            padding: 2rem;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+            margin-bottom: 1rem;
+        }
+        .error-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+        }
+        .error-message {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+        .error-icon {
+            font-size: 6rem;
+            margin-bottom: 2rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .btn-custom {
+            background-color: white;
+            color: var(--danger-red);
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0.5rem;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            color: var(--danger-red);
+        }
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .info-box h5 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+        .info-box ul {
+            text-align: left;
+            display: inline-block;
+            margin: 0;
+        }
+        .info-box li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div class="error-code">500</div>
+        <h1 class="error-title">Internal Server Error</h1>
+        <p class="error-message">
+            Something went wrong on our end. Our team has been notified and we're working to fix it.
+        </p>
+        
+        <div class="mt-4">
+            <a href="/" class="btn-custom">
+                <i class="bi bi-arrow-clockwise"></i> Try Again
+            </a>
+            <a href="/" class="btn-custom">
+                <i class="bi bi-house-door"></i> Go Home
+            </a>
+        </div>
+        
+        <div class="info-box">
+            <h5><i class="bi bi-info-circle"></i> What you can do:</h5>
+            <ul>
+                <li>Refresh the page and try again</li>
+                <li>Go back to the previous page</li>
+                <li>Contact support if the problem persists</li>
+                <li>Check back in a few minutes</li>
+            </ul>
+        </div>
+        
+        <div class="mt-4 small opacity-75">
+            Error ID: {{ error_id|default:"N/A" }}
+        </div>
+    </div>
+</body>
+</html>

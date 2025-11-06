@@ -117,7 +117,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
+            <a class="navbar-brand fw-bold" href="{% url 'accounts:dashboard' %}">
                 <i class="bi bi-building"></i> Agnivridhi CRM
             </a>
             
@@ -128,8 +128,21 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
+                        {% if user.is_admin or user.is_manager %}
+                        <li class="nav-item">
+                            <a class="nav-link position-relative" href="{% url 'applications:pending_applications' %}">
+                                <i class="bi bi-bell"></i> Pending Approvals
+                                {% if pending_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ pending_count }}
+                                    <span class="visually-hidden">pending applications</span>
+                                </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        {% endif %}
                         <li class="nav-item me-3">
-                            <form class="d-flex" method="get" action="{% url 'global_search' %}">
+                            <form class="d-flex" method="get" action="{% url 'accounts:global_search' %}">
                                 <input class="form-control form-control-sm me-2" type="search" name="q" placeholder="Search clients, bookings..." style="width: 250px;">
                                 <button class="btn btn-sm btn-light" type="submit">
                                     <i class="bi bi-search"></i>
@@ -144,15 +157,15 @@
                                 {% endif %}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person"></i> Profile</a></li>
-                                <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="bi bi-key"></i> Change Password</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i> Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:change_password' %}"><i class="bi bi-key"></i> Change Password</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                             </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+                            <a class="nav-link" href="{% url 'accounts:login' %}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
                         </li>
                     {% endif %}
                 </ul>

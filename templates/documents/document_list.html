@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}My Documents - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:client_portal' %}">
+                    <i class="bi bi-house"></i>Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:application_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>My Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'schemes:scheme_list' %}">
+                    <i class="bi bi-award"></i>Schemes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'documents:document_list' %}">
+                    <i class="bi bi-file-pdf"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments:payment_list' %}">
+                    <i class="bi bi-credit-card"></i>Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="h2 mb-4">My Documents</h1>
+
+{% if documents %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Document Type</th>
+                        <th>Title</th>
+                        <th>Application</th>
+                        <th>File Size</th>
+                        <th>Status</th>
+                        <th>Created On</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                    <tr>
+                        <td>
+                            <i class="bi bi-file-earmark-pdf text-danger"></i>
+                            {{ doc.get_document_type_display }}
+                        </td>
+                        <td>{{ doc.title }}</td>
+                        <td>
+                            {% if doc.application %}
+                                <a href="{% url 'applications:application_detail' doc.application.pk %}">
+                                    {{ doc.application.application_id }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ doc.get_file_size_display }}</td>
+                        <td>
+                            {% if doc.status == 'DRAFT' %}
+                                <span class="badge bg-secondary">Draft</span>
+                            {% elif doc.status == 'GENERATED' %}
+                                <span class="badge bg-success">Generated</span>
+                            {% elif doc.status == 'SENT' %}
+                                <span class="badge bg-info">Sent</span>
+                            {% elif doc.status == 'DOWNLOADED' %}
+                                <span class="badge bg-primary">Downloaded</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ doc.created_at|date:"d M Y" }}</td>
+                        <td>
+                            <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-inbox display-1 text-muted"></i>
+        <h3 class="mt-3">No Documents Yet</h3>
+        <p class="text-muted">Documents generated for your applications will appear here.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

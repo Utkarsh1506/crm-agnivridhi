@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
-from .models import User
+from .models import User, SiteSettings
 
 
 @admin.register(User)
@@ -46,4 +46,49 @@ class UserAdmin(BaseUserAdmin):
         elif request.user.is_manager:
             return qs.filter(manager=request.user)
         return qs.filter(pk=request.user.pk)
+
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    list_display = (
+        'session_cookie_age',
+        'session_expire_at_browser_close',
+        'session_idle_timeout',
+        'session_cookie_secure',
+        'csrf_cookie_secure',
+        'secure_ssl_redirect',
+        'secure_hsts_seconds',
+        'updated_at',
+    )
+    fieldsets = (
+        (_('Session Settings'), {
+            'fields': (
+                'session_cookie_age',
+                'session_expire_at_browser_close',
+                'session_idle_timeout',
+            )
+        }),
+        (_('Security Settings (HTTPS)'), {
+            'classes': ('collapse',),
+            'fields': (
+                'session_cookie_secure',
+                'csrf_cookie_secure',
+                'secure_ssl_redirect',
+                'secure_hsts_seconds',
+                'secure_hsts_include_subdomains',
+                'secure_hsts_preload',
+            )
+        }),
+        (_('Metadata'), {
+            'classes': ('collapse',),
+            'fields': ('updated_at',),
+        })
+    )
+    readonly_fields = ('updated_at',)
+
+    def has_add_permission(self, request):
+        # Allow only one settings instance
+        if SiteSettings.objects.exists():
+            return False
+        return super().has_add_permission(request)
 

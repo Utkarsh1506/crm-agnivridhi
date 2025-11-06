@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Applications Awaiting Approval - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:dashboard' %}">
+                    <i class="bi bi-house"></i>Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'applications:pending_applications' %}">
+                    <i class="bi bi-bell"></i>Pending Approvals
+                    {% if pending_count > 0 %}
+                        <span class="badge bg-danger ms-2">{{ pending_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:team_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>All Applications
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="h2 mb-4">
+    <i class="bi bi-bell"></i> {{ title }}
+    {% if applications.count > 0 %}
+        <span class="badge bg-danger ms-2">{{ applications.count }}</span>
+    {% endif %}
+</h1>
+
+{% if applications %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Application ID</th>
+                        <th>Client</th>
+                        <th>Scheme</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Applied On</th>
+                        <th>Assigned To</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'applications:manager_application_detail' app.pk %}">{{ app.application_id }}</a>
+                        </td>
+                        <td>{{ app.client.company_name }}</td>
+                        <td>{{ app.scheme.name }}</td>
+                        <td>₹{{ app.applied_amount }} lakhs</td>
+                        <td>
+                            {% if app.status == 'SUBMITTED' %}
+                                <span class="badge bg-info">New Submission</span>
+                            {% elif app.status == 'UNDER_REVIEW' %}
+                                <span class="badge bg-warning">Under Review</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ app.application_date|date:"d M Y" }}</td>
+                        <td>
+                            {% if app.assigned_to %}
+                                {{ app.assigned_to.get_full_name }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'applications:manager_application_detail' app.pk %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-check-circle display-1 text-success"></i>
+        <h3 class="mt-3">All Caught Up!</h3>
+        <p class="text-muted">There are no applications awaiting your approval.</p>
+    <a href="{% url 'applications:team_applications_list' %}" class="btn btn-outline-primary mt-3">
+            <i class="bi bi-list"></i> View All Applications
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

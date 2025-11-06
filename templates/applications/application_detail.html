@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Application {{ application.application_id }} - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:dashboard' %}">
+                    <i class="bi bi-house"></i>Home
+                </a>
+            </li>
+            <li class="nav-item">
+                {% if user_role == 'client' %}
+                    <a class="nav-link active" href="{% url 'applications:client_applications_list' %}">
+                        <i class="bi bi-file-earmark-text"></i>My Applications
+                    </a>
+                {% elif user_role == 'sales' %}
+                    <a class="nav-link active" href="{% url 'applications:sales_applications_list' %}">
+                        <i class="bi bi-file-earmark-text"></i>My Applications
+                    </a>
+                {% elif user_role == 'manager' %}
+                    <a class="nav-link active" href="{% url 'applications:team_applications_list' %}">
+                        <i class="bi bi-file-earmark-text"></i>Team Applications
+                    </a>
+                {% elif user_role == 'admin' %}
+                    <a class="nav-link active" href="{% url 'applications:team_applications_list' %}">
+                        <i class="bi bi-file-earmark-text"></i>All Applications
+                    </a>
+                {% else %}
+                    <a class="nav-link active" href="{% url 'applications:application_list' %}">
+                        <i class="bi bi-file-earmark-text"></i>Applications
+                    </a>
+                {% endif %}
+            </li>
+            {% if user_role == 'client' %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'schemes:scheme_list' %}">
+                    <i class="bi bi-award"></i>Schemes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'documents:document_list' %}">
+                    <i class="bi bi-file-pdf"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments:payment_list' %}">
+                    <i class="bi bi-credit-card"></i>Payments
+                </a>
+            </li>
+            {% elif user_role == 'manager' or user_role == 'admin' %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:pending_applications' %}">
+                    <i class="bi bi-bell"></i>Pending Approvals
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    {% if user_role == 'client' %}
+    <a href="{% url 'applications:client_applications_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to My Applications
+        </a>
+    {% elif user_role == 'sales' %}
+    <a href="{% url 'applications:sales_applications_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to My Applications
+        </a>
+    {% elif user_role == 'manager' %}
+    <a href="{% url 'applications:team_applications_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Team Applications
+        </a>
+    {% elif user_role == 'admin' %}
+    <a href="{% url 'applications:team_applications_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to All Applications
+        </a>
+    {% else %}
+    <a href="{% url 'applications:application_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Applications
+        </a>
+    {% endif %}
+</div>
+
+<h1 class="h2 mb-4">Application {{ application.application_id }}</h1>
+
+<!-- Status Card -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Application Status</h5>
+            {% if application.status == 'DRAFT' %}
+                <span class="badge bg-secondary">Draft</span>
+            {% elif application.status == 'SUBMITTED' %}
+                <span class="badge bg-info">Submitted - Awaiting Manager Approval</span>
+            {% elif application.status == 'UNDER_REVIEW' %}
+                <span class="badge bg-warning">Under Review</span>
+            {% elif application.status == 'APPROVED' %}
+                <span class="badge bg-success">Approved</span>
+            {% elif application.status == 'REJECTED' %}
+                <span class="badge bg-danger">Rejected</span>
+            {% else %}
+                <span class="badge bg-dark">{{ application.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Application Date:</strong> {{ application.application_date|date:"d M Y" }}</p>
+                <p><strong>Scheme:</strong> {{ application.scheme.name }}</p>
+                <p><strong>Applied Amount:</strong> ₹{{ application.applied_amount }} lakhs</p>
+            </div>
+            <div class="col-md-6">
+                {% if application.assigned_to %}
+                    <p><strong>Assigned To:</strong> {{ application.assigned_to.get_full_name }}</p>
+                {% endif %}
+                {% if application.submission_date %}
+                    <p><strong>Submission Date:</strong> {{ application.submission_date|date:"d M Y" }}</p>
+                {% endif %}
+                {% if application.approval_date %}
+                    <p><strong>Approval Date:</strong> {{ application.approval_date|date:"d M Y" }}</p>
+                    <p><strong>Approved Amount:</strong> ₹{{ application.approved_amount }} lakhs</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if can_approve %}
+        {% if application.status == 'SUBMITTED' or application.status == 'UNDER_REVIEW' %}
+        <hr>
+        <div class="row g-3 align-items-start">
+            <div class="col-md-6">
+                <form method="post" action="{% url 'applications:approve_application' application.pk %}" class="card card-body">
+                    {% csrf_token %}
+                    <h6 class="mb-3">Approve Application</h6>
+                    <div class="mb-3">
+                        <label for="approved_amount" class="form-label">Approved Amount (lakhs)</label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="approved_amount" name="approved_amount" value="{{ application.applied_amount }}">
+                    </div>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Approve</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form method="post" action="{% url 'applications:reject_application' application.pk %}" class="card card-body">
+                    {% csrf_token %}
+                    <h6 class="mb-3">Reject Application</h6>
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label">Reason</label>
+                        <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="3" required placeholder="Provide a brief reason for rejection"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Reject</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        
+        {% if application.status == 'SUBMITTED' %}
+        <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle"></i> Your application has been submitted and is awaiting manager approval. 
+            Your assigned sales representative ({{ application.client.assigned_sales.get_full_name }}) has been notified.
+        </div>
+        {% endif %}
+        
+        {% if application.status == 'REJECTED' and application.rejection_reason %}
+        <div class="alert alert-danger mt-3">
+            <strong>Rejection Reason:</strong><br>
+            {{ application.rejection_reason }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Scheme Details -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Scheme Details</h5>
+    </div>
+    <div class="card-body">
+        <h6>{{ application.scheme.name }}</h6>
+        <p>{{ application.scheme.description }}</p>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <ul>
+                    <li><strong>Funding Range:</strong> ₹{{ application.scheme.min_funding }} - ₹{{ application.scheme.max_funding }} lakhs</li>
+                    <li><strong>Interest Rate:</strong> {{ application.scheme.interest_rate }}%</li>
+                    <li><strong>Processing Time:</strong> {{ application.scheme.processing_time_days }} days</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Purpose -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Purpose of Funding</h5>
+    </div>
+    <div class="card-body">
+        <p>{{ application.purpose }}</p>
+    </div>
+</div>
+
+<!-- Timeline -->
+{% if application.timeline %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Application Timeline</h5>
+    </div>
+    <div class="card-body">
+        <div class="timeline">
+            {% for entry in application.timeline %}
+            <div class="timeline-item mb-3">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ entry.status_display }}</strong>
+                    <span class="text-muted">{{ entry.timestamp|date:"d M Y H:i" }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Related Documents -->
+{% if application.documents.all %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Related Documents</h5>
+    </div>
+    <div class="card-body">
+        <ul class="list-group">
+            {% for doc in application.documents.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                    {{ doc.title }}
+                </span>
+                <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-download"></i> Download
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

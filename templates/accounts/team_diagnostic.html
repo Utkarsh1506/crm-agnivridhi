@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}Team Diagnostic{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <h4 class="mb-4"><i class="bi bi-bug"></i> Team Relationship Diagnostic</h4>
+  
+  <div class="alert alert-info">
+    <strong>Manager:</strong> {{ user.get_full_name }} ({{ user.username }})
+  </div>
+
+  <!-- Team Members -->
+  <div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+      <i class="bi bi-people"></i> Team Members (Sales under me)
+      <span class="badge bg-light text-dark ms-2">{{ team_members.count }}</span>
+    </div>
+    <div class="card-body">
+      {% if team_members %}
+        <ul class="list-group">
+          {% for member in team_members %}
+            <li class="list-group-item">
+              <strong>{{ member.get_full_name }}</strong> ({{ member.username }}) - {{ member.email }}
+              <br><small class="text-muted">Employee ID: {{ member.employee_id }}</small>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No sales employees assigned to you.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Clients by Manager Assignment -->
+  <div class="card mb-3">
+    <div class="card-header bg-success text-white">
+      <i class="bi bi-building"></i> Clients (assigned_manager = me)
+      <span class="badge bg-light text-dark ms-2">{{ clients_by_manager.count }}</span>
+    </div>
+    <div class="card-body">
+      {% if clients_by_manager %}
+        <ul class="list-group">
+          {% for client in clients_by_manager %}
+            <li class="list-group-item">
+              <strong>{{ client.company_name }}</strong>
+              <br><small>Sales: {{ client.assigned_sales.get_full_name|default:'Unassigned' }}</small>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No clients with assigned_manager = you.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Clients by Sales Team -->
+  <div class="card mb-3">
+    <div class="card-header bg-info text-white">
+      <i class="bi bi-building"></i> Clients (assigned_sales is my team member)
+      <span class="badge bg-light text-dark ms-2">{{ clients_by_sales.count }}</span>
+    </div>
+    <div class="card-body">
+      {% if clients_by_sales %}
+        <ul class="list-group">
+          {% for client in clients_by_sales %}
+            <li class="list-group-item">
+              <strong>{{ client.company_name }}</strong>
+              <br><small>Sales: {{ client.assigned_sales.get_full_name }}</small>
+              <br><small>Manager: {{ client.assigned_manager.get_full_name|default:'None' }}</small>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No clients assigned to your team sales.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Bookings by Client Manager -->
+  <div class="card mb-3">
+    <div class="card-header bg-warning text-dark">
+      <i class="bi bi-calendar-check"></i> Bookings (client.assigned_manager = me)
+      <span class="badge bg-dark ms-2">{{ bookings_by_client_manager.count }}</span>
+    </div>
+    <div class="card-body">
+      {% if bookings_by_client_manager %}
+        <ul class="list-group">
+          {% for booking in bookings_by_client_manager %}
+            <li class="list-group-item">
+              <strong>{{ booking.booking_id }}</strong> - {{ booking.client.company_name }}
+              <br><small>Assigned to: {{ booking.assigned_to.get_full_name|default:'Unassigned' }}</small>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No bookings via client manager path.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Bookings by Sales Assignment -->
+  <div class="card mb-3">
+    <div class="card-header bg-secondary text-white">
+      <i class="bi bi-calendar-check"></i> Bookings (assigned_to is my team member)
+      <span class="badge bg-light text-dark ms-2">{{ bookings_by_sales.count }}</span>
+    </div>
+    <div class="card-body">
+      {% if bookings_by_sales %}
+        <ul class="list-group">
+          {% for booking in bookings_by_sales %}
+            <li class="list-group-item">
+              <strong>{{ booking.booking_id }}</strong> - {{ booking.client.company_name }}
+              <br><small>Assigned to: {{ booking.assigned_to.get_full_name }}</small>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No bookings assigned to your team.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Pending Payments by Client -->
+  <div class="card mb-3">
+    <div class="card-header bg-danger text-white">
+      <i class="bi bi-credit-card"></i> Pending Payments (client.assigned_manager = me)
+      <span class="badge bg-light text-dark ms-2">{{ payments_by_client.count }}</span>
+    </div>
+    <div class="card-body">
+      {% if payments_by_client %}
+        <ul class="list-group">
+          {% for payment in payments_by_client %}
+            <li class="list-group-item">
+              <strong>Payment #{{ payment.id }}</strong> - ₹{{ payment.amount }}
+              <br><small>Client: {{ payment.client.company_name }}</small>
+              <br><small>Recorded by: {{ payment.received_by.get_full_name|default:'N/A' }}</small>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No pending payments via client path.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Pending Payments by Sales Team -->
+  <div class="card mb-3">
+    <div class="card-header bg-dark text-white">
+      <i class="bi bi-credit-card"></i> Pending Payments (received_by is my team member)
+      <span class="badge bg-warning text-dark ms-2">{{ payments_by_sales.count }}</span>
+    </div>
+    <div class="card-body">
+      {% if payments_by_sales %}
+        <ul class="list-group">
+          {% for payment in payments_by_sales %}
+            <li class="list-group-item">
+              <strong>Payment #{{ payment.id }}</strong> - ₹{{ payment.amount }}
+              <br><small>Client: {{ payment.client.company_name }}</small>
+              <br><small>Recorded by: {{ payment.received_by.get_full_name }}</small>
+              <br><small>Status: <span class="badge bg-warning">{{ payment.get_status_display }}</span></small>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No pending payments recorded by your team.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="alert alert-secondary mt-4">
+    <strong>Legend:</strong>
+    <ul class="mb-0">
+      <li><strong>Team Members:</strong> Sales users where <code>manager = you</code></li>
+      <li><strong>Clients by Manager:</strong> Clients where <code>assigned_manager = you</code></li>
+      <li><strong>Clients by Sales:</strong> Clients where <code>assigned_sales.manager = you</code></li>
+      <li><strong>Bookings paths:</strong> Via client manager OR via sales assignment</li>
+      <li><strong>Payments paths:</strong> Via client manager OR via sales who recorded it</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

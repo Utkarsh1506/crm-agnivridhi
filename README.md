@@ -377,7 +377,29 @@ python manage.py export_clients --format xlsx
 python manage.py export_applications --format pdf
 ```
 
-## 📞 Support
+## � URL namespaces (prep)
+
+To prepare for cleaner, safer URL reversing and future modularization, each app's `urls.py` now defines an `app_name`:
+
+- `accounts` → reverse with `accounts:login`, etc.
+- `applications` → reverse with `applications:manager_application_detail`
+- `bookings` → reverse with `bookings:booking_detail`
+- `documents` → reverse with `documents:document_detail`
+- `payments` → reverse with `payments:payment_detail`
+- `schemes` → reverse with `schemes:scheme_detail`
+- `api` (DRF router) → reverse with `api:client-list`, etc.
+
+Notes:
+- No behavior change yet; project-level includes remain the same.
+- You can start updating templates and views to use namespaced URL names progressively.
+- When ready, project includes can be switched to namespaced form:
+	- Example: `path('applications/', include(('applications.urls', 'applications'), namespace='applications'))`
+
+Example usages:
+- View code: `return redirect('applications:manager_application_detail', pk=pk)`
+- Template: `{% url 'bookings:booking_detail' id=booking.id %}`
+
+## �📞 Support
 
 For issues or questions:
 - Email: info@agnivridhiindia.com

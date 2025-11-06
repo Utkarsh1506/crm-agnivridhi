@@ -22,12 +22,19 @@ from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
-    path('', lambda request: redirect('login'), name='home'),
+    path('', lambda request: redirect('accounts:login'), name='home'),
     path('admin/', admin.site.urls),
-    path('', include('accounts.urls')),
+    path('', include(('accounts.urls', 'accounts'))),
     
-    # API endpoints
-    path('api/', include('api.urls')),
+    # Applications and Schemes with explicit namespaces
+    path('applications/', include(('applications.urls', 'applications'))),
+    path('schemes/', include(('schemes.urls', 'schemes'))),
+    path('documents/', include(('documents.urls', 'documents'))),
+    path('payments/', include(('payments.urls', 'payments'))),
+    path('bookings/', include(('bookings.urls', 'bookings'))),
+    
+    # API endpoints with namespace
+    path('api/', include(('api.urls', 'api'))),
     
     # Swagger/OpenAPI documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

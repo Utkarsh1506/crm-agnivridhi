@@ -596,70 +596,66 @@ path('pdf/application/<int:application_id>/', views.download_application_form_pd
 
 ---
 
-### ✅ 9. Payment Gateway Integration
+### ✅ 9. Manual Payment Entry System
 
 **Requirements:**
-- Razorpay integration for collecting service booking fees
-- Clients pay online → status updated automatically
+- **NO payment gateway integration** (Razorpay removed)
+- Sales employee manually records payment details
+- Payment methods: UPI QR, Bank Transfer, Cash, Card, Other
 - Store payment history in database
 - Generate receipts and invoices
 
 **Implementation Status:**
 | Feature | Status | Details |
 |---------|--------|---------|
-| Payment Model | ✅ | Complete with Razorpay fields |
-| Razorpay Fields | ✅ | order_id, payment_id, signature |
-| Payment Status | ✅ | 7 statuses (Pending, Initiated, Authorized, Captured, Failed, Refunded, Partial Refund) |
-| Manual Payments | ✅ | UPI QR, Bank Transfer, Cash, Card, Other |
-| Reference Tracking | ✅ | reference_id, payment_method, proof upload |
-| Auto Status Update | ✅ | OneToOne with Booking |
+| Payment Model | ✅ | Complete with manual entry fields |
+| Payment Methods | ✅ | UPI QR, Bank Transfer, Cash, Card, Other |
+| Payment Status | ✅ | Pending, Captured, Failed, Refunded |
+| Reference Tracking | ✅ | reference_id (UTR/UPI Ref/Receipt No) |
+| Payment Proof | ✅ | File upload for payment screenshots |
+| Recorded By | ✅ | Links to sales employee who recorded payment |
+| Approval Workflow | ✅ | Manager/Admin can approve manual payments |
 | Receipt Generation | ✅ | `generate_payment_receipt_pdf()` |
 | Refund Support | ✅ | refund_amount, refund_reason, refund_date |
 
 **Code Verification:**
 ```python
-# ✅ Comprehensive payment system
+# ✅ Manual payment entry system
 class Payment(models.Model):
     class Status(models.TextChoices):
-        PENDING = 'PENDING', _('Pending')
-        INITIATED = 'INITIATED', _('Initiated')
-        AUTHORIZED = 'AUTHORIZED', _('Authorized')
-        CAPTURED = 'CAPTURED', _('Captured')
-        FAILED = 'FAILED', _('Failed')
+        PENDING = 'PENDING', _('Pending Verification')
+        CAPTURED = 'CAPTURED', _('Payment Received')
+        FAILED = 'FAILED', _('Failed/Disputed')
         REFUNDED = 'REFUNDED', _('Refunded')
-        PARTIAL_REFUND = 'PARTIAL_REFUND', _('Partially Refunded')
     
-    # ✅ Razorpay integration
-    razorpay_order_id = models.CharField()
-    razorpay_payment_id = models.CharField()
-    razorpay_signature = models.CharField()
-    razorpay_response = models.JSONField()  # Full webhook data
-    
-    # ✅ Manual payment support
+    # ✅ Manual payment fields
     payment_method = models.CharField(choices=PAYMENT_VIA_CHOICES)
-    reference_id = models.CharField()  # UTR/UPI Ref
-    received_by = models.ForeignKey()  # Sales employee
-    proof = models.FileField(upload_to='payment_proofs/')
+    reference_id = models.CharField()  # UTR/UPI Ref/Receipt No
+    received_by = models.ForeignKey()  # Sales employee who recorded
+    proof = models.FileField(upload_to='payment_proofs/')  # Screenshot
+    notes = models.TextField()  # Payment details
     
     # ✅ Link to booking
     booking = models.OneToOneField('bookings.Booking')
     
     def is_successful(self):
-        return self.status in ['AUTHORIZED', 'CAPTURED']  # ✅
+        return self.status == 'CAPTURED'  # ✅
 ```
 
 **Payment Flow:**
-1. Client books service → Booking created (status=PENDING) ✅
-2. Payment initiated → Razorpay order created OR manual payment recorded ✅
-3. Payment success → Booking status updated to PAID ✅
-4. PDF receipt auto-generated ✅
-5. WhatsApp notification sent ✅
-6. Email confirmation sent ✅
+1. Client pays via UPI/Bank Transfer/Cash to company ✅
+2. Sales employee records payment details manually ✅
+3. Sales uploads payment proof (screenshot/receipt) ✅
+4. Manager/Admin verifies and approves ✅
+5. Booking status updated to PAID ✅
+6. PDF receipt auto-generated ✅
+7. WhatsApp notification sent to client ✅
+8. Email confirmation sent ✅
 
 **API Endpoints:**
-- ✅ POST `/api/payments/` - Create payment
-- ✅ POST `/api/payments/{id}/approve/` - Approve manual payment
-- ✅ POST `/api/payments/{id}/reject/` - Reject payment
+- ✅ POST `/api/payments/` - Record manual payment (Sales)
+- ✅ POST `/api/payments/{id}/approve/` - Approve payment (Manager/Admin)
+- ✅ POST `/api/payments/{id}/reject/` - Reject payment (Manager/Admin)
 
 ---
 

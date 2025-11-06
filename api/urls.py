@@ -16,6 +16,9 @@ router.register(r'services', ServiceViewSet, basename='service')
 router.register(r'payments', PaymentViewSet, basename='payment')
 router.register(r'applications', ApplicationViewSet, basename='application')
 
+# Namespace for reverse() calls like 'api:client-list' (DRF routers)
+app_name = 'api'
+
 urlpatterns = [
     path('', include(router.urls)),
 ]

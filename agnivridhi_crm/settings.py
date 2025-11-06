@@ -63,6 +63,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom role-based access control MUST run after AuthenticationMiddleware
+    'accounts.middleware.RoleAccessMiddleware',
+    # Custom idle timeout middleware MUST run after AuthenticationMiddleware
+    'accounts.middleware.SessionIdleTimeoutMiddleware',
 ]
 
 ROOT_URLCONF = 'agnivridhi_crm.urls'
@@ -78,6 +82,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'applications.context_processors.pending_applications_count',
             ],
         },
     },
@@ -206,3 +211,46 @@ TWILIO_WHATSAPP_FROM = os.getenv('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886'
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
 CORS_ALLOW_CREDENTIALS = True
+
+# -----------------------------------------------------------------------------
+# Session and security settings (production-ready defaults configurable via .env)
+# -----------------------------------------------------------------------------
+# NOTE: For local development you may keep these relaxed. In production set the
+# environment variables to secure values (SESSION_COOKIE_SECURE=True, CSRF_COOKIE_SECURE=True,
+# SECURE_SSL_REDIRECT=True, etc.) behind HTTPS.
+
+# Use secure cookies for session and CSRF when running over HTTPS
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False') == 'True'
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False') == 'True'
+
+# Make session cookie inaccessible to JavaScript
+SESSION_COOKIE_HTTPONLY = True
+
+# Session lifetime (seconds). Default: 1 day (86400). Adjust as needed.
+SESSION_COOKIE_AGE = int(os.getenv('SESSION_COOKIE_AGE', '86400'))
+
+# Whether session expires when browser is closed. Default: False (keep persistent session)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = os.getenv('SESSION_EXPIRE_AT_BROWSER_CLOSE', 'False') == 'True'
+
+# Idle timeout: automatically logout after X seconds of inactivity. Set to 0 to disable.
+SESSION_IDLE_TIMEOUT = int(os.getenv('SESSION_IDLE_TIMEOUT', '1800'))  # 30 minutes default
+
+# HTTP Strict Transport Security (HSTS) - enable in production when using HTTPS
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False') == 'True'
+SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'False') == 'True'
+
+# Redirect all non-HTTPS requests to HTTPS if enabled in env
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+
+# If sitting behind a proxy (e.g. nginx) set this header to respect X-Forwarded-Proto
+USE_X_FORWARDED_HOST = os.getenv('USE_X_FORWARDED_HOST', 'False') == 'True'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if os.getenv('SECURE_PROXY_SSL_HEADER', 'False') == 'True' else None
+
+
+# Custom error handlers
+# These allow custom branded error pages with user context
+handler403 = 'accounts.views.custom_403_view'
+handler404 = 'accounts.views.custom_404_view'
+handler500 = 'accounts.views.custom_500_view'
+

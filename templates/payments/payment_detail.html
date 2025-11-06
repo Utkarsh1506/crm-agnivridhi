@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Details - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:client_portal' %}">
+                    <i class="bi bi-house"></i>Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:application_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>My Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'schemes:scheme_list' %}">
+                    <i class="bi bi-award"></i>Schemes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'documents:document_list' %}">
+                    <i class="bi bi-file-pdf"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'payments:payment_list' %}">
+                    <i class="bi bi-credit-card"></i>Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'payments:payment_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Payments
+    </a>
+</div>
+
+<h1 class="h2 mb-4">Payment Details</h1>
+
+<!-- Payment Status Card -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Payment Status</h5>
+            {% if payment.status == 'PENDING' %}
+                <span class="badge bg-warning">Pending Verification</span>
+            {% elif payment.status == 'CAPTURED' %}
+                <span class="badge bg-success">Payment Received</span>
+            {% elif payment.status == 'FAILED' %}
+                <span class="badge bg-danger">Failed/Disputed</span>
+            {% elif payment.status == 'REFUNDED' %}
+                <span class="badge bg-info">Refunded</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Transaction ID / Reference:</strong> 
+                    {% if payment.reference_id %}
+                        <code>{{ payment.reference_id }}</code>
+                        <small class="text-muted d-block">
+                            {% if payment.payment_method == 'UPI_QR' %}
+                                (UPI Reference Number)
+                            {% elif payment.payment_method == 'BANK_TRANSFER' %}
+                                (UTR/NEFT/RTGS Number)
+                            {% elif payment.payment_method == 'CHEQUE' %}
+                                (Cheque Number)
+                            {% elif payment.payment_method == 'CARD' %}
+                                (Card Transaction ID)
+                            {% else %}
+                                (Transaction Reference)
+                            {% endif %}
+                        </small>
+                    {% else %}
+                        <span class="text-muted">Not assigned yet</span>
+                    {% endif %}
+                </p>
+                <p><strong>Amount:</strong> ₹{{ payment.amount }} {{ payment.currency }}</p>
+                <p><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+                <p><strong>Created On:</strong> {{ payment.created_at|date:"d M Y H:i" }}</p>
+            </div>
+            <div class="col-md-6">
+                {% if payment.booking %}
+                    <p><strong>Booking:</strong> {{ payment.booking.service.name }}</p>
+                    <p><strong>Client:</strong> {{ payment.client.company_name }}</p>
+                {% endif %}
+                {% if payment.payment_date %}
+                    <p><strong>Payment Date:</strong> {{ payment.payment_date|date:"d M Y H:i" }}</p>
+                {% endif %}
+                {% if payment.received_by %}
+                    <p><strong>Recorded By:</strong> {{ payment.received_by.get_full_name }}</p>
+                {% endif %}
+                {% if payment.approved_by %}
+                    <p><strong>Approved By:</strong> {{ payment.approved_by.get_full_name }}</p>
+                    <p><strong>Approval Date:</strong> {{ payment.approval_date|date:"d M Y H:i" }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if payment.notes %}
+        <hr>
+        <div class="alert alert-info">
+            <strong>Notes:</strong><br>
+            {{ payment.notes }}
+        </div>
+        {% endif %}
+
+        {% if payment.error_message %}
+        <div class="alert alert-danger mt-3">
+            <strong>Error/Dispute Details:</strong><br>
+            {{ payment.error_message }}
+        </div>
+        {% endif %}
+
+        {% if payment.status == 'REFUNDED' %}
+        <hr>
+        <div class="alert alert-warning">
+            <strong>Refund Information:</strong><br>
+            Refunded Amount: ₹{{ payment.refund_amount }}<br>
+            Refund Date: {{ payment.refund_date|date:"d M Y" }}<br>
+            {% if payment.refund_reason %}
+            Reason: {{ payment.refund_reason }}
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Booking Details -->
+{% if payment.booking %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Booking Details</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Service:</strong> {{ payment.booking.service.name }}</p>
+        <p><strong>Booking Date:</strong> {{ payment.booking.booking_date|date:"d M Y" }}</p>
+        <p><strong>Status:</strong> <span class="badge bg-primary">{{ payment.booking.get_status_display }}</span></p>
+        {% if payment.booking.notes %}
+        <p><strong>Notes:</strong> {{ payment.booking.notes }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Payment Proof -->
+{% if payment.proof %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Payment Proof</h5>
+    </div>
+    <div class="card-body">
+        <a href="{{ payment.proof.url }}" target="_blank" class="btn btn-outline-primary">
+            <i class="bi bi-file-earmark-image"></i> View Payment Proof
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Manager Actions (if applicable) -->
+{% if user.is_admin or user.is_manager %}
+{% if payment.status == 'PENDING' %}
+<div class="card border-warning">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">Manager Actions Required</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <form method="post" action="{% url 'payments:payment_list' %}" class="card card-body">
+                    {% csrf_token %}
+                    <h6>Approve Payment</h6>
+                    <p class="small text-muted">Confirm that payment has been received and verified.</p>
+                    <button type="submit" class="btn btn-success" onclick="return confirm('Approve this payment?')">
+                        <i class="bi bi-check-circle"></i> Approve Payment
+                    </button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form method="post" action="{% url 'payments:payment_list' %}" class="card card-body">
+                    {% csrf_token %}
+                    <h6>Dispute/Reject Payment</h6>
+                    <div class="mb-2">
+                        <textarea name="error_message" class="form-control form-control-sm" rows="2" placeholder="Reason for dispute..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Reject this payment?')">
+                        <i class="bi bi-x-circle"></i> Reject Payment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

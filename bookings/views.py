@@ -1,3 +1,176 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from decimal import Decimal
 
-# Create your views here.
+from .models import Booking, Service
+from schemes.models import Scheme
+from accounts.views import manager_required, client_required, sales_required
+
+
+@login_required
+def booking_list(request):
+	"""Deprecated generic endpoint: redirect to role-specific page for privacy."""
+	user = request.user
+	if getattr(user, 'is_client', False):
+		return redirect('client_bookings_list')
+	elif getattr(user, 'role', None) == 'SALES':
+		return redirect('sales_bookings_list')
+	elif getattr(user, 'role', None) in ['MANAGER', 'ADMIN']:
+		return redirect('team_bookings_list')
+	return redirect('dashboard')
+
+
+@client_required
+def client_bookings_list(request):
+	"""Client-only: list own bookings"""
+	client = request.user.client_profile
+	bookings = Booking.objects.filter(client=client).order_by('-booking_date')
+	return render(request, 'bookings/booking_list.html', {'bookings': bookings})
+
+
+@sales_required
+def sales_bookings_list(request):
+	"""Sales-only: list bookings assigned to this sales user"""
+	bookings = Booking.objects.filter(assigned_to=request.user).order_by('-booking_date')
+	return render(request, 'bookings/booking_list.html', {'bookings': bookings})
+
+
+@login_required
+def create_scheme_documentation_booking(request, scheme_id: int):
+	"""
+	Client action: request a documentation/application service booking for a scheme.
+	Creates a Booking for the configured Service and assigns to the client's sales if available.
+	"""
+	if not getattr(request.user, 'is_client', False):
+		messages.error(request, 'Only clients can request documentation service.')
+		return redirect('scheme_list')
+
+	scheme = get_object_or_404(Scheme, pk=scheme_id)
+	client = request.user.client_profile
+
+	# Find or create the documentation service
+	service_name = 'Scheme Application Documentation'
+	service, _created = Service.objects.get_or_create(
+		name=service_name,
+		defaults={
+			'category': 'FUNDING',
+			'description': 'Documentation and application services for government schemes',
+			'short_description': 'End-to-end documentation and application filing',
+			'price': Decimal('5000.00'),
+			'duration_days': 30,
+			'is_active': True,
+			'features': ['Application form preparation', 'Document checklist', 'Filing assistance'],
+			'deliverables': ['Prepared application', 'Submission support'],
+		}
+	)
+
+	# Calculate default amounts
+	amount = service.price
+
+	# Create booking
+	booking = Booking.objects.create(
+		client=client,
+		service=service,
+		status='PENDING',
+		priority='MEDIUM',
+		amount=amount,
+		final_amount=amount,  # will also be set in save()
+		requirements=f'Documentation request for scheme: {scheme.name} (ID: {scheme.id})',
+		assigned_to=getattr(client, 'assigned_sales', None),
+		created_by=request.user,
+		internal_notes=f'SCHEME_ID={scheme.id}'
+	)
+
+	messages.success(
+		request,
+		f'Booking created (ID: {booking.booking_id}). Our team will contact you. Please complete payment to proceed.'
+	)
+
+	# Redirect client to their bookings list
+	return redirect('booking_list')
+
+
+@manager_required
+def team_bookings_list(request):
+    """Manager view: All bookings for clients under this manager's team"""
+    # Team bookings are those where:
+    # 1. Client is assigned to this manager, OR
+    # 2. Booking is assigned to a sales employee under this manager
+    from django.db.models import Q
+    bookings = (
+        Booking.objects
+        .filter(Q(client__assigned_manager=request.user) | Q(assigned_to__manager=request.user))
+        .select_related('client', 'service', 'assigned_to', 'payment')
+        .order_by('-booking_date')
+        .distinct()
+    )
+
+    # Basic stats
+    from django.db.models import Count, Sum, Q
+    stats = bookings.aggregate(
+        total=Count('id'),
+        pending=Count('id', filter=Q(status='PENDING')),
+        paid=Count('id', filter=Q(status='PAID')),
+        completed=Count('id', filter=Q(status='COMPLETED')),
+        cancelled=Count('id', filter=Q(status='CANCELLED')),
+        total_value=Sum('final_amount'),
+    )
+
+    # Optional grouping by client
+    bookings_by_client = {}
+    for b in bookings:
+        key = b.client.company_name
+        if key not in bookings_by_client:
+            bookings_by_client[key] = { 'client': b.client, 'items': [] }
+        bookings_by_client[key]['items'].append(b)
+
+    return render(request, 'bookings/team_bookings_list.html', {
+        'bookings': bookings,
+        'bookings_by_client': bookings_by_client,
+        'stats': stats,
+    })
+
+
+@login_required
+def booking_detail(request, id: int):
+	"""Role-scoped booking detail view.
+
+	Access rules:
+	- Client: only their own bookings
+	- Sales: only bookings assigned to them
+	- Manager: bookings for clients assigned to them OR assigned_to under their team
+	- Admin/Superuser: allowed
+	"""
+	booking = get_object_or_404(
+		Booking.objects.select_related('client', 'service', 'assigned_to', 'payment'),
+		id=id
+	)
+
+	user = request.user
+	allowed = False
+
+	try:
+		if getattr(user, 'is_superuser', False) or getattr(user, 'is_admin', False):
+			allowed = True
+		elif getattr(user, 'is_client', False):
+			allowed = getattr(booking.client, 'user_id', None) == user.id
+		elif getattr(user, 'role', None) == 'SALES':
+			allowed = getattr(booking, 'assigned_to_id', None) == user.id
+		elif getattr(user, 'role', None) == 'MANAGER':
+			# Manager via client assignment or team sales assignment
+			allowed = (
+				getattr(booking.client, 'assigned_manager_id', None) == user.id or
+				getattr(getattr(booking, 'assigned_to', None), 'manager_id', None) == user.id
+			)
+	except Exception:
+		allowed = False
+
+	if not allowed:
+		messages.error(request, 'You do not have permission to view this booking.')
+		return redirect('dashboard')
+
+	context = {
+		'booking': booking,
+	}
+	return render(request, 'bookings/booking_detail.html', context)

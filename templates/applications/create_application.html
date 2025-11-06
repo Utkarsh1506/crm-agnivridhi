@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for {{ scheme.name }} - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:client_portal' %}">
+                    <i class="bi bi-house"></i>Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:application_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>My Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'schemes:scheme_list' %}">
+                    <i class="bi bi-award"></i>Schemes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-pdf"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-credit-card"></i>Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'schemes:scheme_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Schemes
+    </a>
+</div>
+
+<h1 class="h2 mb-4">Apply for {{ scheme.name }}</h1>
+
+<!-- Eligibility Check -->
+{% if is_eligible %}
+<div class="alert alert-success">
+    <i class="bi bi-check-circle"></i> <strong>Great News!</strong> You are eligible for this scheme.
+</div>
+{% else %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i> <strong>Eligibility Issues Detected:</strong>
+    <ul class="mb-0 mt-2">
+        {% for reason in reasons %}
+            <li>{{ reason }}</li>
+        {% endfor %}
+    </ul>
+    <p class="mb-0 mt-2"><small>You can still apply, but approval may be more challenging.</small></p>
+</div>
+{% endif %}
+
+<!-- Scheme Details -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Scheme Details</h5>
+    </div>
+    <div class="card-body">
+        <p>{{ scheme.description }}</p>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h6>Funding Details:</h6>
+                <ul>
+                    <li><strong>Range:</strong> ₹{{ scheme.min_funding }} - ₹{{ scheme.max_funding }} lakhs</li>
+                    <li><strong>Interest Rate:</strong> {{ scheme.interest_rate }}%</li>
+                    <li><strong>Processing Time:</strong> {{ scheme.processing_time_days }} days</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>Eligibility Criteria:</h6>
+                <ul>
+                    <li><strong>Sectors:</strong> {{ scheme.eligible_sectors|join:", " }}</li>
+                    <li><strong>Business Types:</strong> {{ scheme.eligible_business_types|join:", " }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Form -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Application Form</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label class="form-label">Company Name</label>
+                <input type="text" class="form-control" value="{{ client.company_name }}" readonly>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Business Type</label>
+                    <input type="text" class="form-control" value="{{ client.get_business_type_display }}" readonly>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Sector</label>
+                    <input type="text" class="form-control" value="{{ client.get_sector_display }}" readonly>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Annual Turnover</label>
+                    <input type="text" class="form-control" value="₹{{ client.annual_turnover }} lakhs" readonly>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Company Age</label>
+                    <input type="text" class="form-control" value="{{ client.company_age }} years" readonly>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="applied_amount" class="form-label">Loan Amount Required (in lakhs) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="applied_amount" name="applied_amount" 
+                       min="{{ scheme.min_funding }}" max="{{ scheme.max_funding }}" 
+                       value="{{ client.funding_required }}" required>
+                <small class="form-text text-muted">
+                    Range: ₹{{ scheme.min_funding }} - ₹{{ scheme.max_funding }} lakhs
+                </small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="purpose" class="form-label">Purpose of Loan <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="purpose" name="purpose" rows="4" required 
+                          placeholder="Describe how you plan to use this funding..."></textarea>
+            </div>
+            
+            <div class="alert alert-info">
+                 <i class="bi bi-info-circle"></i> <strong>Note:</strong> This application will be submitted for manager approval. Your assigned sales representative will be notified.
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send"></i> Submit Application
+                </button>
+                <a href="{% url 'schemes:scheme_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

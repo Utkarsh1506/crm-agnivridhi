@@ -15,88 +15,114 @@
 
 ## 🧪 WORKFLOW TEST SCENARIOS
 
-### Scenario 1: Client Onboarding (SALES → MANAGER → ADMIN)
+### Scenario 1: Client Onboarding (SALES → MANAGER)
 
-**Actors:** Sales Employee, Manager, Admin, Client
+**Actors:** Sales Employee, Manager, Client
 
 **Steps:**
 
-1. **Sales Employee Creates Client Request**
+1. **Sales Employee Fills Client Details**
    ```
    Role: Sales Employee
-   Action: Create EditRequest for new client
-   URL: /edit-requests/create/
+   Action: Fill complete client registration form
+   URL: /clients/request-new/
    
    Data:
-   - Entity Type: CLIENT
-   - Requested Action: Create new client
-   - Reason: "New prospect from marketing campaign"
-   ```
-
-2. **Manager Reviews Request**
-   ```
-   Role: Manager
-   Action: View pending edit requests
-   URL: /edit-requests/
-   Decision: Approve or Reject
-   ```
-
-3. **If Approved, Manager Creates Client**
-   ```
-   Role: Manager
-   Action: Create client account
-   URL: /clients/create/
-   
-   Required Fields:
    - Company Name: "ABC Pvt Ltd"
    - Business Type: Pvt Ltd Company
    - Sector: Manufacturing
    - Annual Turnover: 50 lakhs
    - Funding Required: 20 lakhs
    - Company Age: 3 years
-   - Assigned Sales: [Select sales employee]
-   - Contact Details
+   - Contact Person Details
    - Address
+   - Business Description
+   - Funding Purpose
    ```
 
-4. **System Auto-Generates Credentials**
+2. **Sales Requests Credentials from Manager**
    ```
+   Role: Sales Employee
+   Action: Submit "Create Client & Request Credentials"
+   
+   System Action:
+   - Creates Client record (NO user account yet)
+   - Client Status: PENDING_APPROVAL
+   - Notification sent to Manager
+   - Links to sales employee (assigned_sales)
+   ```
+
+3. **Manager Reviews Client Details**
+   ```
+   Role: Manager
+   Action: View pending client approvals
+   URL: /clients/pending-approval/
+   
+   Shows:
+   - All client details filled by sales
+   - Sales employee who submitted
+   - Approve or Reject buttons
+   ```
+
+4. **Manager Approves & Generates Credentials**
+   ```
+   Role: Manager
+   Action: Click "Approve & Generate Credentials"
+   
    System Action:
    - Creates User account
-   - Creates Client profile
+   - Auto-generates username and password
+   - Links User to Client profile
+   - Updates Client Status: ACTIVE
    - Generates Client ID: CLI-20251105-XXXX
-   - Links user to client
+   - Assigns manager (assigned_manager)
    ```
 
-5. **Manager Sends Credentials via WhatsApp**
+5. **Manager Shares Credentials with Client**
    ```
-   System Action (Auto):
-   - Calls send_custom_whatsapp()
-   - Sends username and password
-   - Sends login URL
+   Role: Manager
+   Action: View generated credentials, then share:
+   
+   Option A: Send via WhatsApp
+   - System calls send_custom_whatsapp()
+   - Sends credentials to client
+   
+   Option B: Manual sharing
+   - Copy credentials
+   - Share via call/in-person
+   - Mark as "Shared"
    ```
 
 **Expected Result:**
-- ✅ EditRequest created (Status: PENDING)
-- ✅ Manager sees request in dashboard
-- ✅ Client account created
+- ✅ Sales fills all details and submits
+- ✅ Client record created (pending)
+- ✅ Manager receives notification
+- ✅ Manager reviews and approves
+- ✅ User account created by Manager
 - ✅ Client ID auto-generated
-- ✅ User account linked
-- ✅ WhatsApp notification sent
+- ✅ Manager shares credentials
 - ✅ Client can login
 
 **Test via API:**
 ```bash
-# 1. Create edit request (Sales)
-POST /api/edit-requests/
+# 1. Sales creates client request
+POST /api/clients/
 {
-  "entity_type": "CLIENT",
-  "requested_action": "create",
-  "reason": "New prospect"
+  "company_name": "ABC Pvt Ltd",
+  "business_type": "PVT_LTD",
+  "sector": "MANUFACTURING",
+  "annual_turnover": "50.00",
+  "funding_required": "20.00",
+  "status": "PENDING_APPROVAL",  # Needs manager approval
+  ...
 }
 
-# 2. Create client (Manager)
-POST /api/clients/
+# 2. Manager approves and generates credentials
+POST /api/clients/1/approve-and-generate-credentials/
+{
+  "send_whatsapp": true
+}
+```
 {
   "company_name": "ABC Pvt Ltd",
   "business_type": "PVT_LTD",
@@ -109,34 +135,16 @@ POST /api/clients/
 
 ---
 
-### Scenario 2: Service Booking (CLIENT → SALES → PAYMENT)
+### Scenario 2: Service Booking & Manual Payment (SALES → CLIENT → SALES)
 
-**Actors:** Client, Sales Employee, System
+**Actors:** Sales Employee, Client, Manager
 
 **Steps:**
 
-1. **Client Browses Services**
-   ```
-   Role: Client
-   Action: View available services
-   URL: /services/
-   ```
-
-2. **Client Requests Service Booking**
-   ```
-   Role: Client
-   Action: Select service (e.g., "DPR Preparation")
-   URL: /bookings/request/
-   
-   Data:
-   - Service: DPR Preparation
-   - Requirements: "Need DPR for manufacturing unit expansion"
-   ```
-
-3. **Sales Employee Creates Booking**
+1. **Sales Employee Creates Booking for Client**
    ```
    Role: Sales Employee
-   Action: Create booking for client
+   Action: Create booking
    URL: /bookings/create/
    
    Data:
@@ -146,52 +154,122 @@ POST /api/clients/
    - Discount: 10%
    - Final Amount: ₹22,500
    - Priority: High
+   - Requirements: "Manufacturing unit expansion DPR needed"
    ```
 
-4. **System Creates Payment Entry**
+2. **System Creates Booking & Payment Record**
    ```
    System Action:
    - Creates Booking (Status: PENDING)
    - Auto-generates Booking ID: BKG-20251105-XXXX
-   - Creates Payment (Status: PENDING)
-   - Calculates final amount after discount
+   - Creates Payment record (Status: PENDING)
+   - Calculates final amount: ₹22,500
+   - Links to booking
    ```
 
-5. **Client Makes Payment**
-   ```
-   Role: Client
-   Option A: Online via Razorpay
-   Option B: Manual (UPI/Bank Transfer)
-   
-   If Manual:
-   - Upload payment proof
-   - Enter UTR/Reference number
-   - Submit for approval
-   ```
-
-6. **Sales Employee Approves Manual Payment**
+3. **Sales Shares Payment Details with Client**
    ```
    Role: Sales Employee
-   Action: Approve payment
-   URL: /payments/{id}/approve/
+   Action: Share company bank details / UPI QR
+   
+   Methods:
+   - WhatsApp message
+   - Phone call
+   - Email
+   - In-person
+   ```
+
+4. **Client Makes Payment**
+   ```
+   Role: Client
+   Action: Transfer amount to company account
+   
+   Methods:
+   - UPI (PhonePe/GPay/Paytm)
+   - Bank Transfer (NEFT/RTGS/IMPS)
+   - Cash payment at office
+   - Cheque/DD
+   ```
+
+5. **Sales Employee Records Payment Details**
+   ```
+   Role: Sales Employee
+   Action: Update payment record
+   URL: /payments/{id}/record-payment/
+   
+   Data:
+   - Payment Method: UPI_QR
+   - Reference ID: UTR/UPI Ref (e.g., "326519281743")
+   - Payment Date: 2025-11-05
+   - Received By: [Sales employee name]
+   - Notes: "Received via PhonePe"
+   - Payment Proof: Upload screenshot (optional)
+   ```
+
+6. **Manager/Admin Verifies & Approves**
+   ```
+   Role: Manager or Admin
+   Action: Verify payment details
+   URL: /payments/pending-approval/
+   
+   Checks:
+   - Amount matches booking
+   - Reference ID is valid
+   - Proof attached (if uploaded)
+   
+   Action: Click "Approve Payment"
    
    System Action:
    - Updates Payment status: CAPTURED
+   - Updates payment_date to current date
    - Updates Booking status: PAID
-   - Sends email confirmation
-   - Sends WhatsApp notification
    - Generates PDF receipt
+   - Sends email to client
+   - Sends WhatsApp notification (if configured)
+   - Logs activity
    ```
 
 **Expected Result:**
-- ✅ Booking created with auto ID
-- ✅ Payment entry created
-- ✅ Discount applied correctly
-- ✅ Payment approved (if manual)
-- ✅ Booking status updated
+- ✅ Booking created by Sales
+- ✅ Payment record created (pending)
+- ✅ Client makes payment offline
+- ✅ Sales records payment manually
+- ✅ Manager approves payment
+- ✅ Booking status updated to PAID
 - ✅ PDF receipt generated
-- ✅ Email sent
-- ✅ WhatsApp sent
+- ✅ Client notified
+- ✅ NO Razorpay/online gateway used
+
+**Test via API:**
+```bash
+# 1. Create booking (Sales)
+POST /api/bookings/
+{
+  "client": 1,
+  "service": 1,
+  "amount": "25000.00",
+  "discount_percent": "10.00",
+  "requirements": "Manufacturing expansion DPR"
+}
+
+# 2. Record manual payment (Sales)
+POST /api/payments/
+{
+  "booking": 1,
+  "client": 1,
+  "amount": "22500.00",
+  "payment_method": "UPI_QR",
+  "reference_id": "326519281743",
+  "notes": "Received via PhonePe",
+  "status": "PENDING"
+}
+
+# 3. Approve payment (Manager)
+POST /api/payments/1/approve/
+{
+  "notes": "Payment verified - UTR matches"
+}
+```
 - ✅ Client can download receipt
 
 **Test via API:**

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ scheme.name }} - Scheme Details{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+  <div class="position-sticky pt-3">
+    <ul class="nav flex-column">
+  <li class="nav-item"><a class="nav-link" href="{% url 'accounts:client_portal' %}"><i class="bi bi-house"></i>Home</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'applications:application_list' %}"><i class="bi bi-file-earmark-text"></i>My Applications</a></li>
+  <li class="nav-item"><a class="nav-link active" href="{% url 'schemes:scheme_list' %}"><i class="bi bi-award"></i>Schemes</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'documents:document_list' %}"><i class="bi bi-file-pdf"></i>Documents</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'payments:payment_list' %}"><i class="bi bi-credit-card"></i>Payments</a></li>
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'schemes:scheme_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Schemes</a>
+</div>
+
+<h1 class="h2 mb-3">{{ scheme.name }}</h1>
+<p class="text-muted">{{ scheme.full_name }}</p>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <p>{{ scheme.description }}</p>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <h6>Key Details:</h6>
+        <ul class="mb-0">
+          <li><strong>Category:</strong> {{ scheme.get_category_display }}</li>
+          <li><strong>Status:</strong> {{ scheme.get_status_display }}</li>
+          <li><strong>Funding:</strong> ₹{{ scheme.min_funding|default:"-" }} - ₹{{ scheme.max_funding|default:"-" }} lakhs</li>
+          <li><strong>Interest Rate:</strong> {{ scheme.interest_rate|default:"-" }}%</li>
+          <li><strong>Processing Time:</strong> {{ scheme.processing_time_days }} days</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h6>Eligibility:</h6>
+        <ul class="mb-0">
+          <li><strong>Sectors:</strong> {{ scheme.eligible_sectors|join:', ' }}</li>
+          <li><strong>Business Types:</strong> {{ scheme.eligible_business_types|join:', ' }}</li>
+          {% if scheme.min_turnover or scheme.max_turnover %}
+          <li><strong>Turnover:</strong>
+            {% if scheme.min_turnover %}Min ₹{{ scheme.min_turnover }} lakhs{% endif %}
+            {% if scheme.max_turnover %}{% if scheme.min_turnover %} - {% endif %}Max ₹{{ scheme.max_turnover }} lakhs{% endif %}
+          </li>
+          {% endif %}
+          {% if scheme.min_company_age or scheme.max_company_age %}
+          <li><strong>Company Age:</strong>
+            {% if scheme.min_company_age %}Min {{ scheme.min_company_age }} yrs{% endif %}
+            {% if scheme.max_company_age %}{% if scheme.min_company_age %} - {% endif %}Max {{ scheme.max_company_age }} yrs{% endif %}
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if is_eligible is not None %}
+<div class="alert {% if is_eligible %}alert-success{% else %}alert-warning{% endif %}">
+  {% if is_eligible %}
+    <i class="bi bi-check-circle"></i> You're eligible for this scheme.
+  {% else %}
+    <i class="bi bi-exclamation-triangle"></i> There are eligibility issues:
+    <ul class="mb-0 mt-2">
+      {% for reason in reasons %}
+        <li>{{ reason }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="d-grid gap-2 d-sm-block">
+  <a href="{% url 'bookings:create_documentation_booking' scheme.pk %}" class="btn btn-primary"><i class="bi bi-calendar-plus"></i> Request Documentation Service</a>
+  {% if scheme.official_website %}
+  <a href="{{ scheme.official_website }}" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-box-arrow-up-right"></i> Official Site</a>
+  {% endif %}
+</div>
+{% endblock %}

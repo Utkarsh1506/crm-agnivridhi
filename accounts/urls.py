@@ -1,6 +1,25 @@
 from django.urls import path
 from . import views
 
+# -----------------------------------------------------------------------------
+# Django app namespace (prep for namespaced includes)
+app_name = 'accounts'
+
+# -----------------------------------------------------------------------------
+# Dashboard routing (role-specific)
+#
+# Routes provide a single predictable location per role:
+#  - /dashboard/                 -> redirects to role-appropriate dashboard
+#  - /dashboard/client/          -> client portal
+#  - /dashboard/sales/           -> sales dashboard
+#  - /dashboard/manager/         -> manager dashboard
+#  - /dashboard/admin/           -> admin dashboard (for ADMIN role users)
+#  - /dashboard/owner/           -> owner/dashboard for Admins flagged is_owner
+#
+# Keep the generic `application_list` and other deprecated generic endpoints
+# as redirectors to role-specific pages to maintain privacy and a clear URL map.
+# -----------------------------------------------------------------------------
+
 urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
@@ -11,6 +30,9 @@ urlpatterns = [
     path('dashboard/owner/', views.owner_dashboard, name='owner_dashboard'),
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/manager/', views.manager_dashboard, name='manager_dashboard'),
+    path('team/members/', views.team_members_list, name='team_members_list'),
+    path('team/clients/', views.team_clients_list, name='team_clients_list'),
+    path('team/diagnostic/', views.team_diagnostic, name='team_diagnostic'),
     path('dashboard/sales/', views.sales_dashboard, name='sales_dashboard'),
     path('bookings/<int:booking_id>/record-payment/', views.record_payment, name='record_payment'),
     path('payments/<int:payment_id>/approve/', views.approve_payment, name='approve_payment'),
@@ -28,6 +50,9 @@ urlpatterns = [
     
     # Reports
     path('reports/', views.reports_dashboard, name='reports_dashboard'),
+
+    # Route Directory (staff-only)
+    path('routes/', views.route_directory, name='route_directory'),
     
     # PDF Downloads
     path('pdf/payment/<int:payment_id>/', views.download_payment_receipt_pdf, name='download_payment_receipt'),

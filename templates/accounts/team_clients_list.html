@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Clients - Agnivridhi CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2"><i class="bi bi-building"></i> Team Clients</h1>
+    <a href="{% url 'accounts:manager_dashboard' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Stats Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Clients</h6>
+                    <h2>{{ total_clients }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients Table -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-building"></i> All Team Clients
+        </div>
+        <div class="card-body">
+            {% if team_clients %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Contact Person</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Assigned Sales</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in team_clients %}
+                            <tr>
+                                <td>
+                                    <strong>{{ client.company_name }}</strong>
+                                </td>
+                                <td>{{ client.contact_person|default:"N/A" }}</td>
+                                <td>{{ client.email }}</td>
+                                <td>{{ client.phone|default:"N/A" }}</td>
+                                <td>
+                                    {% if client.assigned_sales %}
+                                        <span class="badge bg-info">
+                                            {{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if client.status == 'ACTIVE' %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% elif client.status == 'PENDING' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif client.status == 'INACTIVE' %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ client.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="/api/clients/{{ client.id }}/" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No clients assigned to your team yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Applications - Agnivridhi CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2"><i class="bi bi-file-earmark-text"></i> Team Applications</h1>
+    <a href="{% url 'accounts:manager_dashboard' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Applications</h6>
+                    <h2>{{ total_applications }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stats-card bg-warning text-white">
+                <div class="card-body">
+                    <h6>Submitted</h6>
+                    <h2>{{ stats.submitted_count|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stats-card bg-info text-white">
+                <div class="card-body">
+                    <h6>Under Review</h6>
+                    <h2>{{ stats.under_review_count|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stats-card bg-success text-white">
+                <div class="card-body">
+                    <h6>Approved</h6>
+                    <h2>{{ stats.approved_count|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stats-card bg-danger text-white">
+                <div class="card-body">
+                    <h6>Rejected</h6>
+                    <h2>{{ stats.rejected_count|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Clients</h6>
+                    <h2>{{ total_clients }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if stats.total_amount %}
+    <div class="alert alert-info">
+        <strong>Total Amount Applied:</strong> ₹{{ stats.total_amount|floatformat:2 }} Lakhs
+    </div>
+    {% endif %}
+
+    <!-- View Toggle -->
+    <ul class="nav nav-tabs mb-3" id="viewTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="by-client-tab" data-bs-toggle="tab" data-bs-target="#by-client" type="button" role="tab">
+                <i class="bi bi-building"></i> By Client
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="all-apps-tab" data-bs-toggle="tab" data-bs-target="#all-apps" type="button" role="tab">
+                <i class="bi bi-list"></i> All Applications
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="viewTabsContent">
+        <!-- By Client View -->
+        <div class="tab-pane fade show active" id="by-client" role="tabpanel">
+            {% if applications_by_client %}
+                {% for client_name, data in applications_by_client.items %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-building"></i> <strong>{{ client_name }}</strong>
+                            </div>
+                            <div>
+                                <span class="badge bg-info">
+                                    Sales: {{ data.client.assigned_sales.get_full_name|default:"Unassigned" }}
+                                </span>
+                                <span class="badge bg-secondary">
+                                    {{ data.applications|length }} application{{ data.applications|length|pluralize }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Application ID</th>
+                                        <th>Scheme</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for app in data.applications %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ app.application_id }}</strong>
+                                        </td>
+                                        <td>
+                                            <i class="bi bi-award"></i> {{ app.scheme.name }}
+                                        </td>
+                                        <td><strong>₹{{ app.applied_amount }} L</strong></td>
+                                        <td>
+                                            {% if app.status == 'APPROVED' %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% elif app.status == 'SUBMITTED' %}
+                                                <span class="badge bg-warning">Submitted</span>
+                                            {% elif app.status == 'UNDER_REVIEW' %}
+                                                <span class="badge bg-info">Under Review</span>
+                                            {% elif app.status == 'REJECTED' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% elif app.status == 'WITHDRAWN' %}
+                                                <span class="badge bg-secondary">Withdrawn</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ app.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ app.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                            {% if app.status == 'SUBMITTED' or app.status == 'UNDER_REVIEW' %}
+                                                {% if user.is_admin or user.is_manager %}
+                                                    <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-outline-success">
+                                                        <i class="bi bi-check-circle"></i> Review
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No applications found for your team clients.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- All Applications View -->
+        <div class="tab-pane fade" id="all-apps" role="tabpanel">
+            {% if applications %}
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Client</th>
+                                        <th>Application ID</th>
+                                        <th>Scheme</th>
+                                        <th>Amount</th>
+                                        <th>Sales Person</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for app in applications %}
+                                    <tr>
+                                        <td><strong>{{ app.client.company_name }}</strong></td>
+                                        <td><strong>{{ app.application_id }}</strong></td>
+                                        <td>
+                                            <i class="bi bi-award"></i> {{ app.scheme.name }}
+                                        </td>
+                                        <td><strong>₹{{ app.applied_amount }} L</strong></td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                {{ app.client.assigned_sales.get_full_name|default:"Unassigned" }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if app.status == 'APPROVED' %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% elif app.status == 'SUBMITTED' %}
+                                                <span class="badge bg-warning">Submitted</span>
+                                            {% elif app.status == 'UNDER_REVIEW' %}
+                                                <span class="badge bg-info">Under Review</span>
+                                            {% elif app.status == 'REJECTED' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% elif app.status == 'WITHDRAWN' %}
+                                                <span class="badge bg-secondary">Withdrawn</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ app.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ app.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                            {% if app.status == 'SUBMITTED' or app.status == 'UNDER_REVIEW' %}
+                                                {% if user.is_admin or user.is_manager %}
+                                                    <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-outline-success">
+                                                        <i class="bi bi-check-circle"></i> Review
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No applications found.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

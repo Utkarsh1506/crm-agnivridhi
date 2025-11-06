@@ -7,28 +7,59 @@
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link active" href="{% url 'manager_dashboard' %}">
+                <a class="nav-link active" href="{% url 'accounts:manager_dashboard' %}">
                     <i class="bi bi-speedometer2"></i>Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{% url 'applications:pending_applications' %}">
+                    <i class="bi bi-bell"></i>Pending Approvals
+                    {% if pending_count > 0 %}
+                        <span class="badge bg-danger ms-2">{{ pending_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:team_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:team_members_list' %}">
                     <i class="bi bi-people"></i>My Team
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{% url 'accounts:team_clients_list' %}">
                     <i class="bi bi-building"></i>Clients
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{% url 'bookings:team_bookings_list' %}">
                     <i class="bi bi-calendar-check"></i>Bookings
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-file-earmark-text"></i>Applications
+                <a class="nav-link" href="{% url 'documents:team_documents_list' %}">
+                    <i class="bi bi-folder"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments:team_payments_list' %}">
+                    <i class="bi bi-credit-card"></i>Payments
+                    {% if pending_payments_count > 0 %}
+                        <span class="badge bg-warning text-dark ms-2">{{ pending_payments_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:global_search' %}">
+                    <i class="bi bi-search"></i>Search
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="{% url 'accounts:team_diagnostic' %}">
+                    <i class="bi bi-bug"></i>Team Diagnostic
                 </a>
             </li>
         </ul>
@@ -38,6 +69,16 @@
 
 {% block content %}
 <h1 class="h2 mb-4"><i class="bi bi-briefcase"></i> Manager Dashboard</h1>
+
+<!-- Pending Payment Approvals Alert -->
+{% if pending_payments_count > 0 %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>{{ pending_payments_count }}</strong> payment{{ pending_payments_count|pluralize }} awaiting your approval!
+    <a href="#payment-approvals-section" class="alert-link">Review now</a>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
 
 <!-- Team Overview -->
 <div class="row mb-4">
@@ -67,8 +108,61 @@
     </div>
 </div>
 
+<!-- Pending Payment Approvals Section -->
+{% if pending_payments_count > 0 %}
+<div class="card mb-4" id="payment-approvals-section">
+    <div class="card-header bg-warning text-dark">
+        <i class="bi bi-exclamation-circle"></i> Pending Payment Approvals
+        <span class="badge bg-dark ms-2">{{ pending_payments_count }}</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Payment ID</th>
+                        <th>Client</th>
+                        <th>Booking</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Reference</th>
+                        <th>Recorded By</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in team_bookings %}
+                        {% if booking.payment and booking.payment.status == 'PENDING' %}
+                        <tr>
+                            <td>#{{ booking.payment.id }}</td>
+                            <td>{{ booking.client.company_name }}</td>
+                            <td>{{ booking.booking_id }}</td>
+                            <td><strong>₹{{ booking.payment.amount }}</strong></td>
+                            <td>{{ booking.payment.get_payment_method_display }}</td>
+                            <td><code>{{ booking.payment.reference_id|default:'-' }}</code></td>
+                            <td>{{ booking.payment.received_by.get_full_name|default:booking.payment.received_by.username }}</td>
+                            <td>{{ booking.payment.created_at|date:"M d, Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'accounts:approve_payment' booking.payment.id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-success me-1">
+                                    <i class="bi bi-check-circle"></i> Approve
+                                </a>
+                                <a href="{% url 'accounts:reject_payment' booking.payment.id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-x-circle"></i> Reject
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Team Members -->
-<div class="card mb-4">
+<div class="card mb-4" id="team-section">
     <div class="card-header">
         <i class="bi bi-people"></i> Team Members
     </div>
@@ -109,7 +203,7 @@
 </div>
 
 <!-- Recent Clients -->
-<div class="card">
+<div class="card" id="clients-section">
     <div class="card-header">
         <i class="bi bi-building"></i> Team Clients
     </div>
@@ -141,6 +235,68 @@
             </div>
         {% else %}
             <p class="text-muted text-center">No clients assigned</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Team Bookings -->
+<div class="card mt-4" id="bookings-section">
+    <div class="card-header">
+        <i class="bi bi-calendar-check"></i> Team Bookings
+    </div>
+    <div class="card-body">
+        {% if team_bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Client</th>
+                            <th>Service</th>
+                            <th>Amount</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in team_bookings %}
+                        <tr {% if booking.payment and booking.payment.status == 'PENDING' %}class="table-warning"{% endif %}>
+                            <td><a href="{% url 'bookings:booking_detail' booking.id %}">{{ booking.booking_id }}</a></td>
+                            <td>{{ booking.client.company_name }}</td>
+                            <td>{{ booking.service.name }}</td>
+                            <td>₹{{ booking.final_amount|default:booking.amount }}</td>
+                            <td>
+                                {% if booking.payment %}
+                                    <span class="badge bg-{% if booking.payment.status == 'CAPTURED' %}success{% elif booking.payment.status == 'PENDING' %}warning{% elif booking.payment.status == 'FAILED' %}danger{% else %}secondary{% endif %}">
+                                        {{ booking.payment.get_status_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">UNPAID</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-secondary">{{ booking.get_status_display }}</span></td>
+                            <td>{{ booking.booking_date|date:"M d, Y" }}</td>
+                            <td>
+                                {% if booking.payment and booking.payment.status == 'PENDING' %}
+                                    <a href="{% url 'accounts:approve_payment' booking.payment.id %}" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-circle"></i> Approve Payment
+                                    </a>
+                                    <a href="{% url 'accounts:reject_payment' booking.payment.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-x-circle"></i> Reject
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted text-center">No bookings yet</p>
         {% endif %}
     </div>
 </div>

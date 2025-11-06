@@ -20,14 +20,14 @@ def role_required(*roles):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                return redirect('login')
+                return redirect('accounts:login')
             
             if hasattr(request.user, 'role'):
                 if request.user.role in roles:
                     return view_func(request, *args, **kwargs)
             
             messages.error(request, 'You do not have permission to access this page.')
-            return redirect('dashboard')
+            return redirect('accounts:dashboard')
         return wrapper
     return decorator
 
@@ -62,7 +62,7 @@ def login_view(request):
     Custom login view with role-based redirect
     """
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('accounts:dashboard')
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -77,20 +77,20 @@ def login_view(request):
             # Role-based redirect
             # Route Owner Admins to the Owner Dashboard
             if getattr(user, 'is_owner', False) and getattr(user, 'role', None) == 'ADMIN':
-                return redirect('owner_dashboard')
+                return redirect('accounts:owner_dashboard')
             # Superuser gets dedicated dashboard
             if user.is_superuser:
-                return redirect('superuser_dashboard')
+                return redirect('accounts:superuser_dashboard')
 
             role = getattr(user, 'role', None)
             if role:
                 if role == 'CLIENT':
-                    return redirect('client_portal')
+                    return redirect('accounts:client_portal')
                 else:
                     # Admin, Manager, Sales go to their respective dashboards
-                    return redirect('dashboard')
+                    return redirect('accounts:dashboard')
             
-            return redirect('dashboard')
+            return redirect('accounts:dashboard')
         else:
             messages.error(request, 'Invalid username or password.')
     
@@ -104,7 +104,31 @@ def logout_view(request):
     """
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
-    return redirect('login')
+    return redirect('accounts:login')
+
+
+def custom_403_view(request, exception=None):
+    """
+    Custom 403 Forbidden error page
+    Shows role-specific information and safe navigation options
+    """
+    return render(request, 'errors/403.html', status=403)
+
+
+def custom_404_view(request, exception=None):
+    """
+    Custom 404 Not Found error page
+    Shows helpful navigation based on user role
+    """
+    return render(request, 'errors/404.html', status=404)
+
+
+def custom_500_view(request):
+    """
+    Custom 500 Internal Server Error page
+    Note: This handler receives no request context in production
+    """
+    return render(request, 'errors/500.html', status=500)
 
 
 @login_required
@@ -116,21 +140,21 @@ def dashboard_view(request):
     
     # Owner Admin gets Owner Dashboard
     if getattr(user, 'is_owner', False) and getattr(user, 'role', None) == 'ADMIN':
-        return redirect('owner_dashboard')
+        return redirect('accounts:owner_dashboard')
     # Superuser gets dedicated dashboard
     if user.is_superuser:
-        return redirect('superuser_dashboard')
+        return redirect('accounts:superuser_dashboard')
 
     role = getattr(user, 'role', None)
     if role:
         if role == 'ADMIN':
-            return redirect('admin_dashboard')
+            return redirect('accounts:admin_dashboard')
         elif role == 'MANAGER':
-            return redirect('manager_dashboard')
+            return redirect('accounts:manager_dashboard')
         elif role == 'SALES':
-            return redirect('sales_dashboard')
+            return redirect('accounts:sales_dashboard')
         elif role == 'CLIENT':
-            return redirect('client_portal')
+            return redirect('accounts:client_portal')
     
     # Fallback generic dashboard (shouldn't generally hit)
     return render(request, 'accounts/dashboard.html', {'user': user})
@@ -297,6 +321,8 @@ def manager_dashboard(request):
     """
     from clients.models import Client
     from bookings.models import Booking
+    from applications.models import Application
+    from payments.models import Payment
     from accounts.models import User
     
     # Team members under this manager
@@ -305,8 +331,27 @@ def manager_dashboard(request):
     # Clients assigned to team
     team_clients = Client.objects.filter(assigned_manager=request.user)
     
-    # Bookings
-    team_bookings = Booking.objects.filter(client__assigned_manager=request.user)
+    # Bookings with payment info - include bookings where:
+    # 1. Client is assigned to this manager, OR
+    # 2. The sales employee who recorded payment reports to this manager
+    from django.db.models import Q
+    team_bookings = Booking.objects.filter(
+        Q(client__assigned_manager=request.user) |
+        Q(assigned_to__manager=request.user)
+    ).select_related('client', 'service', 'payment', 'assigned_to').order_by('-booking_date').distinct()
+    
+    # Pending applications count for sidebar badge
+    pending_count = Application.objects.filter(
+        client__assigned_manager=request.user,
+        status__in=['SUBMITTED', 'UNDER_REVIEW']
+    ).count()
+    
+    # Pending payments count (awaiting manager approval) - check both client assignment and sales team
+    pending_payments_count = Payment.objects.filter(
+        Q(client__assigned_manager=request.user) |
+        Q(received_by__manager=request.user),
+        status='PENDING'
+    ).distinct().count()
     
     context = {
         'team_members': team_members,
@@ -315,9 +360,86 @@ def manager_dashboard(request):
         'total_team_members': team_members.count(),
         'total_clients': team_clients.count(),
         'total_bookings': team_bookings.count(),
+        'pending_count': pending_count,
+        'pending_payments_count': pending_payments_count,
     }
     
     return render(request, 'dashboards/manager_dashboard.html', context)
+
+
+@manager_required
+def team_members_list(request):
+    """
+    Full page view of team members under this manager
+    """
+    from accounts.models import User
+    
+    # Team members under this manager
+    team_members = User.objects.filter(manager=request.user, role='SALES').select_related('manager')
+    
+    context = {
+        'team_members': team_members,
+        'total_team_members': team_members.count(),
+    }
+    
+    return render(request, 'accounts/team_members_list.html', context)
+
+
+@manager_required
+def team_diagnostic(request):
+    """Diagnostic page to check team relationships"""
+    from accounts.models import User
+    from clients.models import Client
+    from bookings.models import Booking
+    from payments.models import Payment
+    from django.db.models import Q
+    
+    # Team members
+    team_members = User.objects.filter(manager=request.user, role='SALES')
+    
+    # Clients assigned to manager
+    clients_by_manager = Client.objects.filter(assigned_manager=request.user)
+    
+    # Clients assigned to team sales
+    clients_by_sales = Client.objects.filter(assigned_sales__manager=request.user)
+    
+    # Bookings
+    bookings_by_client_manager = Booking.objects.filter(client__assigned_manager=request.user)
+    bookings_by_sales = Booking.objects.filter(assigned_to__manager=request.user)
+    
+    # Payments
+    payments_by_client = Payment.objects.filter(client__assigned_manager=request.user, status='PENDING')
+    payments_by_sales = Payment.objects.filter(received_by__manager=request.user, status='PENDING')
+    
+    context = {
+        'team_members': team_members,
+        'clients_by_manager': clients_by_manager,
+        'clients_by_sales': clients_by_sales,
+        'bookings_by_client_manager': bookings_by_client_manager,
+        'bookings_by_sales': bookings_by_sales,
+        'payments_by_client': payments_by_client,
+        'payments_by_sales': payments_by_sales,
+    }
+    
+    return render(request, 'accounts/team_diagnostic.html', context)
+
+
+@manager_required
+def team_clients_list(request):
+    """
+    Full page view of clients assigned to this manager's team
+    """
+    from clients.models import Client
+    
+    # Clients assigned to team
+    team_clients = Client.objects.filter(assigned_manager=request.user).select_related('assigned_sales', 'assigned_manager')
+    
+    context = {
+        'team_clients': team_clients,
+        'total_clients': team_clients.count(),
+    }
+    
+    return render(request, 'accounts/team_clients_list.html', context)
 
 
 @sales_required
@@ -363,7 +485,7 @@ def record_payment(request, booking_id):
     # permission: booking must be assigned to this sales or user is manager/admin
     if getattr(booking, 'assigned_to_id', None) != request.user.id and not (getattr(request.user, 'is_manager', False) or getattr(request.user, 'is_admin', False)):
         messages.error(request, 'You are not allowed to record payment for this booking.')
-        return redirect('sales_dashboard')
+        return redirect('accounts:sales_dashboard')
 
     # Prefill defaults
     default_amount = getattr(booking, 'final_amount', None) or getattr(booking, 'amount', None) or Decimal('0.00')
@@ -408,7 +530,7 @@ def record_payment(request, booking_id):
 
         messages.success(request, 'Payment recorded and sent for approval.')
         # Do not change booking status until approval
-        return redirect('sales_dashboard')
+        return redirect('accounts:sales_dashboard')
 
     return render(request, 'payments/record_payment.html', {
         'booking': booking,
@@ -421,7 +543,7 @@ def approve_payment(request, payment_id):
     """Manager/Admin can approve recorded payments"""
     if not (getattr(request.user, 'is_manager', False) or getattr(request.user, 'is_admin', False) or request.user.is_superuser):
         messages.error(request, 'Permission denied.')
-        return redirect('dashboard')
+        return redirect('accounts:dashboard')
     from django.shortcuts import get_object_or_404
     from payments.models import Payment
     from activity_logs.models import ActivityLog
@@ -471,7 +593,16 @@ def approve_payment(request, payment_id):
         pass
     
     messages.success(request, 'Payment approved and notification sent.')
-    return redirect('admin_dashboard')
+    # Redirect back to where the action was initiated, prefer manager dashboard if manager
+    next_url = request.GET.get('next') or request.META.get('HTTP_REFERER')
+    if getattr(request.user, 'is_manager', False):
+        return redirect('accounts:manager_dashboard')
+    if next_url:
+        try:
+            return redirect(next_url)
+        except Exception:
+            pass
+    return redirect('accounts:admin_dashboard')
 
 
 @login_required
@@ -479,7 +610,7 @@ def reject_payment(request, payment_id):
     """Manager/Admin can reject recorded payments"""
     if not (getattr(request.user, 'is_manager', False) or getattr(request.user, 'is_admin', False) or request.user.is_superuser):
         messages.error(request, 'Permission denied.')
-        return redirect('dashboard')
+        return redirect('accounts:dashboard')
     from django.shortcuts import get_object_or_404
     from payments.models import Payment
     from activity_logs.models import ActivityLog
@@ -509,7 +640,16 @@ def reject_payment(request, payment_id):
         print(f"Email notification failed: {e}")
     
     messages.success(request, 'Payment rejected and notification sent.')
-    return redirect('admin_dashboard')
+    # Redirect back to where the action was initiated, prefer manager dashboard if manager
+    next_url = request.GET.get('next') or request.META.get('HTTP_REFERER')
+    if getattr(request.user, 'is_manager', False):
+        return redirect('accounts:manager_dashboard')
+    if next_url:
+        try:
+            return redirect(next_url)
+        except Exception:
+            pass
+    return redirect('accounts:admin_dashboard')
 
 
 @client_required
@@ -527,7 +667,7 @@ def client_portal(request):
         client = request.user.client_profile
     except:
         messages.error(request, 'Client profile not found.')
-        return redirect('dashboard')
+        return redirect('accounts:dashboard')
     
     # Client data
     applications = Application.objects.filter(client=client).order_by('-application_date')
@@ -570,7 +710,7 @@ def superuser_dashboard(request):
     """
     if not request.user.is_superuser:
         messages.error(request, 'You do not have permission to access this page.')
-        return redirect('dashboard')
+        return redirect('accounts:dashboard')
 
     # Reuse admin analytics plus include system/user metrics
     from clients.models import Client
@@ -620,7 +760,7 @@ def owner_dashboard(request):
     """
     if not getattr(request.user, 'is_owner', False):
         messages.error(request, 'Only the company owner can access this dashboard.')
-        return redirect('admin_dashboard')
+        return redirect('accounts:admin_dashboard')
 
     from clients.models import Client
     from bookings.models import Booking
@@ -727,7 +867,7 @@ def profile_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Profile updated successfully.')
-            return redirect('profile')
+            return redirect('accounts:profile')
     else:
         form = ProfileForm(instance=request.user)
     return render(request, 'accounts/profile.html', {'form': form})
@@ -743,7 +883,7 @@ def change_password(request):
             # Keep user logged in after password change
             update_session_auth_hash(request, user)
             messages.success(request, 'Password changed successfully.')
-            return redirect('profile')
+            return redirect('accounts:profile')
         else:
             messages.error(request, 'Please correct the error below.')
     else:
@@ -1113,6 +1253,80 @@ def reports_dashboard(request):
     return render(request, 'accounts/reports_dashboard.html', context)
 
 
+@staff_required
+def route_directory(request):
+    """Staff-only page listing key routes per role for quick reference."""
+    routes = {
+        'superuser': [
+            {'path': '/dashboard/superuser/', 'name': 'superuser_dashboard', 'desc': 'Full system visibility and analytics.'},
+        ],
+        'owner': [
+            {'path': '/dashboard/owner/', 'name': 'owner_dashboard', 'desc': 'Company-level metrics and management access.'},
+        ],
+        'admin': [
+            {'path': '/dashboard/admin/', 'name': 'admin_dashboard', 'desc': 'Central dashboard overview.'},
+            {'path': '/reports/', 'name': 'reports_dashboard', 'desc': 'Analytics and business metrics.'},
+            {'path': '/export/clients/', 'name': 'export_clients', 'desc': 'Export client data.'},
+            {'path': '/export/bookings/', 'name': 'export_bookings', 'desc': 'Export bookings.'},
+            {'path': '/export/payments/', 'name': 'export_payments', 'desc': 'Export payments.'},
+            {'path': '/export/dashboard/', 'name': 'export_dashboard_data', 'desc': 'Export revenue data for dashboard KPIs.'},
+        ],
+        'manager': [
+            {'path': '/dashboard/manager/', 'name': 'manager_dashboard', 'desc': 'Team overview dashboard.'},
+            {'path': '/applications/pending/', 'name': 'pending_applications', 'desc': 'Pending application approvals.'},
+            {'path': '/applications/team/', 'name': 'team_applications_list', 'desc': 'Team applications list.'},
+            {'path': '/team/members/', 'name': 'team_members_list', 'desc': 'Assigned sales employees.'},
+            {'path': '/team/clients/', 'name': 'team_clients_list', 'desc': 'Team clients.'},
+            {'path': '/bookings/team/', 'name': 'team_bookings_list', 'desc': 'Team bookings overview.'},
+            {'path': '/documents/team/', 'name': 'team_documents_list', 'desc': 'Team documents.'},
+            {'path': '/payments/team/', 'name': 'team_payments_list', 'desc': 'Team payments.'},
+            {'path': '/team/diagnostic/', 'name': 'team_diagnostic', 'desc': 'Team diagnostic.'},
+        ],
+        'sales': [
+            {'path': '/dashboard/sales/', 'name': 'sales_dashboard', 'desc': 'Sales dashboard.'},
+            {'path': '/bookings/sales/', 'name': 'sales_bookings_list', 'desc': 'My bookings.'},
+            {'path': '/applications/sales/', 'name': 'sales_applications_list', 'desc': 'My applications.'},
+        ],
+        'client': [
+            {'path': '/dashboard/client/', 'name': 'client_portal', 'desc': 'Client portal.'},
+            {'path': '/bookings/client/', 'name': 'client_bookings_list', 'desc': 'My bookings.'},
+            {'path': '/applications/client/', 'name': 'client_applications_list', 'desc': 'My applications.'},
+            {'path': '/documents/client/', 'name': 'client_documents_list', 'desc': 'Documents.'},
+            {'path': '/payments/client/', 'name': 'client_payments_list', 'desc': 'Payments.'},
+            {'path': '/schemes/', 'name': 'scheme_list', 'desc': 'Browse schemes.'},
+        ],
+        'applications': [
+            {'path': '/applications/admin/<pk>/', 'name': 'admin_application_detail', 'desc': 'Admin application detail (alias).'},
+            {'path': '/applications/manager/<pk>/', 'name': 'manager_application_detail', 'desc': 'Manager application detail.'},
+            {'path': '/applications/sales/<pk>/', 'name': 'sales_application_detail', 'desc': 'Sales application detail.'},
+            {'path': '/applications/client/<pk>/', 'name': 'client_application_detail', 'desc': 'Client application detail.'},
+        ],
+        'bookings': [
+            {'path': '/bookings/<id>/', 'name': 'booking_detail', 'desc': 'Role-scoped booking detail.'},
+        ],
+        'documents': [
+            {'path': '/documents/<pk>/', 'name': 'document_detail', 'desc': 'Document detail.'},
+            {'path': '/documents/<pk>/download/', 'name': 'document_download', 'desc': 'Download file.'},
+        ],
+        'payments': [
+            {'path': '/payments/<pk>/', 'name': 'payment_detail', 'desc': 'Payment detail.'},
+            {'path': '/payments/<payment_id>/approve/', 'name': 'approve_payment', 'desc': 'Approve payment.'},
+            {'path': '/payments/<payment_id>/reject/', 'name': 'reject_payment', 'desc': 'Reject payment.'},
+        ],
+        'api': [
+            {'path': '/api/schema/', 'name': 'schema', 'desc': 'OpenAPI schema JSON.'},
+            {'path': '/api/docs/', 'name': 'swagger-ui', 'desc': 'Swagger UI.'},
+            {'path': '/api/redoc/', 'name': 'redoc', 'desc': 'Redoc UI.'},
+        ],
+        'pdf': [
+            {'path': '/pdf/payment/<payment_id>/', 'name': 'download_payment_receipt', 'desc': 'Payment receipt PDF.'},
+            {'path': '/pdf/booking/<booking_id>/', 'name': 'download_booking_confirmation', 'desc': 'Booking confirmation PDF.'},
+            {'path': '/pdf/application/<application_id>/', 'name': 'download_application_form', 'desc': 'Application form PDF.'},
+        ],
+    }
+    return render(request, 'accounts/route_directory.html', {'routes': routes})
+
+
 # =============================================================================
 # PDF Generation Views
 # =============================================================================
@@ -1130,13 +1344,13 @@ def download_payment_receipt_pdf(request, payment_id):
         # Check permission
         if not request.user.is_staff and payment.client.salesperson != request.user:
             messages.error(request, 'You do not have permission to view this receipt.')
-            return redirect('dashboard')
+            return redirect('accounts:dashboard')
         
         return generate_payment_receipt_pdf(payment)
     
     except Payment.DoesNotExist:
         messages.error(request, 'Payment not found.')
-        return redirect('admin_dashboard')
+        return redirect('accounts:admin_dashboard')
 
 
 @login_required
@@ -1152,13 +1366,13 @@ def download_booking_confirmation_pdf(request, booking_id):
         # Check permission
         if not request.user.is_staff and booking.client.salesperson != request.user:
             messages.error(request, 'You do not have permission to view this booking.')
-            return redirect('dashboard')
+            return redirect('accounts:dashboard')
         
         return generate_booking_confirmation_pdf(booking)
     
     except Booking.DoesNotExist:
         messages.error(request, 'Booking not found.')
-        return redirect('admin_dashboard')
+        return redirect('accounts:admin_dashboard')
 
 
 @login_required
@@ -1174,10 +1388,10 @@ def download_application_form_pdf(request, application_id):
         # Check permission
         if not request.user.is_staff and application.client.salesperson != request.user:
             messages.error(request, 'You do not have permission to view this application.')
-            return redirect('dashboard')
+            return redirect('accounts:dashboard')
         
         return generate_application_form_pdf(application)
     
     except Application.DoesNotExist:
         messages.error(request, 'Application not found.')
-        return redirect('admin_dashboard')
+        return redirect('accounts:admin_dashboard')

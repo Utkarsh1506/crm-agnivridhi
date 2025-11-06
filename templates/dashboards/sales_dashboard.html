@@ -7,7 +7,7 @@
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link active" href="{% url 'sales_dashboard' %}">
+                <a class="nav-link active" href="{% url 'accounts:sales_dashboard' %}">
                     <i class="bi bi-speedometer2"></i>Dashboard
                 </a>
             </li>
@@ -17,12 +17,12 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{% url 'bookings:sales_bookings_list' %}">
                     <i class="bi bi-calendar-check"></i>My Bookings
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{% url 'applications:sales_applications_list' %}">
                     <i class="bi bi-file-earmark-text"></i>My Applications
                 </a>
             </li>
@@ -123,16 +123,22 @@
                     <tbody>
                         {% for booking in my_bookings %}
                         <tr>
-                            <td>{{ booking.booking_id }}</td>
+                            <td><a href="{% url 'bookings:booking_detail' booking.id %}">{{ booking.booking_id }}</a></td>
                             <td>{{ booking.client.company_name }}</td>
                             <td>{{ booking.service.name }}</td>
                             <td>₹{{ booking.final_amount|default:booking.amount }}</td>
-                            <td><span class="badge bg-secondary">{{ booking.get_status_display }}</span></td>
-                            <td>
-                                <a href="{% url 'record_payment' booking.id %}" class="btn btn-sm btn-success">
-                                    <i class="bi bi-cash-coin"></i> Record Payment
-                                </a>
-                            </td>
+                                                        <td><span class="badge bg-secondary">{{ booking.get_status_display }}</span></td>
+                                                        <td>
+                                                                {% if booking.payment and booking.payment.status == 'CAPTURED' %}
+                                                                    <a href="{% url 'applications:create_application_from_booking' booking.id %}" class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-file-earmark-plus"></i> Create Application
+                                                                    </a>
+                                                                {% else %}
+                                                                    <a href="{% url 'accounts:record_payment' booking.id %}" class="btn btn-sm btn-success">
+                                                                        <i class="bi bi-cash-coin"></i> Record Payment
+                                                                    </a>
+                                                                {% endif %}
+                                                        </td>
                         </tr>
                         {% endfor %}
                     </tbody>
