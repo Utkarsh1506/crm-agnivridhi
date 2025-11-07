@@ -12,19 +12,19 @@ class PaymentSerializer(serializers.ModelSerializer):
     payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     received_by_name = serializers.CharField(source='received_by.get_full_name', read_only=True, allow_null=True)
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True, allow_null=True)
+    approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True, allow_null=True)
     
     class Meta:
         model = Payment
         fields = [
             'id', 'client', 'client_name', 'booking', 'booking_id',
             'amount', 'payment_method', 'payment_method_display',
-            'transaction_id', 'reference_id', 'payment_date',
+            'reference_id', 'payment_date',
             'status', 'status_display', 'received_by', 'received_by_name',
-            'proof', 'notes', 'created_by', 'created_by_name',
-            'created_at', 'updated_at'
+            'approved_by', 'approved_by_name', 'approval_date',
+            'proof', 'notes', 'created_at'
         ]
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'approved_by', 'approval_date']
     
     def validate_amount(self, value):
         """Validate amount is positive"""

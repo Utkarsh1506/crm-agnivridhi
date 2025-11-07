@@ -12,10 +12,18 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'applications:pending_applications' %}">
+                <a class="nav-link" href="{% url 'accounts:pending_approvals' %}">
                     <i class="bi bi-bell"></i>Pending Approvals
-                    {% if pending_count > 0 %}
-                        <span class="badge bg-danger ms-2">{{ pending_count }}</span>
+                    {% if pending_count > 0 or pending_payments_count > 0 or pending_clients_count > 0 %}
+                        <span class="badge bg-danger ms-2">{{ pending_count|add:pending_payments_count|add:pending_clients_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'clients:pending_approval_clients' %}">
+                    <i class="bi bi-person-check"></i>Client Approvals
+                    {% if pending_clients_count > 0 %}
+                        <span class="badge bg-warning ms-2">{{ pending_clients_count }}</span>
                     {% endif %}
                 </a>
             </li>
@@ -76,6 +84,16 @@
     <i class="bi bi-exclamation-triangle-fill"></i>
     <strong>{{ pending_payments_count }}</strong> payment{{ pending_payments_count|pluralize }} awaiting your approval!
     <a href="#payment-approvals-section" class="alert-link">Review now</a>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<!-- Pending Client Approvals Alert -->
+{% if pending_clients_count > 0 %}
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    <i class="bi bi-person-check-fill"></i>
+    <strong>{{ pending_clients_count }}</strong> new client{{ pending_clients_count|pluralize }} awaiting your approval!
+    <a href="{% url 'clients:pending_approval_clients' %}" class="alert-link">Review now</a>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endif %}
@@ -204,8 +222,11 @@
 
 <!-- Recent Clients -->
 <div class="card" id="clients-section">
-    <div class="card-header">
-        <i class="bi bi-building"></i> Team Clients
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-building"></i> Team Clients</span>
+        <a href="{% url 'clients:create_client' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-person-plus"></i> Create New Client
+        </a>
     </div>
     <div class="card-body">
         {% if team_clients %}
@@ -297,6 +318,73 @@
             </div>
         {% else %}
             <p class="text-muted text-center">No bookings yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Team Applications -->
+<div class="card mt-4" id="applications-section">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-file-earmark-text"></i> Team Applications</span>
+        <a href="{% url 'applications:team_applications_list' %}" class="btn btn-sm btn-outline-primary">
+            View All <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+    <div class="card-body">
+        {% if team_applications %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Application ID</th>
+                            <th>Client</th>
+                            <th>Scheme</th>
+                            <th>Amount</th>
+                            <th>Sales Person</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in team_applications %}
+                        <tr {% if application.status == 'SUBMITTED' %}class="table-info"{% endif %}>
+                            <td><strong>{{ application.application_id }}</strong></td>
+                            <td>{{ application.client.company_name }}</td>
+                            <td>{{ application.scheme.name }}</td>
+                            <td>₹{{ application.applied_amount }} L</td>
+                            <td>{{ application.assigned_to.get_full_name|default:application.assigned_to.username }}</td>
+                            <td>
+                                {% if application.status == 'SUBMITTED' %}
+                                    <span class="badge bg-info">Submitted</span>
+                                {% elif application.status == 'UNDER_REVIEW' %}
+                                    <span class="badge bg-warning">Under Review</span>
+                                {% elif application.status == 'APPROVED' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif application.status == 'REJECTED' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ application.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ application.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'applications:manager_application_detail' application.pk %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                {% if application.status == 'SUBMITTED' %}
+                                    <a href="{% url 'applications:approve_application' application.pk %}" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-circle"></i> Approve
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted text-center">No applications yet</p>
         {% endif %}
     </div>
 </div>

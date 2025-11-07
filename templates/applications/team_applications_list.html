@@ -2,6 +2,55 @@
 
 {% block title %}Team Applications - Agnivridhi CRM{% endblock %}
 
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:pending_applications' %}">
+                    <i class="bi bi-bell"></i>Pending Approvals
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'applications:team_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:team_members_list' %}">
+                    <i class="bi bi-people"></i>My Team
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:team_clients_list' %}">
+                    <i class="bi bi-building"></i>Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'bookings:team_bookings_list' %}">
+                    <i class="bi bi-calendar-check"></i>Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'documents:team_documents_list' %}">
+                    <i class="bi bi-folder"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments:team_payments_list' %}">
+                    <i class="bi bi-credit-card"></i>Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -144,15 +193,13 @@
                                         </td>
                                         <td>{{ app.created_at|date:"M d, Y" }}</td>
                                         <td>
-                                            <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-outline-primary">
+                                            <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-primary">
                                                 <i class="bi bi-eye"></i> View
                                             </a>
-                                            {% if app.status == 'SUBMITTED' or app.status == 'UNDER_REVIEW' %}
-                                                {% if user.is_admin or user.is_manager %}
-                                                    <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-outline-success">
-                                                        <i class="bi bi-check-circle"></i> Review
-                                                    </a>
-                                                {% endif %}
+                                            {% if app.status == 'SUBMITTED' %}
+                                                <a href="{% url 'applications:approve_application' app.id %}" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-check-circle"></i> Approve
+                                                </a>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -220,15 +267,13 @@
                                         </td>
                                         <td>{{ app.created_at|date:"M d, Y" }}</td>
                                         <td>
-                                            <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-outline-primary">
+                                            <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-primary">
                                                 <i class="bi bi-eye"></i> View
                                             </a>
-                                            {% if app.status == 'SUBMITTED' or app.status == 'UNDER_REVIEW' %}
-                                                {% if user.is_admin or user.is_manager %}
-                                                    <a href="{% url 'applications:manager_application_detail' app.id %}" class="btn btn-sm btn-outline-success">
-                                                        <i class="bi bi-check-circle"></i> Review
-                                                    </a>
-                                                {% endif %}
+                                            {% if app.status == 'SUBMITTED' %}
+                                                <a href="{% url 'applications:approve_application' app.id %}" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-check-circle"></i> Approve
+                                                </a>
                                             {% endif %}
                                         </td>
                                     </tr>

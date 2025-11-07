@@ -353,18 +353,108 @@ def manager_dashboard(request):
         status='PENDING'
     ).distinct().count()
     
+    # Recent team applications (last 10)
+    team_applications = Application.objects.filter(
+        Q(client__assigned_manager=request.user) |
+        Q(assigned_to__manager=request.user)
+    ).select_related('client', 'scheme', 'assigned_to').order_by('-created_at').distinct()[:10]
+    
+    # Pending client approvals count
+    pending_clients_count = Client.objects.filter(
+        Q(assigned_manager=request.user) | Q(created_by__manager=request.user),
+        is_approved=False
+    ).count()
+    
     context = {
         'team_members': team_members,
         'team_clients': team_clients,
         'team_bookings': team_bookings,
+        'team_applications': team_applications,
         'total_team_members': team_members.count(),
         'total_clients': team_clients.count(),
         'total_bookings': team_bookings.count(),
         'pending_count': pending_count,
         'pending_payments_count': pending_payments_count,
+        'pending_clients_count': pending_clients_count,
     }
     
     return render(request, 'dashboards/manager_dashboard.html', context)
+
+
+@manager_required
+def pending_approvals(request):
+    """
+    Unified view for all pending approvals - Applications, Bookings (Payments), and Client Edit Requests
+    """
+    from clients.models import Client
+    from bookings.models import Booking
+    from applications.models import Application
+    from payments.models import Payment
+    from edit_requests.models import EditRequest
+    from django.db.models import Q
+    
+    user = request.user
+    
+    # 1. Pending Applications (SUBMITTED status)
+    pending_applications = Application.objects.filter(
+        client__assigned_manager=user,
+        status='SUBMITTED'
+    ).select_related('client', 'scheme', 'assigned_to').order_by('-created_at')
+    
+    # 2. Pending Booking Payments (PENDING status)
+    pending_payments = Payment.objects.filter(
+        Q(client__assigned_manager=user) | Q(received_by__manager=user),
+        status='PENDING'
+    ).select_related('booking', 'client', 'received_by').order_by('-created_at').distinct()
+    
+    # Get booking details for each payment
+    bookings_with_pending_payments = []
+    for payment in pending_payments:
+        if hasattr(payment, 'booking'):
+            bookings_with_pending_payments.append({
+                'booking': payment.booking,
+                'payment': payment
+            })
+    
+    # 3. Pending Client Edit Requests
+    pending_edit_requests = EditRequest.objects.filter(
+        status='PENDING',
+        entity_type='CLIENT'
+    ).select_related('requested_by', 'approved_by').order_by('-created_at')
+    
+    # Get client details for edit requests
+    edit_requests_with_details = []
+    for edit_request in pending_edit_requests:
+        try:
+            client = Client.objects.get(pk=edit_request.entity_id)
+            # Only show if client belongs to this manager's team
+            if client.assigned_manager == user:
+                edit_requests_with_details.append({
+                    'edit_request': edit_request,
+                    'client': client
+                })
+        except Client.DoesNotExist:
+            pass
+    
+    # 4. Pending New Client Approvals
+    pending_clients = Client.objects.filter(
+        Q(assigned_manager=user) | Q(created_by__manager=user),
+        is_approved=False
+    ).select_related('assigned_sales', 'assigned_manager', 'created_by').order_by('-created_at')
+    
+    context = {
+        'pending_applications': pending_applications,
+        'pending_applications_count': pending_applications.count(),
+        'bookings_with_pending_payments': bookings_with_pending_payments,
+        'pending_payments_count': len(bookings_with_pending_payments),
+        'edit_requests_with_details': edit_requests_with_details,
+        'pending_edit_requests_count': len(edit_requests_with_details),
+        'pending_clients': pending_clients,
+        'pending_clients_count': pending_clients.count(),
+        'total_pending': pending_applications.count() + len(bookings_with_pending_payments) + len(edit_requests_with_details) + pending_clients.count(),
+    }
+    
+    return render(request, 'accounts/pending_approvals.html', context)
 
 
 @manager_required
@@ -451,14 +541,17 @@ def sales_dashboard(request):
     from bookings.models import Booking
     from applications.models import Application
     
-    # Assigned clients
-    assigned_clients = Client.objects.filter(assigned_sales=request.user)
+    # Assigned clients (only approved ones)
+    assigned_clients = Client.objects.filter(assigned_sales=request.user, is_approved=True)
     
-    # Bookings
-    my_bookings = Booking.objects.filter(assigned_to=request.user)
+    # Bookings for assigned clients
+    my_bookings = Booking.objects.filter(client__assigned_sales=request.user).select_related('client', 'service')
     
     # Applications
-    my_applications = Application.objects.filter(assigned_to=request.user)
+    my_applications = Application.objects.filter(assigned_to=request.user).select_related('client', 'scheme')
+    
+    # Pending client approvals created by this sales person
+    pending_clients_count = Client.objects.filter(created_by=request.user, is_approved=False).count()
     
     context = {
         'assigned_clients': assigned_clients,
@@ -467,6 +560,7 @@ def sales_dashboard(request):
         'total_clients': assigned_clients.count(),
         'total_bookings': my_bookings.count(),
         'total_applications': my_applications.count(),
+        'pending_clients_count': pending_clients_count,
     }
     
     return render(request, 'dashboards/sales_dashboard.html', context)

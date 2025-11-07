@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Client - {{ client.company_name }} - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:team_clients_list' %}">
+                    <i class="bi bi-building"></i>Team Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'clients:client_detail' client.id %}">
+                    <i class="bi bi-info-circle"></i>{{ client.company_name }}
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'clients:client_detail' client.id %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Client Details
+    </a>
+</div>
+
+<h1 class="h2 mb-4"><i class="bi bi-pencil-square"></i> Edit Client - {{ client.company_name }}</h1>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> <strong>Manager Privilege:</strong> You can directly edit client details without needing approval.
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <!-- Company Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-building"></i> Company Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="company_name" class="form-label">Company Name</label>
+                    <input type="text" name="company_name" id="company_name" class="form-control" value="{{ client.company_name }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="business_type" class="form-label">Business Type</label>
+                    <select name="business_type" id="business_type" class="form-select">
+                        <option value="PROPRIETORSHIP" {% if client.business_type == 'PROPRIETORSHIP' %}selected{% endif %}>Proprietorship</option>
+                        <option value="PARTNERSHIP" {% if client.business_type == 'PARTNERSHIP' %}selected{% endif %}>Partnership</option>
+                        <option value="LLP" {% if client.business_type == 'LLP' %}selected{% endif %}>LLP</option>
+                        <option value="PRIVATE_LIMITED" {% if client.business_type == 'PRIVATE_LIMITED' %}selected{% endif %}>Private Limited</option>
+                        <option value="PUBLIC_LIMITED" {% if client.business_type == 'PUBLIC_LIMITED' %}selected{% endif %}>Public Limited</option>
+                        <option value="OTHER" {% if client.business_type == 'OTHER' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="sector" class="form-label">Sector</label>
+                    <select name="sector" id="sector" class="form-select">
+                        <option value="AGRICULTURE" {% if client.sector == 'AGRICULTURE' %}selected{% endif %}>Agriculture</option>
+                        <option value="MANUFACTURING" {% if client.sector == 'MANUFACTURING' %}selected{% endif %}>Manufacturing</option>
+                        <option value="SERVICES" {% if client.sector == 'SERVICES' %}selected{% endif %}>Services</option>
+                        <option value="RETAIL" {% if client.sector == 'RETAIL' %}selected{% endif %}>Retail</option>
+                        <option value="TECHNOLOGY" {% if client.sector == 'TECHNOLOGY' %}selected{% endif %}>Technology</option>
+                        <option value="HEALTHCARE" {% if client.sector == 'HEALTHCARE' %}selected{% endif %}>Healthcare</option>
+                        <option value="EDUCATION" {% if client.sector == 'EDUCATION' %}selected{% endif %}>Education</option>
+                        <option value="CONSTRUCTION" {% if client.sector == 'CONSTRUCTION' %}selected{% endif %}>Construction</option>
+                        <option value="OTHER" {% if client.sector == 'OTHER' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="company_age" class="form-label">Company Age (Years)</label>
+                    <input type="number" name="company_age" id="company_age" class="form-control" value="{{ client.company_age }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="registration_number" class="form-label">Registration Number</label>
+                    <input type="text" name="registration_number" id="registration_number" class="form-control" value="{{ client.registration_number }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="gst_number" class="form-label">GST Number</label>
+                    <input type="text" name="gst_number" id="gst_number" class="form-control" value="{{ client.gst_number }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="pan_number" class="form-label">PAN Number</label>
+                    <input type="text" name="pan_number" id="pan_number" class="form-control" value="{{ client.pan_number }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Address -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Address</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="address_line1" class="form-label">Address Line 1</label>
+                    <input type="text" name="address_line1" id="address_line1" class="form-control" value="{{ client.address_line1 }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="address_line2" class="form-label">Address Line 2</label>
+                    <input type="text" name="address_line2" id="address_line2" class="form-control" value="{{ client.address_line2 }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" name="city" id="city" class="form-control" value="{{ client.city }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="state" class="form-label">State</label>
+                    <input type="text" name="state" id="state" class="form-control" value="{{ client.state }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="pincode" class="form-label">Pincode</label>
+                    <input type="text" name="pincode" id="pincode" class="form-control" value="{{ client.pincode }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Financial Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-currency-rupee"></i> Financial Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="annual_turnover" class="form-label">Annual Turnover (Lakhs)</label>
+                    <input type="number" step="0.01" name="annual_turnover" id="annual_turnover" class="form-control" value="{{ client.annual_turnover }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="funding_required" class="form-label">Funding Required (Lakhs)</label>
+                    <input type="number" step="0.01" name="funding_required" id="funding_required" class="form-control" value="{{ client.funding_required }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="existing_loans" class="form-label">Existing Loans (Lakhs)</label>
+                    <input type="number" step="0.01" name="existing_loans" id="existing_loans" class="form-control" value="{{ client.existing_loans }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contact Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-telephone"></i> Contact Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="contact_person" class="form-label">Contact Person</label>
+                    <input type="text" name="contact_person" id="contact_person" class="form-control" value="{{ client.contact_person }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="contact_email" class="form-label">Contact Email</label>
+                    <input type="email" name="contact_email" id="contact_email" class="form-control" value="{{ client.contact_email }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="contact_phone" class="form-label">Contact Phone</label>
+                    <input type="text" name="contact_phone" id="contact_phone" class="form-control" value="{{ client.contact_phone }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="alternate_phone" class="form-label">Alternate Phone</label>
+                    <input type="text" name="alternate_phone" id="alternate_phone" class="form-control" value="{{ client.alternate_phone }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-info-circle"></i> Additional Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="business_description" class="form-label">Business Description</label>
+                <textarea name="business_description" id="business_description" class="form-control" rows="3">{{ client.business_description }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label for="funding_purpose" class="form-label">Funding Purpose</label>
+                <textarea name="funding_purpose" id="funding_purpose" class="form-control" rows="3">{{ client.funding_purpose }}</textarea>
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <a href="{% url 'clients:client_detail' client.id %}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Save Changes
+        </button>
+    </div>
+</form>
+{% endblock %}

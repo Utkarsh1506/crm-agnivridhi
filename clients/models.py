@@ -203,6 +203,33 @@ class Client(models.Model):
         help_text=_('Current client status')
     )
     
+    # Approval fields
+    is_approved = models.BooleanField(
+        default=True,
+        help_text=_('Whether client is approved by manager')
+    )
+    
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_clients',
+        help_text=_('Manager who approved this client')
+    )
+    
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_('Date when client was approved')
+    )
+    
+    rejection_reason = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_('Reason for rejection if not approved')
+    )
+    
     # Additional Information
     business_description = models.TextField(
         blank=True,
@@ -289,3 +316,21 @@ class Client(models.Model):
             booking__client=self,
             status__in=['AUTHORIZED', 'CAPTURED']
         ).aggregate(models.Sum('amount'))['amount__sum'] or 0
+    
+    def approve(self, manager_user):
+        """Approve the client"""
+        from django.utils import timezone
+        self.is_approved = True
+        self.approved_by = manager_user
+        self.approved_at = timezone.now()
+        self.rejection_reason = None
+        self.save()
+    
+    def reject(self, manager_user, reason):
+        """Reject the client"""
+        from django.utils import timezone
+        self.is_approved = False
+        self.approved_by = manager_user
+        self.approved_at = timezone.now()
+        self.rejection_reason = reason
+        self.save()

@@ -13,11 +13,11 @@ def booking_list(request):
 	"""Deprecated generic endpoint: redirect to role-specific page for privacy."""
 	user = request.user
 	if getattr(user, 'is_client', False):
-		return redirect('client_bookings_list')
+		return redirect('bookings:client_bookings_list')
 	elif getattr(user, 'role', None) == 'SALES':
-		return redirect('sales_bookings_list')
+		return redirect('bookings:sales_bookings_list')
 	elif getattr(user, 'role', None) in ['MANAGER', 'ADMIN']:
-		return redirect('team_bookings_list')
+		return redirect('bookings:team_bookings_list')
 	return redirect('dashboard')
 
 
@@ -31,9 +31,17 @@ def client_bookings_list(request):
 
 @sales_required
 def sales_bookings_list(request):
-	"""Sales-only: list bookings assigned to this sales user"""
-	bookings = Booking.objects.filter(assigned_to=request.user).order_by('-booking_date')
-	return render(request, 'bookings/booking_list.html', {'bookings': bookings})
+	"""Sales-only: list bookings for clients assigned to this sales user"""
+	bookings = Booking.objects.filter(
+		client__assigned_sales=request.user
+	).select_related('client', 'service', 'assigned_to').order_by('-booking_date')
+	
+	context = {
+		'bookings': bookings,
+		'total_bookings': bookings.count(),
+		'page_title': 'Total Bookings'
+	}
+	return render(request, 'bookings/sales_booking_list.html', context)
 
 
 @login_required
@@ -44,7 +52,7 @@ def create_scheme_documentation_booking(request, scheme_id: int):
 	"""
 	if not getattr(request.user, 'is_client', False):
 		messages.error(request, 'Only clients can request documentation service.')
-		return redirect('scheme_list')
+		return redirect('schemes:scheme_list')
 
 	scheme = get_object_or_404(Scheme, pk=scheme_id)
 	client = request.user.client_profile
@@ -138,7 +146,7 @@ def booking_detail(request, id: int):
 
 	Access rules:
 	- Client: only their own bookings
-	- Sales: only bookings assigned to them
+	- Sales: bookings for their assigned clients OR assigned to them
 	- Manager: bookings for clients assigned to them OR assigned_to under their team
 	- Admin/Superuser: allowed
 	"""
@@ -156,7 +164,11 @@ def booking_detail(request, id: int):
 		elif getattr(user, 'is_client', False):
 			allowed = getattr(booking.client, 'user_id', None) == user.id
 		elif getattr(user, 'role', None) == 'SALES':
-			allowed = getattr(booking, 'assigned_to_id', None) == user.id
+			# Sales can view bookings for their assigned clients OR bookings assigned to them
+			allowed = (
+				getattr(booking.client, 'assigned_sales_id', None) == user.id or
+				getattr(booking, 'assigned_to_id', None) == user.id
+			)
 		elif getattr(user, 'role', None) == 'MANAGER':
 			# Manager via client assignment or team sales assignment
 			allowed = (

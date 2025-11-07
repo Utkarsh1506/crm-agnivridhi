@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block sidebar %}
+{% if user.role == 'SALES' %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:sales_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'clients:sales_clients_list' %}">
+                    <i class="bi bi-people"></i> My Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'bookings:sales_bookings_list' %}">
+                    <i class="bi bi-calendar-check"></i> My Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:sales_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i> Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments:sales_payments_list' %}">
+                    <i class="bi bi-credit-card"></i> Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% elif user.role == 'MANAGER' %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'clients:pending_approval_clients' %}">
+                    <i class="bi bi-clock-history"></i> Pending Approvals
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'clients:manager_clients_list' %}">
+                    <i class="bi bi-people"></i> Team Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:team_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i> Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:team_members_list' %}">
+                    <i class="bi bi-people-fill"></i> My Team
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-person-plus"></i> {{ page_title }}</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Create Client</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    {% if user.role == 'SALES' %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 
+        <strong>Note:</strong> New clients created by you will require manager approval before they can access the system.
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-building"></i> Client Information</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <!-- User Account Section -->
+                <h6 class="border-bottom pb-2 mb-3"><i class="bi bi-person-circle"></i> Contact Person Details</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                            First Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div class="text-danger">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                            Last Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div class="text-danger">{{ form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">
+                            Email <span class="text-danger">*</span>
+                        </label>
+                        {{ form.email }}
+                        <div class="form-text">Will be used for login credentials</div>
+                        {% if form.email.errors %}
+                        <div class="text-danger">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.phone.id_for_label }}" class="form-label">
+                            Phone <span class="text-danger">*</span>
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                        <div class="text-danger">{{ form.phone.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Company Information Section -->
+                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-building"></i> Company Information</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.company_name.id_for_label }}" class="form-label">
+                            Company Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.company_name }}
+                        {% if form.company_name.errors %}
+                        <div class="text-danger">{{ form.company_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="{{ form.business_type.id_for_label }}" class="form-label">
+                            Business Type <span class="text-danger">*</span>
+                        </label>
+                        {{ form.business_type }}
+                        {% if form.business_type.errors %}
+                        <div class="text-danger">{{ form.business_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="{{ form.sector.id_for_label }}" class="form-label">
+                            Sector <span class="text-danger">*</span>
+                        </label>
+                        {{ form.sector }}
+                        {% if form.sector.errors %}
+                        <div class="text-danger">{{ form.sector.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="{{ form.company_age.id_for_label }}" class="form-label">
+                            Company Age (Years) <span class="text-danger">*</span>
+                        </label>
+                        {{ form.company_age }}
+                        {% if form.company_age.errors %}
+                        <div class="text-danger">{{ form.company_age.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="{{ form.registration_number.id_for_label }}" class="form-label">
+                            Registration Number
+                        </label>
+                        {{ form.registration_number }}
+                        {% if form.registration_number.errors %}
+                        <div class="text-danger">{{ form.registration_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="{{ form.gst_number.id_for_label }}" class="form-label">
+                            GST Number
+                        </label>
+                        {{ form.gst_number }}
+                        {% if form.gst_number.errors %}
+                        <div class="text-danger">{{ form.gst_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="{{ form.pan_number.id_for_label }}" class="form-label">
+                            PAN Number
+                        </label>
+                        {{ form.pan_number }}
+                        {% if form.pan_number.errors %}
+                        <div class="text-danger">{{ form.pan_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Address Section -->
+                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-geo-alt"></i> Address</h6>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label for="{{ form.registered_address.id_for_label }}" class="form-label">
+                            Registered Address <span class="text-danger">*</span>
+                        </label>
+                        {{ form.registered_address }}
+                        {% if form.registered_address.errors %}
+                        <div class="text-danger">{{ form.registered_address.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.city.id_for_label }}" class="form-label">
+                            City <span class="text-danger">*</span>
+                        </label>
+                        {{ form.city }}
+                        {% if form.city.errors %}
+                        <div class="text-danger">{{ form.city.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.state.id_for_label }}" class="form-label">
+                            State <span class="text-danger">*</span>
+                        </label>
+                        {{ form.state }}
+                        {% if form.state.errors %}
+                        <div class="text-danger">{{ form.state.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.pincode.id_for_label }}" class="form-label">
+                            Pincode <span class="text-danger">*</span>
+                        </label>
+                        {{ form.pincode }}
+                        {% if form.pincode.errors %}
+                        <div class="text-danger">{{ form.pincode.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.website.id_for_label }}" class="form-label">
+                            Website
+                        </label>
+                        {{ form.website }}
+                        {% if form.website.errors %}
+                        <div class="text-danger">{{ form.website.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Financial Information -->
+                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-currency-rupee"></i> Financial Information</h6>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.annual_turnover.id_for_label }}" class="form-label">
+                            Annual Turnover (₹) <span class="text-danger">*</span>
+                        </label>
+                        {{ form.annual_turnover }}
+                        {% if form.annual_turnover.errors %}
+                        <div class="text-danger">{{ form.annual_turnover.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.funding_required.id_for_label }}" class="form-label">
+                            Funding Required (₹ Lakhs) <span class="text-danger">*</span>
+                        </label>
+                        {{ form.funding_required }}
+                        {% if form.funding_required.errors %}
+                        <div class="text-danger">{{ form.funding_required.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.existing_loans.id_for_label }}" class="form-label">
+                            Existing Loans (₹ Lakhs)
+                        </label>
+                        {{ form.existing_loans }}
+                        {% if form.existing_loans.errors %}
+                        <div class="text-danger">{{ form.existing_loans.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Additional Details -->
+                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-card-text"></i> Additional Details</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.business_description.id_for_label }}" class="form-label">
+                            Business Description
+                        </label>
+                        {{ form.business_description }}
+                        {% if form.business_description.errors %}
+                        <div class="text-danger">{{ form.business_description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.funding_purpose.id_for_label }}" class="form-label">
+                            Funding Purpose
+                        </label>
+                        {{ form.funding_purpose }}
+                        {% if form.funding_purpose.errors %}
+                        <div class="text-danger">{{ form.funding_purpose.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Create Client
+                        </button>
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

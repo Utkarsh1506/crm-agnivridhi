@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Reject Edit Request - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'edit_requests:manager_edit_requests' %}">
+                    <i class="bi bi-pencil-square"></i>Edit Requests
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'edit_requests:manager_edit_requests' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Edit Requests
+    </a>
+</div>
+
+<h1 class="h2 mb-4"><i class="bi bi-x-circle text-danger"></i> Reject Edit Request</h1>
+
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Edit Request Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <p><strong>Client:</strong> 
+                    {% if client %}
+                        <a href="{% url 'clients:client_detail' client.id %}">{{ client.company_name }}</a>
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+                <p><strong>Field to Edit:</strong> <span class="badge bg-secondary">{{ edit_request.field_name }}</span></p>
+                <p><strong>Requested By:</strong> {{ edit_request.requested_by.get_full_name|default:edit_request.requested_by.username }}</p>
+                <p><strong>Request Date:</strong> {{ edit_request.created_at|date:"M d, Y H:i" }}</p>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-light">
+                    <p class="mb-2"><strong>Current Value:</strong></p>
+                    <p class="text-muted">{{ edit_request.current_value }}</p>
+                </div>
+                <div class="alert alert-primary">
+                    <p class="mb-2"><strong>Requested New Value:</strong></p>
+                    <p><strong>{{ edit_request.requested_value }}</strong></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info">
+            <strong>Reason for Change:</strong><br>
+            {{ edit_request.reason }}
+        </div>
+    </div>
+</div>
+
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Reject This Request</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> <strong>Note:</strong> Rejecting this request will not make any changes to the client record. The sales employee will be notified.
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="reason" class="form-label"><strong>Reason for Rejection</strong> <span class="text-danger">*</span></label>
+                <textarea name="reason" id="reason" class="form-control" rows="4" required placeholder="Explain why you are rejecting this edit request"></textarea>
+                <small class="text-muted">This reason will be shared with the sales employee who made the request</small>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'edit_requests:manager_edit_requests' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Go Back
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-x-circle"></i> Reject Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

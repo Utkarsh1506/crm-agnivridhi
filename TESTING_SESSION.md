@@ -200,18 +200,204 @@
 - [ ] PDF Generation
 
 ### Priority 3 (WORKFLOW TESTING):
-- [ ] Create new client (Sales → Manager approval)
+- [ ] **Create new client (Sales → Manager approval)** ⭐ NEW FEATURE
 - [ ] Record manual payment (Sales → Manager approval)
 - [ ] Create application
 - [ ] Edit request workflow
 
 ---
 
+## 🔧 TEST 9: SALES DASHBOARD - ALL NAVLINKS ⭐ **UPDATED**
+
+### **Context**: Fixed middleware blocking + URL namespace issues
+
+#### **Issue 1 - NoReverseMatch Fixed**:
+- ✅ Added namespace prefixes to redirects in bookings/views.py
+- ✅ Added namespace prefixes to redirects in payments/views.py
+
+#### **Issue 2 - "Unauthorized" Error Fixed**:
+- ✅ Added "clients" namespace to SALES role in constants.py
+- ✅ All roles now have proper namespace access
+
+### **Part A: Test All Navigation Links**
+
+#### Steps:
+1. **Restart server first** (middleware changes need reload):
+   ```powershell
+   # Press Ctrl+C in terminal running server
+   python manage.py runserver
+   ```
+
+2. Login as `sales1` / `test123`
+3. Click each navigation link in order:
+
+   - [ ] **Dashboard** → Should load sales dashboard
+   - [ ] **My Clients** → Should open `/clients/my-clients/`
+   - [ ] **Pending Approvals** → Should open `/clients/pending-approval/`
+   - [ ] **Total Bookings** → Should open `/bookings/sales/`
+   - [ ] **My Applications** → Should open `/applications/sales/`
+   - [ ] **Payments** → Should open `/payments/sales/`
+
+#### Expected Results:
+- ✅ No "NoReverseMatch" errors
+- ✅ No "Unauthorized" errors
+- ✅ All pages load successfully
+- ✅ Each page shows sales-specific data
+
+---
+
+### **Part B: Test Data Isolation**
+
+#### Steps:
+1. On **My Clients** page:
+   - Should see ONLY clients assigned to sales1
+   - Should see "Create New Client" button
+
+2. On **Pending Approvals** page:
+   - Should see ONLY clients created by sales1
+   - Should see approval status for each
+
+3. On **Total Bookings** page:
+   - Should see ONLY bookings for sales1's assigned clients
+   - Click "View" button → Should open booking detail
+
+4. On **My Applications** page:
+   - Should see ONLY applications assigned to sales1
+   - No template syntax errors
+
+5. On **Payments** page:
+   - Should see ONLY payments for sales1's clients
+   - Professional layout with sales sidebar
+
+#### Expected Results:
+- ✅ Each page shows ONLY sales1's data
+- ✅ No data from other sales persons visible
+- ✅ View buttons work correctly
+- ✅ No permission errors
+
+---
+
+### **Part C: Test Client Creation Workflow**
+
+#### Steps:
+1. From sales dashboard, click "Create New Client"
+2. Fill out client form with test data
+3. Submit form
+
+#### Expected Results:
+- ✅ Form submits successfully
+- ✅ Redirects to pending approvals page
+- ✅ New client appears in pending list
+- ✅ Status shows "Awaiting Approval"
+
+---
+
+## 🆕 TEST 8: CLIENT CREATION & APPROVAL WORKFLOW
+
+### **Part A: Sales Creates Client (Needs Approval)**
+
+#### Steps:
+1. Login as `sales1` / `test123`
+2. Go to Sales Dashboard
+3. Click **"Create New Client"** button
+4. Fill out the form:
+   - **Contact Person**: John Doe
+   - **Contact Email**: john.doe@testcompany.com
+   - **Contact Phone**: +91 9876543210
+   - **Company Name**: Test Manufacturing Ltd
+   - **Business Type**: Pvt Ltd Company
+   - **Sector**: Manufacturing
+   - **Company Age**: 5
+   - **Address Line 1**: 123 Industrial Area
+   - **City**: Mumbai
+   - **State**: Maharashtra
+   - **Pincode**: 400001
+   - **Annual Turnover**: 5000000
+   - **Funding Required**: 2000000
+   - **Existing Loans**: 500000
+5. Submit the form
+
+#### Expected Results:
+- ✅ Success message: "Client created successfully! Waiting for manager approval."
+- ✅ Redirected to Pending Approvals page
+- ✅ New client appears in pending list
+- ✅ Client shows "Awaiting Approval" status
+
+---
+
+### **Part B: Manager Reviews and Approves**
+
+#### Steps:
+1. Logout from sales1
+2. Login as `manager1` / `test123`
+3. Should see alert: "1 new client awaiting your approval"
+4. Click "Client Approvals" in sidebar
+5. See the new client in pending list
+6. Click **"Review"** button
+7. Review all client details
+8. Select **"Approve"** radio button
+9. Click **"Submit Decision"**
+
+#### Expected Results:
+- ✅ Success message: "Client 'Test Manufacturing Ltd' has been approved!"
+- ✅ Client removed from pending list
+- ✅ Client now appears in approved clients
+- ✅ Client user account activated
+
+---
+
+### **Part C: Test Manager Direct Creation**
+
+#### Steps:
+1. Still logged in as `manager1`
+2. Click **"Create New Client"** from dashboard
+3. Fill out form with different data:
+   - **Contact Person**: Jane Smith
+   - **Contact Email**: jane.smith@anothercompany.com
+   - **Company Name**: Direct Approval Corp
+   - (fill other required fields)
+4. Submit
+
+#### Expected Results:
+- ✅ Success message: "Client created and approved successfully!"
+- ✅ No approval needed (manager privilege)
+- ✅ Client immediately active
+- ✅ Appears in approved clients list
+
+---
+
+### **Part D: Test Rejection Workflow**
+
+#### Steps:
+1. Login as `sales1`
+2. Create another new client (use different email)
+3. Logout, login as `manager1`
+4. Go to Pending Approvals
+5. Click **"Review"** on new client
+6. Select **"Reject"** radio button
+7. Enter rejection reason: "Incomplete documentation"
+8. Submit
+
+#### Expected Results:
+- ✅ Warning message: "Client rejected"
+- ✅ Client marked as rejected
+- ✅ Rejection reason saved
+- ✅ Sales person can see rejection status (TODO: notification)
+
+---
+
 ## 📝 TEST RESULTS LOG
 
+### ✅ Server Status
+- Status: ✅ RUNNING
+- URL: http://127.0.0.1:8000/
+- Time: November 7, 2025 - 11:25 AM
+- Django Version: 5.2.7
+- System Check: 0 issues
+
 ### Test 1: Client Dashboard
-- Status: ⏳ PENDING
-- Notes: 
+- Status: ⏳ IN PROGRESS
+- Notes: Browser open at login page - ready to test
 
 ### Test 2: Admin Dashboard
 - Status: ⏳ PENDING

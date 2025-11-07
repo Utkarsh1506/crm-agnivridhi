@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Edit - {{ client.company_name }} - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:sales_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'clients:sales_clients_list' %}">
+                    <i class="bi bi-people"></i>My Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'clients:client_detail' client.id %}">
+                    <i class="bi bi-building"></i>{{ client.company_name }}
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'clients:client_detail' client.id %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Client Details
+    </a>
+</div>
+
+<h1 class="h2 mb-4"><i class="bi bi-pencil-square"></i> Request Edit for {{ client.company_name }}</h1>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> <strong>Note:</strong> Any changes you request will need to be approved by your manager before they are applied.
+</div>
+
+<!-- Pending Requests -->
+{% if pending_requests %}
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Your Pending Edit Requests</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Current Value</th>
+                        <th>Requested Value</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in pending_requests %}
+                    <tr>
+                        <td><strong>{{ req.field_name }}</strong></td>
+                        <td>{{ req.current_value|truncatewords:10 }}</td>
+                        <td><strong class="text-primary">{{ req.requested_value|truncatewords:10 }}</strong></td>
+                        <td>{{ req.reason|truncatewords:10 }}</td>
+                        <td>{{ req.created_at|date:"M d, Y" }}</td>
+                        <td><span class="badge bg-warning">Pending</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Request Edit Form -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Submit New Edit Request</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="field_name" class="form-label"><strong>Field to Edit</strong> <span class="text-danger">*</span></label>
+                <select name="field_name" id="field_name" class="form-select" required onchange="updateCurrentValue()">
+                    <option value="">-- Select a field --</option>
+                    {% for field_key, field_label in editable_fields %}
+                    <option value="{{ field_key }}">{{ field_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="current_value_display" class="form-label"><strong>Current Value</strong></label>
+                <input type="text" id="current_value_display" class="form-control" readonly disabled>
+                <small class="text-muted">This is the current value in the system</small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="requested_value" class="form-label"><strong>Requested New Value</strong> <span class="text-danger">*</span></label>
+                <textarea name="requested_value" id="requested_value" class="form-control" rows="3" required placeholder="Enter the new value you want to update"></textarea>
+                <small class="text-muted">Enter the value you want this field to be changed to</small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="reason" class="form-label"><strong>Reason for Change</strong> <span class="text-danger">*</span></label>
+                <textarea name="reason" id="reason" class="form-control" rows="3" required placeholder="Explain why this change is needed"></textarea>
+                <small class="text-muted">Provide a clear explanation for your manager</small>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'clients:client_detail' client.id %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send"></i> Submit Edit Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Client Current Values (for reference) -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Current Client Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Company Name:</strong> <span id="val_company_name">{{ client.company_name }}</span></p>
+                <p><strong>Business Type:</strong> <span id="val_business_type">{{ client.get_business_type_display }}</span></p>
+                <p><strong>Sector:</strong> <span id="val_sector">{{ client.get_sector_display }}</span></p>
+                <p><strong>Company Age:</strong> <span id="val_company_age">{{ client.company_age }} years</span></p>
+                <p><strong>Registration Number:</strong> <span id="val_registration_number">{{ client.registration_number|default:"-" }}</span></p>
+                <p><strong>GST Number:</strong> <span id="val_gst_number">{{ client.gst_number|default:"-" }}</span></p>
+                <p><strong>PAN Number:</strong> <span id="val_pan_number">{{ client.pan_number|default:"-" }}</span></p>
+                <p><strong>Address:</strong> <span id="val_address_line1">{{ client.address_line1 }}</span></p>
+                <p><strong>Address Line 2:</strong> <span id="val_address_line2">{{ client.address_line2|default:"-" }}</span></p>
+                <p><strong>City:</strong> <span id="val_city">{{ client.city }}</span></p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>State:</strong> <span id="val_state">{{ client.state }}</span></p>
+                <p><strong>Pincode:</strong> <span id="val_pincode">{{ client.pincode }}</span></p>
+                <p><strong>Annual Turnover:</strong> <span id="val_annual_turnover">₹{{ client.annual_turnover }} lakhs</span></p>
+                <p><strong>Funding Required:</strong> <span id="val_funding_required">₹{{ client.funding_required }} lakhs</span></p>
+                <p><strong>Existing Loans:</strong> <span id="val_existing_loans">₹{{ client.existing_loans|default:"0" }} lakhs</span></p>
+                <p><strong>Contact Person:</strong> <span id="val_contact_person">{{ client.contact_person }}</span></p>
+                <p><strong>Contact Email:</strong> <span id="val_contact_email">{{ client.contact_email }}</span></p>
+                <p><strong>Contact Phone:</strong> <span id="val_contact_phone">{{ client.contact_phone }}</span></p>
+                <p><strong>Alternate Phone:</strong> <span id="val_alternate_phone">{{ client.alternate_phone|default:"-" }}</span></p>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <p><strong>Business Description:</strong> <span id="val_business_description">{{ client.business_description|default:"-" }}</span></p>
+                <p><strong>Funding Purpose:</strong> <span id="val_funding_purpose">{{ client.funding_purpose|default:"-" }}</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateCurrentValue() {
+    const fieldName = document.getElementById('field_name').value;
+    const currentValueDisplay = document.getElementById('current_value_display');
+    
+    if (fieldName) {
+        const valueElement = document.getElementById('val_' + fieldName);
+        if (valueElement) {
+            currentValueDisplay.value = valueElement.textContent.trim();
+        } else {
+            currentValueDisplay.value = 'N/A';
+        }
+    } else {
+        currentValueDisplay.value = '';
+    }
+}
+</script>
+{% endblock %}

@@ -12,12 +12,12 @@ def application_list(request):
     """Deprecated generic endpoint: redirect to role-specific page for privacy."""
     user = request.user
     if getattr(user, 'is_client', False):
-        return redirect('client_applications_list')
+        return redirect('applications:client_applications_list')
     elif getattr(user, 'role', None) == 'SALES':
-        return redirect('sales_applications_list')
+        return redirect('applications:sales_applications_list')
     elif getattr(user, 'role', None) in ['MANAGER', 'ADMIN']:
-        return redirect('team_applications_list')
-    return redirect('dashboard')
+        return redirect('applications:team_applications_list')
+    return redirect('accounts:dashboard')
 
 
 @client_required
@@ -30,7 +30,19 @@ def client_applications_list(request):
 @sales_required
 def sales_applications_list(request):
     applications = Application.objects.filter(assigned_to=request.user).order_by('-created_at')
-    return render(request, 'applications/application_list.html', {'applications': applications})
+    
+    # Calculate status counts
+    submitted_count = applications.filter(status='SUBMITTED').count()
+    approved_count = applications.filter(status='APPROVED').count()
+    rejected_count = applications.filter(status='REJECTED').count()
+    
+    context = {
+        'applications': applications,
+        'submitted_count': submitted_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+    }
+    return render(request, 'applications/sales_application_list.html', context)
 
 
 @staff_required
@@ -45,7 +57,7 @@ def create_application_from_booking(request, booking_id: int):
     payment = getattr(booking, 'payment', None)
     if not payment or payment.status != 'CAPTURED':
         messages.error(request, 'Payment must be approved before creating an application.')
-        return redirect('sales_dashboard')
+        return redirect('accounts:sales_dashboard')
 
     # Pick a scheme id from internal notes if available
     scheme = None
@@ -64,7 +76,7 @@ def create_application_from_booking(request, booking_id: int):
 
         if not scheme:
             messages.error(request, 'Scheme missing. Please select a scheme.')
-            return redirect('create_application_from_booking', booking_id=booking.id)
+            return redirect('applications:create_application_from_booking', booking_id=booking.id)
 
         try:
             # Create application referencing booking and assign to current sales
@@ -83,7 +95,7 @@ def create_application_from_booking(request, booking_id: int):
                 _notify_manager_for_approval(application, client.assigned_manager)
 
             messages.success(request, f'Application created from booking {booking.booking_id}.')
-            return redirect('application_detail', pk=application.pk)
+            return redirect('applications:application_detail', pk=application.pk)
         except Exception as e:
             messages.error(request, f'Error creating application: {str(e)}')
 
@@ -99,13 +111,17 @@ def team_applications_list(request):
     user = request.user
     
     # Get all clients assigned to this manager's team
-    team_clients = Client.objects.filter(assigned_manager=user).select_related('assigned_sales', 'assigned_manager')
+    # Include both: clients directly assigned to manager AND clients assigned to sales employees under this manager
+    from django.db.models import Q
+    team_clients = Client.objects.filter(
+        Q(assigned_manager=user) | Q(assigned_sales__manager=user)
+    ).select_related('assigned_sales', 'assigned_manager').distinct()
     
     # Get applications for these clients
     applications = Application.objects.filter(client__in=team_clients).select_related('client', 'client__assigned_sales', 'scheme', 'assigned_to').order_by('-created_at')
     
     # Statistics
-    from django.db.models import Sum, Count, Q
+    from django.db.models import Sum, Count
     stats = applications.aggregate(
         total_amount=Sum('applied_amount'),
         submitted_count=Count('id', filter=Q(status='SUBMITTED')),
@@ -140,14 +156,14 @@ def application_detail(request, pk):
     """Deprecated generic endpoint: redirect to role-specific detail page."""
     user = request.user
     if getattr(user, 'is_client', False):
-        return redirect('client_application_detail', pk=pk)
+        return redirect('applications:client_application_detail', pk=pk)
     elif getattr(user, 'role', None) == 'SALES':
-        return redirect('sales_application_detail', pk=pk)
+        return redirect('applications:sales_application_detail', pk=pk)
     elif getattr(user, 'role', None) == 'MANAGER':
-        return redirect('manager_application_detail', pk=pk)
+        return redirect('applications:manager_application_detail', pk=pk)
     elif getattr(user, 'role', None) == 'ADMIN':
-        return redirect('owner_application_detail', pk=pk)
-    return redirect('dashboard')
+        return redirect('applications:owner_application_detail', pk=pk)
+    return redirect('accounts:dashboard')
 
 
 @client_required
@@ -158,7 +174,7 @@ def client_application_detail(request, pk):
     # Check permissions - client can only view their own applications
     if application.client.user != request.user:
         messages.error(request, "You don't have permission to view this application.")
-        return redirect('client_applications_list')
+        return redirect('applications:client_applications_list')
     
     context = {
         'application': application,
@@ -175,11 +191,35 @@ def sales_application_detail(request, pk):
     # Check permissions - sales can view applications assigned to them
     if application.assigned_to != request.user:
         messages.error(request, "You don't have permission to view this application.")
-        return redirect('sales_applications_list')
+        return redirect('applications:sales_applications_list')
+    
+    # Handle submit action
+    if request.method == 'POST' and 'submit_application' in request.POST:
+        if application.status == 'DRAFT':
+            application.status = 'SUBMITTED'
+            application.submission_date = timezone.now().date()
+            application.save()
+            
+            # Add to timeline
+            timeline = application.timeline or []
+            timeline.append({
+                'status': 'SUBMITTED',
+                'date': str(timezone.now()),
+                'by': request.user.get_full_name() or request.user.username,
+                'note': 'Application submitted for manager approval'
+            })
+            application.timeline = timeline
+            application.save()
+            
+            messages.success(request, f'Application {application.application_id} has been submitted for manager approval.')
+            return redirect('applications:sales_application_detail', pk=pk)
+        else:
+            messages.warning(request, 'Only draft applications can be submitted.')
     
     context = {
         'application': application,
         'user_role': 'sales',
+        'can_submit': application.status == 'DRAFT',  # Can submit only draft applications
     }
     return render(request, 'applications/application_detail.html', context)
 
@@ -192,7 +232,7 @@ def manager_application_detail(request, pk):
     # Check permissions - manager can view applications from their team clients
     if application.client.assigned_manager != request.user:
         messages.error(request, "You don't have permission to view this application.")
-        return redirect('team_applications_list')
+        return redirect('applications:team_applications_list')
     
     context = {
         'application': application,
@@ -220,7 +260,7 @@ def create_application(request, scheme_id):
     """Deprecated: Always redirect to booking-first flow."""
     scheme = get_object_or_404(Scheme, pk=scheme_id)
     messages.warning(request, 'Applications are created after documentation booking and payment approval.')
-    return redirect('create_documentation_booking', scheme_id=scheme.pk)
+    return redirect('bookings:create_documentation_booking', scheme_id=scheme.pk)
 
 
 def _notify_sales_employee(application, sales_user):
@@ -284,68 +324,120 @@ Please review and approve/reject this application in the system.
 
 @login_required
 def approve_application(request, pk):
-    """Manager/Admin approves an application and notifies sales and client"""
+    """Manager/Admin approves an application"""
     application = get_object_or_404(Application, pk=pk)
 
     # Permission check
     user = request.user
-    if not (user.is_admin or user.is_manager):
+    if user.role not in ['MANAGER', 'ADMIN', 'OWNER']:
         messages.error(request, "You don't have permission to approve applications.")
-        return redirect('application_detail', pk=pk)
-
+        return redirect('applications:application_detail', pk=pk)
+    
+    # Manager can only approve applications from their team
+    if user.role == 'MANAGER':
+        if application.client.assigned_manager != user and application.client.assigned_sales.manager != user:
+            messages.error(request, "You can only approve applications from your team.")
+            return redirect('applications:team_applications_list')
+    
     if request.method == 'POST':
+        if application.status != 'SUBMITTED':
+            messages.warning(request, 'Only submitted applications can be approved.')
+            return redirect('applications:manager_application_detail', pk=pk)
+        
+        # Get approved amount from form (optional)
         approved_amount = request.POST.get('approved_amount')
-        try:
-            # Update application
-            if approved_amount:
-                application.approved_amount = approved_amount
-            application.status = Application.Status.APPROVED
-            application.approval_date = timezone.now().date()
-            application.save()
-
-            # Notify sales and client
-            sales_user = application.client.assigned_sales
-            if sales_user:
-                _notify_sales_on_approval(application, sales_user)
-            _notify_client_on_approval(application)
-
-            messages.success(request, f"Application {application.application_id} approved.")
-        except Exception as e:
-            messages.error(request, f"Error approving application: {str(e)}")
-
-    return redirect('application_detail', pk=pk)
+        if approved_amount:
+            try:
+                application.approved_amount = float(approved_amount)
+            except ValueError:
+                messages.error(request, 'Invalid approved amount.')
+                return redirect('applications:approve_application', pk=pk)
+        else:
+            # If no approved amount specified, use applied amount
+            application.approved_amount = application.applied_amount
+        
+        # Update application status
+        application.status = 'APPROVED'
+        application.approval_date = timezone.now().date()
+        application.save()
+        
+        # Add to timeline
+        timeline = application.timeline or []
+        timeline.append({
+            'status': 'APPROVED',
+            'date': str(timezone.now()),
+            'by': user.get_full_name() or user.username,
+            'note': f'Application approved by {user.get_role_display()}. Approved amount: ₹{application.approved_amount} lakhs'
+        })
+        application.timeline = timeline
+        application.save()
+        
+        messages.success(request, f'Application {application.application_id} has been approved for ₹{application.approved_amount} lakhs!')
+        
+        # TODO: Send notification to sales and client
+        
+        return redirect('applications:manager_application_detail', pk=pk)
+    
+    # GET request - show confirmation form
+    context = {
+        'application': application,
+        'user_role': 'manager' if user.role == 'MANAGER' else 'admin',
+    }
+    return render(request, 'applications/approve_application.html', context)
 
 
 @login_required
 def reject_application(request, pk):
-    """Manager/Admin rejects an application and notifies sales and client"""
+    """Manager/Admin rejects an application"""
     application = get_object_or_404(Application, pk=pk)
 
     # Permission check
     user = request.user
-    if not (user.is_admin or user.is_manager):
+    if user.role not in ['MANAGER', 'ADMIN', 'OWNER']:
         messages.error(request, "You don't have permission to reject applications.")
-        return redirect('application_detail', pk=pk)
+        return redirect('applications:application_detail', pk=pk)
+    
+    # Manager can only reject applications from their team
+    if user.role == 'MANAGER':
+        if application.client.assigned_manager != user:
+            messages.error(request, "You can only reject applications from your team.")
+            return redirect('applications:team_applications_list')
 
     if request.method == 'POST':
+        if application.status != 'SUBMITTED':
+            messages.warning(request, 'Only submitted applications can be rejected.')
+            return redirect('applications:manager_application_detail', pk=pk)
+        
         reason = request.POST.get('rejection_reason', '').strip()
-        try:
-            application.status = Application.Status.REJECTED
-            application.rejection_reason = reason or 'Not specified'
-            application.rejection_date = timezone.now().date()
-            application.save()
-
-            # Notify sales and client
-            sales_user = application.client.assigned_sales
-            if sales_user:
-                _notify_sales_on_rejection(application, sales_user)
-            _notify_client_on_rejection(application)
-
-            messages.success(request, f"Application {application.application_id} rejected.")
-        except Exception as e:
-            messages.error(request, f"Error rejecting application: {str(e)}")
-
-    return redirect('application_detail', pk=pk)
+        if not reason:
+            messages.error(request, 'Please provide a reason for rejection.')
+            return redirect('applications:manager_application_detail', pk=pk)
+        
+        # Update application status
+        application.status = 'REJECTED'
+        application.rejection_reason = reason
+        application.rejection_date = timezone.now().date()
+        application.save()
+        
+        # Add to timeline
+        timeline = application.timeline or []
+        timeline.append({
+            'status': 'REJECTED',
+            'date': str(timezone.now()),
+            'by': user.get_full_name() or user.username,
+            'note': f'Application rejected by {user.get_role_display()}: {reason}'
+        })
+        application.timeline = timeline
+        application.save()
+        
+        messages.warning(request, f'Application {application.application_id} has been rejected.')
+        
+        # TODO: Send notification to sales and client
+        
+        return redirect('applications:manager_application_detail', pk=pk)
+    
+    # GET request - show confirmation
+    return render(request, 'applications/confirm_reject.html', {'application': application})
 
 
 def _notify_sales_on_approval(application, sales_user):
@@ -451,17 +543,26 @@ def pending_applications(request):
     """Manager-only view for applications awaiting approval"""
     user = request.user
     
-    if not (user.is_admin or user.is_manager):
+    if user.role not in ['MANAGER', 'ADMIN', 'OWNER']:
         messages.error(request, "You don't have permission to view this page.")
-        return redirect('dashboard')
+        return redirect('accounts:dashboard')
     
     # Get applications requiring approval
-    pending_apps = Application.objects.filter(
-        status__in=['SUBMITTED', 'UNDER_REVIEW']
-    ).select_related('client', 'scheme', 'assigned_to').order_by('-created_at')
+    if user.role == 'MANAGER':
+        # Manager sees only their team's submitted applications
+        pending_apps = Application.objects.filter(
+            status='SUBMITTED',
+            client__assigned_manager=user
+        ).select_related('client', 'scheme', 'assigned_to').order_by('-created_at')
+    else:
+        # Admin/Owner sees all submitted applications
+        pending_apps = Application.objects.filter(
+            status='SUBMITTED'
+        ).select_related('client', 'scheme', 'assigned_to').order_by('-created_at')
     
     context = {
         'applications': pending_apps,
         'title': 'Applications Awaiting Approval',
+        'user_role': user.role.lower() if user.role else 'staff',
     }
     return render(request, 'applications/pending_applications.html', context)

@@ -30,6 +30,7 @@ urlpatterns = [
     path('dashboard/owner/', views.owner_dashboard, name='owner_dashboard'),
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/manager/', views.manager_dashboard, name='manager_dashboard'),
+    path('pending-approvals/', views.pending_approvals, name='pending_approvals'),
     path('team/members/', views.team_members_list, name='team_members_list'),
     path('team/clients/', views.team_clients_list, name='team_clients_list'),
     path('team/diagnostic/', views.team_diagnostic, name='team_diagnostic'),

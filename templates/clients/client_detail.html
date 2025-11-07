@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ client.company_name }} - Client Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+            {% if user.role == 'SALES' %}
+            <li class="breadcrumb-item"><a href="{% url 'clients:sales_clients_list' %}">My Clients</a></li>
+            {% elif user.role == 'MANAGER' %}
+            <li class="breadcrumb-item"><a href="{% url 'clients:manager_clients_list' %}">Team Clients</a></li>
+            {% endif %}
+            <li class="breadcrumb-item active">{{ client.company_name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-building"></i> {{ client.company_name }}</h2>
+            <p class="text-muted mb-0">Client ID: {{ client.client_id }}</p>
+        </div>
+        <div>
+            {% if user.role == 'MANAGER' or user.role == 'ADMIN' or user.role == 'OWNER' %}
+                <a href="{% url 'edit_requests:edit_client_direct' client.id %}" class="btn btn-primary me-2">
+                    <i class="bi bi-pencil-square"></i> Edit Client
+                </a>
+            {% elif user.role == 'SALES' %}
+                <a href="{% url 'edit_requests:request_client_edit' client.id %}" class="btn btn-warning me-2">
+                    <i class="bi bi-pencil-square"></i> Request Edit
+                </a>
+            {% endif %}
+            <span class="badge {% if client.is_approved %}bg-success{% else %}bg-warning{% endif %} fs-6">
+                {% if client.is_approved %}
+                    <i class="bi bi-check-circle"></i> Approved
+                {% else %}
+                    <i class="bi bi-clock-history"></i> Pending Approval
+                {% endif %}
+            </span>
+            <span class="badge bg-info fs-6 ms-2">{{ client.get_status_display }}</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Company Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Company Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Company Name:</strong><br>
+                            {{ client.company_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Business Type:</strong><br>
+                            {{ client.get_business_type_display }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Sector:</strong><br>
+                            {{ client.get_sector_display }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Company Age:</strong><br>
+                            {{ client.company_age }} years
+                        </div>
+                    </div>
+                    {% if client.registration_number %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Registration Number:</strong><br>
+                            {{ client.registration_number }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>GST Number:</strong><br>
+                            {{ client.gst_number|default:"N/A" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if client.pan_number %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>PAN Number:</strong><br>
+                            {{ client.pan_number }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Financial Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-currency-rupee"></i> Financial Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Annual Turnover:</strong><br>
+                            <span class="fs-5 text-success">₹{{ client.annual_turnover|floatformat:2 }} L</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Funding Required:</strong><br>
+                            <span class="fs-5 text-primary">₹{{ client.funding_required|floatformat:2 }} L</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Existing Loans:</strong><br>
+                            <span class="fs-5 text-warning">₹{{ client.existing_loans|floatformat:2 }} L</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Contact Person:</strong><br>
+                            {{ client.contact_person }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Email:</strong><br>
+                            <a href="mailto:{{ client.contact_email }}">{{ client.contact_email }}</a>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Phone:</strong><br>
+                            <a href="tel:{{ client.contact_phone }}">{{ client.contact_phone }}</a>
+                        </div>
+                        {% if client.alternate_phone %}
+                        <div class="col-md-6">
+                            <strong>Alternate Phone:</strong><br>
+                            <a href="tel:{{ client.alternate_phone }}">{{ client.alternate_phone }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Address</h5>
+                </div>
+                <div class="card-body">
+                    <address>
+                        {{ client.address_line1 }}<br>
+                        {% if client.address_line2 %}{{ client.address_line2 }}<br>{% endif %}
+                        {{ client.city }}, {{ client.state }} - {{ client.pincode }}
+                    </address>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            {% if client.business_description or client.funding_purpose %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-card-text"></i> Additional Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if client.business_description %}
+                    <div class="mb-3">
+                        <strong>Business Description:</strong><br>
+                        <p>{{ client.business_description }}</p>
+                    </div>
+                    {% endif %}
+                    {% if client.funding_purpose %}
+                    <div class="mb-3">
+                        <strong>Funding Purpose:</strong><br>
+                        <p>{{ client.funding_purpose }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Assignment Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-people"></i> Assigned Team</h5>
+                </div>
+                <div class="card-body">
+                    {% if client.assigned_sales %}
+                    <div class="mb-3">
+                        <strong>Sales Person:</strong><br>
+                        <i class="bi bi-person-badge"></i> {{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}
+                        <br><small class="text-muted">{{ client.assigned_sales.email }}</small>
+                    </div>
+                    {% endif %}
+                    {% if client.assigned_manager %}
+                    <div class="mb-3">
+                        <strong>Manager:</strong><br>
+                        <i class="bi bi-person-check"></i> {{ client.assigned_manager.get_full_name|default:client.assigned_manager.username }}
+                        <br><small class="text-muted">{{ client.assigned_manager.email }}</small>
+                    </div>
+                    {% endif %}
+                    {% if client.created_by %}
+                    <div class="mb-3">
+                        <strong>Created By:</strong><br>
+                        <i class="bi bi-person-plus"></i> {{ client.created_by.get_full_name|default:client.created_by.username }}
+                        <br><small class="text-muted">{{ client.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Approval Status -->
+            {% if not client.is_approved %}
+            <div class="card mb-4 border-warning">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Approval Status</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Status:</strong> Awaiting Manager Approval</p>
+                    <p class="text-muted mb-0">This client is pending approval before they can access the system.</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle"></i> Approval Status</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Status:</strong> Approved</p>
+                    {% if client.approved_by %}
+                    <p class="mb-2"><strong>Approved By:</strong><br>
+                        {{ client.approved_by.get_full_name|default:client.approved_by.username }}
+                    </p>
+                    {% endif %}
+                    {% if client.approved_at %}
+                    <p class="mb-0"><strong>Approved On:</strong><br>
+                        {{ client.approved_at|date:"M d, Y H:i" }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if user.role == 'SALES' or user.role == 'MANAGER' %}
+                        <a href="{% url 'bookings:create_documentation_booking' 1 %}?client={{ client.id }}" class="btn btn-primary">
+                            <i class="bi bi-calendar-plus"></i> Create Booking
+                        </a>
+                        <a href="{% url 'applications:create_application' 1 %}?client={{ client.id }}" class="btn btn-success">
+                            <i class="bi bi-file-earmark-plus"></i> Create Application
+                        </a>
+                        {% endif %}
+                        
+                        {% if user.role == 'SALES' %}
+                        <a href="{% url 'clients:sales_clients_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to My Clients
+                        </a>
+                        {% elif user.role == 'MANAGER' %}
+                        <a href="{% url 'clients:manager_clients_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Team Clients
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Total Bookings:</span>
+                            <strong>0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Total Applications:</span>
+                            <strong>0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Total Payments:</span>
+                            <strong>₹0.00</strong>
+                        </div>
+                    </div>
+                    <small class="text-muted">Coming soon: Full statistics integration</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:sales_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'clients:sales_clients_list' %}">
+                    <i class="bi bi-people"></i> My Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'clients:pending_approval_clients' %}">
+                    <i class="bi bi-clock-history"></i> Pending Approvals
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'bookings:sales_bookings_list' %}">
+                    <i class="bi bi-calendar-check"></i> Total Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:sales_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i> My Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments:sales_payments_list' %}">
+                    <i class="bi bi-credit-card"></i> Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-people"></i> {{ page_title }}</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:sales_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">My Clients</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'clients:create_client' %}" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Create New Client
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Approved Clients</h6>
+                    <h2>{{ approved_clients.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stats-card border-warning">
+                <div class="card-body">
+                    <h6 class="text-muted">Pending Approval</h6>
+                    <h2>{{ pending_clients.count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Clients Alert -->
+    {% if pending_clients %}
+    <div class="alert alert-warning">
+        <i class="bi bi-clock-history"></i>
+        <strong>{{ pending_clients.count }}</strong> client{{ pending_clients.count|pluralize }} awaiting manager approval.
+        <a href="{% url 'clients:pending_approval_clients' %}" class="alert-link">View pending approvals</a>
+    </div>
+    {% endif %}
+
+    <!-- Approved Clients -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-check-circle text-success"></i> Approved Clients
+        </div>
+        <div class="card-body">
+            {% if approved_clients %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Client ID</th>
+                            <th>Company</th>
+                            <th>Contact Person</th>
+                            <th>Email</th>
+                            <th>Sector</th>
+                            <th>Turnover</th>
+                            <th>Funding Required</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in approved_clients %}
+                        <tr>
+                            <td><code>{{ client.client_id }}</code></td>
+                            <td><strong>{{ client.company_name }}</strong></td>
+                            <td>{{ client.contact_person }}</td>
+                            <td>{{ client.contact_email }}</td>
+                            <td>{{ client.get_sector_display }}</td>
+                            <td>₹{{ client.annual_turnover|floatformat:2 }}</td>
+                            <td>₹{{ client.funding_required|floatformat:2 }}</td>
+                            <td><span class="badge bg-{{ client.status|lower }}">{{ client.get_status_display }}</span></td>
+                            <td>
+                                <a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted py-4">
+                No approved clients yet. 
+                <a href="{% url 'clients:create_client' %}">Create your first client</a>
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pending Clients -->
+    {% if pending_clients %}
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <i class="bi bi-hourglass-split"></i> Pending Manager Approval
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Client ID</th>
+                            <th>Company</th>
+                            <th>Contact Person</th>
+                            <th>Email</th>
+                            <th>Submitted Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in pending_clients %}
+                        <tr>
+                            <td><code>{{ client.client_id }}</code></td>
+                            <td><strong>{{ client.company_name }}</strong></td>
+                            <td>{{ client.contact_person }}</td>
+                            <td>{{ client.contact_email }}</td>
+                            <td>{{ client.created_at|date:"d M Y, g:i A" }}</td>
+                            <td>
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock"></i> Awaiting Approval
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -130,6 +130,19 @@
             </div>
         </div>
 
+        {% if can_submit %}
+        <hr>
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> This application is still in draft. Submit it to your manager for approval.
+        </div>
+        <form method="post" class="mb-3">
+            {% csrf_token %}
+            <button type="submit" name="submit_application" class="btn btn-primary">
+                <i class="bi bi-send"></i> Submit for Manager Approval
+            </button>
+        </form>
+        {% endif %}
+
         {% if can_approve %}
         {% if application.status == 'SUBMITTED' or application.status == 'UNDER_REVIEW' %}
         <hr>

@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Approve Application - {{ application.application_id }} - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:pending_approvals' %}">
+                    <i class="bi bi-bell"></i>Pending Approvals
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'applications:team_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>Applications
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'applications:manager_application_detail' application.pk %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Application
+    </a>
+</div>
+
+<h1 class="h2 mb-4"><i class="bi bi-check-circle text-success"></i> Approve Application</h1>
+
+<!-- Application Summary -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Application Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Application ID:</strong> {{ application.application_id }}</p>
+                <p><strong>Client:</strong> {{ application.client.company_name }}</p>
+                <p><strong>Scheme:</strong> {{ application.scheme.name }}</p>
+                <p><strong>Applied Amount:</strong> ₹{{ application.applied_amount }} Lakhs</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Sales Person:</strong> {{ application.assigned_to.get_full_name|default:application.assigned_to.username }}</p>
+                <p><strong>Application Date:</strong> {{ application.application_date|date:"M d, Y" }}</p>
+                <p><strong>Submission Date:</strong> {{ application.submission_date|date:"M d, Y"|default:"Not submitted" }}</p>
+                <p><strong>Status:</strong> <span class="badge bg-warning">{{ application.get_status_display }}</span></p>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <div class="row">
+            <div class="col-12">
+                <p><strong>Purpose:</strong></p>
+                <p class="text-muted">{{ application.purpose }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Form -->
+<div class="card border-success">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-check-circle"></i> Approve This Application</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-success">
+            <i class="bi bi-info-circle"></i> <strong>You are about to approve this application.</strong> Please review the details above and specify the approved amount if different from the applied amount.
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label for="approved_amount" class="form-label"><strong>Approved Amount (in Lakhs)</strong></label>
+                <input type="number" 
+                       step="0.01" 
+                       min="0" 
+                       class="form-control" 
+                       id="approved_amount" 
+                       name="approved_amount" 
+                       value="{{ application.applied_amount }}"
+                       placeholder="Enter approved amount">
+                <small class="text-muted">Applied amount: ₹{{ application.applied_amount }} Lakhs. You can approve a different amount if needed.</small>
+            </div>
+            
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i> <strong>Note:</strong> Once approved, the application status will change to APPROVED and notifications will be sent to the sales person and client.
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'applications:manager_application_detail' application.pk %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                <a href="{% url 'applications:reject_application' application.pk %}" class="btn btn-danger">
+                    <i class="bi bi-x-circle"></i> Reject Instead
+                </a>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle"></i> Approve Application
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Client Details -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-building"></i> Client Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Company:</strong> {{ application.client.company_name }}</p>
+                <p><strong>Business Type:</strong> {{ application.client.get_business_type_display }}</p>
+                <p><strong>Sector:</strong> {{ application.client.get_sector_display }}</p>
+                <p><strong>Annual Turnover:</strong> ₹{{ application.client.annual_turnover }} Lakhs</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Contact Person:</strong> {{ application.client.contact_person }}</p>
+                <p><strong>Email:</strong> {{ application.client.contact_email }}</p>
+                <p><strong>Phone:</strong> {{ application.client.contact_phone }}</p>
+                <p><strong>Funding Required:</strong> ₹{{ application.client.funding_required }} Lakhs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scheme Details -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-award"></i> Scheme Information</h5>
+    </div>
+    <div class="card-body">
+        <h6>{{ application.scheme.name }}</h6>
+        <p class="text-muted">{{ application.scheme.description }}</p>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <p><strong>Category:</strong> {{ application.scheme.get_category_display }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>Min Amount:</strong> ₹{{ application.scheme.min_amount }} L</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>Max Amount:</strong> ₹{{ application.scheme.max_amount }} L</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

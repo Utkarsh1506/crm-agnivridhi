@@ -36,6 +36,7 @@ ROLE_HIERARCHY = [
 ROLE_NAMESPACE_MAP = {
     ROLE_SUPERUSER: [
         "accounts",      # All dashboard and auth routes
+        "clients",       # Full client management
         "applications",  # Full application management
         "bookings",      # Full booking management
         "documents",     # Full document access
@@ -45,6 +46,7 @@ ROLE_NAMESPACE_MAP = {
     ],
     ROLE_OWNER: [
         "accounts",
+        "clients",
         "applications",
         "bookings",
         "documents",
@@ -54,6 +56,7 @@ ROLE_NAMESPACE_MAP = {
     ],
     ROLE_ADMIN: [
         "accounts",
+        "clients",
         "applications",
         "bookings",
         "documents",
@@ -63,6 +66,7 @@ ROLE_NAMESPACE_MAP = {
     ],
     ROLE_MANAGER: [
         "accounts",      # Manager dashboard, team views
+        "clients",       # Client approvals, team clients
         "applications",  # Team applications, approvals
         "bookings",      # Team bookings, payment approvals
         "documents",     # Team documents
@@ -71,9 +75,11 @@ ROLE_NAMESPACE_MAP = {
     ],
     ROLE_SALES: [
         "accounts",      # Sales dashboard, profile
+        "clients",       # Client creation, pending approvals, client list
         "applications",  # Own applications, create from booking
         "bookings",      # Own bookings, record payment
         "documents",     # Own documents
+        "payments",      # Own payments, record payment
         "schemes",       # Scheme catalog (for client recommendations)
     ],
     ROLE_CLIENT: [

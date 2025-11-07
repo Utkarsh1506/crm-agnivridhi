@@ -157,7 +157,8 @@ class Application(models.Model):
             models.Index(fields=['assigned_to', 'status']),
             models.Index(fields=['-application_date']),
         ]
-        unique_together = [['client', 'scheme', 'status']]  # Prevent duplicate active applications
+        # Note: Removed unique_together constraint to allow multiple applications
+        # for the same client-scheme combination (e.g., reapply after rejection)
     
     def __str__(self):
         return f"{self.application_id} - {self.client.company_name} - {self.scheme.name}"

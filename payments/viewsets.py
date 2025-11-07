@@ -19,7 +19,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
     - Create: Staff users only
     - Update/Delete: Admin users only
     """
-    queryset = Payment.objects.select_related('client', 'booking', 'received_by', 'created_by').all()
+    queryset = Payment.objects.select_related('client', 'booking', 'received_by', 'approved_by').all()
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'payment_method', 'payment_date']
@@ -82,14 +82,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         payment = self.get_object()
         
-        if payment.status == 'APPROVED':
+        if payment.status == 'CAPTURED':
             return Response(
                 {'detail': 'Payment is already approved.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        payment.status = 'APPROVED'
-        payment.save()
+        # Use the model's approve method which handles status and booking updates
+        payment.approve(request.user)
         
         # Log activity
         from activity_logs.models import ActivityLog
@@ -124,15 +124,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
         payment = self.get_object()
         reason = request.data.get('reason', 'No reason provided')
         
-        if payment.status == 'REJECTED':
+        if payment.status == 'FAILED':
             return Response(
                 {'detail': 'Payment is already rejected.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        payment.status = 'REJECTED'
-        payment.notes = f"Rejected: {reason}" if not payment.notes else f"{payment.notes}\nRejected: {reason}"
-        payment.save()
+        # Use the model's reject method which sets status to FAILED
+        payment.reject(request.user, reason)
         
         # Log activity
         from activity_logs.models import ActivityLog

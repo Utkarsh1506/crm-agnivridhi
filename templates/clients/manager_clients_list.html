@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Clients - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:pending_approvals' %}">
+                    <i class="bi bi-bell"></i>Pending Approvals
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'accounts:team_clients_list' %}">
+                    <i class="bi bi-building"></i>Team Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'clients:pending_approval_clients' %}">
+                    <i class="bi bi-clock-history"></i>Pending Approvals
+                    {% if pending_clients.count > 0 %}
+                        <span class="badge bg-warning ms-2">{{ pending_clients.count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:team_members_list' %}">
+                    <i class="bi bi-people"></i>My Team
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:team_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'bookings:team_bookings_list' %}">
+                    <i class="bi bi-calendar-check"></i>Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments:team_payments_list' %}">
+                    <i class="bi bi-credit-card"></i>Payments
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2"><i class="bi bi-building"></i> Team Clients</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'accounts:manager_dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Team Clients</li>
+            </ol>
+        </nav>
+    </div>
+    <div>
+        <a href="{% url 'clients:create_client' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Client
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6><i class="bi bi-check-circle"></i> Approved Clients</h6>
+                <h2>{{ approved_clients.count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h6><i class="bi bi-clock-history"></i> Pending Approval</h6>
+                <h2>{{ pending_clients.count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Clients Alert -->
+{% if pending_clients.count > 0 %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>{{ pending_clients.count }}</strong> client{{ pending_clients.count|pluralize }} awaiting your approval!
+    <a href="{% url 'clients:pending_approval_clients' %}" class="alert-link">Review now</a>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<!-- Approved Clients -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-check-circle"></i> Approved Clients ({{ approved_clients.count }})</h5>
+    </div>
+    <div class="card-body">
+        {% if approved_clients %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Client ID</th>
+                        <th>Company Name</th>
+                        <th>Contact Person</th>
+                        <th>Contact Email</th>
+                        <th>Business Type</th>
+                        <th>Sector</th>
+                        <th>Funding Required</th>
+                        <th>Assigned Sales</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in approved_clients %}
+                    <tr>
+                        <td><code>{{ client.client_id }}</code></td>
+                        <td><strong>{{ client.company_name }}</strong></td>
+                        <td>{{ client.contact_person }}</td>
+                        <td>{{ client.contact_email }}</td>
+                        <td>{{ client.get_business_type_display }}</td>
+                        <td>{{ client.get_sector_display }}</td>
+                        <td><strong>₹{{ client.funding_required }} L</strong></td>
+                        <td>{{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}</td>
+                        <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>
+                        <td>
+                            <a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            <a href="{% url 'edit_requests:edit_client_direct' client.pk %}" class="btn btn-sm btn-warning">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4">No approved clients yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pending Clients -->
+{% if pending_clients %}
+<div class="card">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Pending Approval ({{ pending_clients.count }})</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Client ID</th>
+                        <th>Company Name</th>
+                        <th>Contact Person</th>
+                        <th>Business Type</th>
+                        <th>Funding Required</th>
+                        <th>Created By</th>
+                        <th>Created Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in pending_clients %}
+                    <tr>
+                        <td><code>{{ client.client_id }}</code></td>
+                        <td><strong>{{ client.company_name }}</strong></td>
+                        <td>{{ client.contact_person }}</td>
+                        <td>{{ client.get_business_type_display }}</td>
+                        <td><strong>₹{{ client.funding_required }} L</strong></td>
+                        <td>{{ client.created_by.get_full_name|default:client.created_by.username }}</td>
+                        <td>{{ client.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            <a href="{% url 'clients:approve_client' client.pk %}" class="btn btn-sm btn-success">
+                                <i class="bi bi-check-circle"></i> Approve
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

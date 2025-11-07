@@ -9,11 +9,11 @@ def payment_list(request):
     """Deprecated generic endpoint: redirect to role-specific page for privacy."""
     user = request.user
     if getattr(user, 'is_client', False):
-        return redirect('client_payments_list')
+        return redirect('payments:client_payments_list')
     elif getattr(user, 'role', None) == 'SALES':
-        return redirect('sales_payments_list')
+        return redirect('payments:sales_payments_list')
     elif getattr(user, 'role', None) in ['MANAGER', 'ADMIN']:
-        return redirect('team_payments_list')
+        return redirect('payments:team_payments_list')
     return redirect('dashboard')
 
 
@@ -26,10 +26,17 @@ def client_payments_list(request):
 
 @sales_required
 def sales_payments_list(request):
-    # Payments related to bookings assigned to this sales or received_by = this sales
+    # Payments related to bookings for clients assigned to this sales
     from django.db.models import Q
-    payments = Payment.objects.filter(Q(received_by=request.user) | Q(booking__assigned_to=request.user)).order_by('-created_at')
-    return render(request, 'payments/payment_list.html', {'payments': payments})
+    payments = Payment.objects.filter(
+        Q(received_by=request.user) | Q(client__assigned_sales=request.user)
+    ).select_related('client', 'booking', 'booking__service', 'received_by').order_by('-created_at')
+    
+    context = {
+        'payments': payments,
+        'page_title': 'My Payments'
+    }
+    return render(request, 'payments/sales_payments_list.html', context)
 
 
 @manager_required
@@ -38,19 +45,24 @@ def team_payments_list(request):
     user = request.user
     
     # Get all clients assigned to this manager's team
+    # Include both: clients directly assigned to manager AND clients assigned to sales employees under this manager
     from clients.models import Client
-    team_clients = Client.objects.filter(assigned_manager=user).select_related('assigned_sales', 'assigned_manager')
+    from django.db.models import Q
+    
+    team_clients = Client.objects.filter(
+        Q(assigned_manager=user) | Q(assigned_sales__manager=user)
+    ).select_related('assigned_sales', 'assigned_manager').distinct()
     
     # Get payments for these clients
-    payments = Payment.objects.filter(client__in=team_clients).select_related('client', 'client__assigned_sales', 'booking').order_by('-created_at')
+    payments = Payment.objects.filter(client__in=team_clients).select_related('client', 'client__assigned_sales', 'booking', 'received_by').order_by('-created_at')
     
     # Statistics
-    from django.db.models import Sum, Count, Q
+    from django.db.models import Sum, Count
     stats = payments.aggregate(
         total_amount=Sum('amount'),
         pending_count=Count('id', filter=Q(status='PENDING')),
-        approved_count=Count('id', filter=Q(status='APPROVED')),
-        rejected_count=Count('id', filter=Q(status='REJECTED')),
+        captured_count=Count('id', filter=Q(status='CAPTURED')),
+        failed_count=Count('id', filter=Q(status='FAILED')),
     )
     
     # Group by client
