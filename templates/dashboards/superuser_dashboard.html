@@ -7,12 +7,12 @@
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link active" href="{% url 'superuser_dashboard' %}">
+                <a class="nav-link active" href="{% url 'accounts:superuser_dashboard' %}">
                     <i class="bi bi-shield-lock"></i> Superuser Console
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                <a class="nav-link" href="{% url 'accounts:admin_dashboard' %}">
                     <i class="bi bi-speedometer2"></i> Admin Dashboard
                 </a>
             </li>
@@ -130,14 +130,20 @@
             </div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action" href="{% url 'accounts:admin_dashboard' %}">
+                        <i class="bi bi-speedometer2"></i> Admin Dashboard
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="{% url 'clients:manager_clients_list' %}">
+                        <i class="bi bi-building"></i> Team Clients
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="{% url 'payments:team_payments_list' %}">
+                        <i class="bi bi-credit-card"></i> Team Payments
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="{% url 'applications:pending_applications' %}">
+                        <i class="bi bi-file-text"></i> Pending Applications
+                    </a>
                     <a class="list-group-item list-group-item-action" href="/admin/">
-                        <i class="bi bi-gear"></i> Open Django Admin
-                    </a>
-                    <a class="list-group-item list-group-item-action" href="/admin/accounts/user/">
-                        <i class="bi bi-person-plus"></i> Add/Manage Users
-                    </a>
-                    <a class="list-group-item list-group-item-action" href="{% url 'admin_dashboard' %}">
-                        <i class="bi bi-speedometer2"></i> View Admin Dashboard
+                        <i class="bi bi-gear"></i> Django Admin (Full)
                     </a>
                 </div>
             </div>

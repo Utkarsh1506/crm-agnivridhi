@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from .models import Client
 from .forms import ClientCreationForm, ClientApprovalForm
+from django.core.paginator import Paginator
 
 
 @login_required
@@ -82,7 +84,8 @@ def approve_client(request, pk):
     
     # Manager can only approve clients in their team
     if request.user.role == 'MANAGER':
-        if client.assigned_manager != request.user and client.created_by.manager != request.user:
+        creator_manager = getattr(client.created_by, 'manager', None)
+        if client.assigned_manager != request.user and creator_manager != request.user:
             messages.error(request, 'You can only approve clients in your team.')
             return redirect('clients:pending_approval_clients')
     
@@ -94,14 +97,27 @@ def approve_client(request, pk):
             if action == 'approve':
                 client.approve(request.user)
                 messages.success(request, f'Client "{client.company_name}" has been approved!')
-                # TODO: Send notification to sales person
-                # TODO: Send welcome email to client
+                status = 'APPROVED'
+                extra = {}
             else:
                 reason = form.cleaned_data['rejection_reason']
                 client.reject(request.user, reason)
                 messages.warning(request, f'Client "{client.company_name}" has been rejected.')
-                # TODO: Send notification to sales person with reason
-            
+                status = 'REJECTED'
+                extra = {'rejection_reason': reason}
+
+            # AJAX support
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'ok': True,
+                    'status': status,
+                    'client_id': client.client_id,
+                    **extra
+                })
+
+            next_url = request.POST.get('next') or request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
             return redirect('clients:pending_approval_clients')
     else:
         form = ClientApprovalForm()
@@ -128,7 +144,8 @@ def client_detail(request, pk):
             messages.error(request, 'You can only view clients assigned to you.')
             return redirect('accounts:dashboard')
     elif request.user.role == 'MANAGER':
-        if client.assigned_manager != request.user and client.assigned_sales.manager != request.user:
+        sales_manager = getattr(client.assigned_sales, 'manager', None)
+        if client.assigned_manager != request.user and sales_manager != request.user:
             messages.error(request, 'You can only view clients in your team.')
             return redirect('accounts:dashboard')
     
@@ -166,10 +183,14 @@ def manager_clients_list(request):
         messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')
     
-    # Get all clients in the manager's team
-    clients = Client.objects.filter(
-        Q(assigned_manager=request.user) | Q(assigned_sales__manager=request.user)
-    ).select_related('user', 'assigned_sales', 'assigned_manager').order_by('-created_at')
+    # If Admin/Owner: show ALL clients (global visibility)
+    if request.user.role in ['ADMIN', 'OWNER']:
+        clients = Client.objects.all().select_related('user', 'assigned_sales', 'assigned_manager').order_by('-created_at')
+    else:
+        # Manager scope: clients directly assigned to manager OR via team sales
+        clients = Client.objects.filter(
+            Q(assigned_manager=request.user) | Q(assigned_sales__manager=request.user)
+        ).select_related('user', 'assigned_sales', 'assigned_manager').order_by('-created_at')
     
     approved_clients = clients.filter(is_approved=True)
     pending_clients = clients.filter(is_approved=False)
@@ -178,5 +199,118 @@ def manager_clients_list(request):
         'approved_clients': approved_clients,
         'pending_clients': pending_clients,
         'page_title': 'Team Clients'
+    })
+
+
+@login_required
+def admin_clients_list(request):
+    """Global client listing for Admin/Owner/Superuser with direct edit access.
+
+    Features:
+    - Full visibility of all clients
+    - Filtering by search (company/contact), status, sales, manager
+    - Pagination with adjustable page size
+    - Direct edit link using edit_requests:edit_client_direct
+    """
+    if request.user.role not in ['ADMIN', 'OWNER'] and not request.user.is_superuser:
+        from django.contrib import messages
+        messages.error(request, 'Access denied.')
+        return redirect('accounts:dashboard')
+
+    qs = Client.objects.select_related('user', 'assigned_sales', 'assigned_manager').all().order_by('-created_at')
+
+    # Filters
+    search = request.GET.get('q', '').strip()
+    status = request.GET.get('status', '').strip()
+    sales_id = request.GET.get('sales', '').strip()
+    manager_id = request.GET.get('manager', '').strip()
+    business_type = request.GET.get('business_type', '').strip()
+    sector = request.GET.get('sector', '').strip()
+    city = request.GET.get('city', '').strip()
+    state = request.GET.get('state', '').strip()
+    approved = request.GET.get('approved', '').strip()
+    created_from = request.GET.get('created_from', '').strip()
+    created_to = request.GET.get('created_to', '').strip()
+    turnover_min = request.GET.get('turnover_min', '').strip()
+    turnover_max = request.GET.get('turnover_max', '').strip()
+    funding_min = request.GET.get('funding_min', '').strip()
+    funding_max = request.GET.get('funding_max', '').strip()
+
+    if search:
+        qs = qs.filter(
+            Q(company_name__icontains=search) |
+            Q(contact_person__icontains=search) |
+            Q(contact_email__icontains=search) |
+            Q(client_id__icontains=search)
+        )
+    if status:
+        qs = qs.filter(status=status)
+    if sales_id:
+        qs = qs.filter(assigned_sales_id=sales_id)
+    if manager_id:
+        qs = qs.filter(assigned_manager_id=manager_id)
+    if business_type:
+        qs = qs.filter(business_type=business_type)
+    if sector:
+        qs = qs.filter(sector=sector)
+    if city:
+        qs = qs.filter(city__icontains=city)
+    if state:
+        qs = qs.filter(state__icontains=state)
+    if approved in ['yes', 'no']:
+        qs = qs.filter(is_approved=(approved == 'yes'))
+    if created_from:
+        qs = qs.filter(created_at__date__gte=created_from)
+    if created_to:
+        qs = qs.filter(created_at__date__lte=created_to)
+    if turnover_min:
+        qs = qs.filter(annual_turnover__gte=turnover_min)
+    if turnover_max:
+        qs = qs.filter(annual_turnover__lte=turnover_max)
+    if funding_min:
+        qs = qs.filter(funding_required__gte=funding_min)
+    if funding_max:
+        qs = qs.filter(funding_required__lte=funding_max)
+
+    # Pagination
+    try:
+        page_size = int(request.GET.get('page_size', 25))
+    except ValueError:
+        page_size = 25
+    if page_size not in [25, 50, 100, 150, 200]:
+        page_size = 25
+
+    paginator = Paginator(qs, page_size)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Distinct lists for filter dropdowns
+    sales_team = qs.exclude(assigned_sales=None).values('assigned_sales_id', 'assigned_sales__first_name', 'assigned_sales__last_name', 'assigned_sales__username').distinct()
+    manager_team = qs.exclude(assigned_manager=None).values('assigned_manager_id', 'assigned_manager__first_name', 'assigned_manager__last_name', 'assigned_manager__username').distinct()
+
+    return render(request, 'clients/admin_clients_list.html', {
+        'page_obj': page_obj,
+        'total_clients': qs.count(),
+        'search': search,
+        'status_filter': status,
+        'sales_filter': sales_id,
+        'manager_filter': manager_id,
+        'business_type_filter': business_type,
+        'sector_filter': sector,
+        'city_filter': city,
+        'state_filter': state,
+        'approved_filter': approved,
+        'created_from': created_from,
+        'created_to': created_to,
+        'turnover_min': turnover_min,
+        'turnover_max': turnover_max,
+        'funding_min': funding_min,
+        'funding_max': funding_max,
+        'page_size': page_size,
+        'sales_team': sales_team,
+        'manager_team': manager_team,
+        'business_type_choices': Client.BusinessType.choices,
+        'sector_choices': Client.Sector.choices,
+        'page_title': 'All Clients'
     })
 

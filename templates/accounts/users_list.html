@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Users - Admin{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3"><i class="bi bi-people"></i> Users Directory</h1>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-md-2">
+    <label class="form-label small">Role</label>
+    <select name="role" class="form-select form-select-sm">
+      <option value="">All</option>
+      {% for r,c in role_counts_items %}
+        <option value="{{ r }}" {% if filter_role == r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label small">Manager</label>
+    <select name="manager" class="form-select form-select-sm">
+      <option value="">All</option>
+      {% for m in managers %}
+        <option value="{{ m.id }}" {% if filter_manager == m.id|stringformat:'s' %}selected{% endif %}>{{ m.get_full_name|default:m.username }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label small">Search</label>
+    <input type="text" name="q" value="{{ filter_q }}" placeholder="Name / email" class="form-control form-control-sm">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label small">Page Size</label>
+    <select name="page_size" class="form-select form-select-sm">
+      <option value="25" {% if page_size == 25 or page_size == '25' %}selected{% endif %}>25</option>
+      <option value="50" {% if page_size == 50 or page_size == '50' %}selected{% endif %}>50</option>
+      <option value="100" {% if page_size == 100 or page_size == '100' %}selected{% endif %}>100</option>
+      <option value="150" {% if page_size == 150 or page_size == '150' %}selected{% endif %}>150</option>
+      <option value="200" {% if page_size == 200 or page_size == '200' %}selected{% endif %}>200</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-sm btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Apply</button>
+    <a href="?" class="btn btn-sm btn-outline-secondary w-100 mt-1">Reset</a>
+  </div>
+</form>
+<div class="row mb-4">
+  {% for role, count in role_counts_items %}
+    <div class="col-auto mb-2">
+      <span class="badge bg-primary">{{ role }}: {{ count }}</span>
+    </div>
+  {% endfor %}
+</div>
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Email</th>
+        <th>Manager</th>
+        <th>Joined</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users_page %}
+      <tr>
+        <td>{{ u.get_full_name|default:u.username }}</td>
+        <td><span class="badge bg-secondary">{{ u.role }}</span>{% if u.is_owner %} <span class="badge bg-warning text-dark">Owner</span>{% endif %}</td>
+        <td>{{ u.email }}</td>
+        <td>{% if u.manager %}{{ u.manager.get_full_name|default:u.manager.username }}{% else %}-{% endif %}</td>
+        <td>{{ u.date_joined|date:'Y-m-d' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include 'partials/pagination.html' with page_obj=users_page page_size=page_size %}
+{% endblock %}

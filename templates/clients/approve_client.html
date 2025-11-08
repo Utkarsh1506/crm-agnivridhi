@@ -44,7 +44,7 @@
             <h2><i class="bi bi-check-circle"></i> {{ page_title }}</h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ dashboard_url }}">Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="{% url 'clients:pending_approval_clients' %}">Pending Approvals</a></li>
                     <li class="breadcrumb-item active">Review Client</li>
                 </ol>

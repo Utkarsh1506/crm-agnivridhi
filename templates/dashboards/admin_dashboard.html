@@ -7,37 +7,37 @@
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link active" href="{% url 'admin_dashboard' %}">
+                <a class="nav-link active" href="{% url 'accounts:admin_dashboard' %}">
                     <i class="bi bi-speedometer2"></i>Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'reports_dashboard' %}">
+                <a class="nav-link" href="{% url 'accounts:reports_dashboard' %}">
                     <i class="bi bi-graph-up"></i>Reports & Analytics
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/clients/client/">
+                <a class="nav-link" href="{% url 'clients:admin_clients_list' %}">
                     <i class="bi bi-building"></i>Clients
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/bookings/booking/">
+                <a class="nav-link" href="{% url 'bookings:team_bookings_list' %}">
                     <i class="bi bi-calendar-check"></i>Bookings
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/applications/application/">
+                <a class="nav-link" href="{% url 'applications:team_applications_list' %}">
                     <i class="bi bi-file-earmark-text"></i>Applications
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/schemes/scheme/">
+                <a class="nav-link" href="{% url 'schemes:scheme_list' %}">
                     <i class="bi bi-award"></i>Schemes
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/payments/payment/">
+                <a class="nav-link" href="{% url 'payments:team_payments_list' %}">
                     <i class="bi bi-credit-card"></i>Payments
                     {% if pending_payments_count > 0 %}
                         <span class="badge bg-warning ms-2">{{ pending_payments_count }}</span>
@@ -45,7 +45,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/edit_requests/editrequest/">
+                <a class="nav-link" href="{% url 'edit_requests:manager_edit_requests' %}">
                     <i class="bi bi-pencil-square"></i>Edit Requests
                     {% if pending_edit_requests > 0 %}
                         <span class="badge bg-danger ms-2">{{ pending_edit_requests }}</span>
@@ -53,17 +53,17 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/documents/document/">
+                <a class="nav-link" href="{% url 'documents:team_documents_list' %}">
                     <i class="bi bi-file-pdf"></i>Documents
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/accounts/user/">
+                <a class="nav-link" href="{% url 'accounts:users_list' %}">
                     <i class="bi bi-people"></i>Users
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/notifications/notification/">
+                <a class="nav-link" href="{% url 'notifications:notification_list' %}">
                     <i class="bi bi-bell"></i>Notifications
                 </a>
             </li>
@@ -91,11 +91,11 @@
                 <i class="bi bi-download"></i> Export
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{% url 'export_clients' %}"><i class="bi bi-building"></i> Clients</a></li>
-                <li><a class="dropdown-item" href="{% url 'export_bookings' %}"><i class="bi bi-calendar-check"></i> Bookings</a></li>
-                <li><a class="dropdown-item" href="{% url 'export_payments' %}"><i class="bi bi-credit-card"></i> Payments</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounts:export_clients' %}"><i class="bi bi-building"></i> Clients</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounts:export_bookings' %}"><i class="bi bi-calendar-check"></i> Bookings</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounts:export_payments' %}"><i class="bi bi-credit-card"></i> Payments</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{% url 'export_dashboard_data' %}?method={{ selected_method }}&salesperson={{ selected_salesperson }}&date_from={{ date_from }}&date_to={{ date_to }}">
+                <li><a class="dropdown-item" href="{% url 'accounts:export_dashboard_data' %}?method={{ selected_method }}&salesperson={{ selected_salesperson }}&date_from={{ date_from }}&date_to={{ date_to }}">
                     <i class="bi bi-graph-up"></i> Filtered Revenue Data
                 </a></li>
             </ul>
@@ -143,7 +143,7 @@
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-sm btn-primary w-100">Apply Filters</button>
-                    <a href="{% url 'admin_dashboard' %}" class="btn btn-sm btn-outline-secondary w-100 mt-1">Reset</a>
+                    <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-sm btn-outline-secondary w-100 mt-1">Reset</a>
                 </div>
             </div>
         </form>
@@ -262,8 +262,8 @@
                                     <td>{{ p.reference_id|default:'-' }}</td>
                                     <td>{{ p.received_by.get_full_name|default:p.received_by.username }}</td>
                                     <td>
-                                        <a href="{% url 'approve_payment' p.id %}" class="btn btn-sm btn-success">Approve</a>
-                                        <a href="{% url 'reject_payment' p.id %}" class="btn btn-sm btn-outline-danger ms-1">Reject</a>
+                                        <a href="{% url 'accounts:approve_payment' p.id %}" class="btn btn-sm btn-success">Approve</a>
+                                        <a href="{% url 'accounts:reject_payment' p.id %}" class="btn btn-sm btn-outline-danger ms-1">Reject</a>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -287,17 +287,7 @@
         </div>
     </div>
 
-    <!-- Method Breakdown and Last 7 Days -->
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header"><i class="bi bi-pie-chart"></i> Revenue by Method</div>
-            <div class="card-body">
-                {{ method_labels|json_script:"method-labels" }}
-                {{ method_values|json_script:"method-values" }}
-                <canvas id="methodChart" height="120"></canvas>
-            </div>
-        </div>
-    </div>
+    <!-- Last 7 Days (Revenue) -->
     <div class="col-lg-6 mb-4">
         <div class="card">
             <div class="card-header"><i class="bi bi-graph-up-arrow"></i> Last 7 Days (Revenue)</div>
@@ -362,7 +352,7 @@
                 {% if recent_clients %}
                     <div class="list-group list-group-flush">
                         {% for client in recent_clients %}
-                        <a href="/admin/clients/client/{{ client.id }}/change/" class="list-group-item list-group-item-action">
+                        <a href="{% url 'clients:client_detail' client.id %}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ client.company_name }}</h6>
                                 <small class="text-muted">{{ client.created_at|date:"M d" }}</small>
@@ -438,7 +428,7 @@
                 {% if recent_bookings %}
                     <div class="list-group list-group-flush">
                         {% for booking in recent_bookings %}
-                        <a href="/admin/bookings/booking/{{ booking.id }}/change/" class="list-group-item list-group-item-action">
+                        <a href="{% url 'bookings:booking_detail' booking.id %}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ booking.client.company_name }}</h6>
                                 <small>₹{{ booking.final_amount }}</small>
@@ -468,7 +458,7 @@
                 {% if recent_applications %}
                     <div class="list-group list-group-flush">
                         {% for app in recent_applications %}
-                        <a href="/admin/applications/application/{{ app.id }}/change/" class="list-group-item list-group-item-action">
+                        <a href="{% url 'applications:admin_application_detail' app.id %}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ app.client.company_name }}</h6>
                                 <small>₹{{ app.applied_amount }} L</small>
@@ -556,28 +546,7 @@
             });
         }
 
-        // Method breakdown (doughnut)
-        const methodLabelsEl = document.getElementById('method-labels');
-        const methodValuesEl = document.getElementById('method-values');
-        const methodCtx = document.getElementById('methodChart');
-        if (methodCtx && methodLabelsEl && methodValuesEl) {
-            const mLabels = JSON.parse(methodLabelsEl.textContent || '[]');
-            const mValues = JSON.parse(methodValuesEl.textContent || '[]');
-            new Chart(methodCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: mLabels,
-                    datasets: [{
-                        data: mValues,
-                        backgroundColor: ['#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
-        }
+        // (Revenue by Method moved to Reports & Analytics page)
 
         // Daily revenue (last 7 days)
         const dailyLabelsEl = document.getElementById('daily-labels');

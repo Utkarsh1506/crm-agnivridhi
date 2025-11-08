@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3"><i class="bi bi-bell"></i> Notifications</h1>
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-md-2">
+    <label class="form-label small">Status</label>
+    <input type="text" name="status" value="{{ filter_status }}" class="form-control form-control-sm" placeholder="e.g. SENT, QUEUED">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label small">Channel</label>
+    <input type="text" name="channel" value="{{ filter_channel }}" class="form-control form-control-sm" placeholder="EMAIL / SMS / WEB">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label small">Search</label>
+    <input type="text" name="q" value="{{ filter_q }}" class="form-control form-control-sm" placeholder="Subject or message">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label small">Page Size</label>
+    <select name="page_size" class="form-select form-select-sm">
+      <option value="25" {% if page_size == 25 or page_size == '25' %}selected{% endif %}>25</option>
+      <option value="50" {% if page_size == 50 or page_size == '50' %}selected{% endif %}>50</option>
+      <option value="100" {% if page_size == 100 or page_size == '100' %}selected{% endif %}>100</option>
+      <option value="150" {% if page_size == 150 or page_size == '150' %}selected{% endif %}>150</option>
+      <option value="200" {% if page_size == 200 or page_size == '200' %}selected{% endif %}>200</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-sm btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Apply</button>
+    <a href="?" class="btn btn-sm btn-outline-secondary w-100 mt-1">Reset</a>
+  </div>
+</form>
+<div class="row mb-3">
+  {% for status, count in status_counts_items %}
+    <div class="col-auto mb-2">
+      <span class="badge bg-info">{{ status }}: {{ count }}</span>
+    </div>
+  {% endfor %}
+</div>
+<div class="table-responsive">
+  <table class="table table-sm table-hover">
+    <thead>
+      <tr>
+        <th>Created</th>
+        <th>Recipient</th>
+        <th>Type</th>
+        <th>Channel</th>
+        <th>Status</th>
+        <th>Subject</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for n in page_obj %}
+      <tr>
+        <td>{{ n.created_at|date:'Y-m-d H:i' }}</td>
+        <td>{{ n.recipient.get_full_name|default:n.recipient.username }}</td>
+        <td>{{ n.get_notification_type_display }}</td>
+        <td>{{ n.channel }}</td>
+        <td><span class="badge bg-secondary">{{ n.status }}</span></td>
+        <td>{{ n.subject }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-muted text-center">No notifications found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include 'partials/pagination.html' with page_obj=page_obj page_size=page_size %}
+{% endblock %}

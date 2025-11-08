@@ -101,7 +101,8 @@ class User(AbstractUser):
     @property
     def is_admin(self):
         """Check if user is Admin"""
-        return self.role == self.Role.ADMIN.value or self.role == 'ADMIN'
+        # Treat OWNER as having full admin capabilities everywhere
+        return self.role in [self.Role.ADMIN.value, 'ADMIN', self.Role.OWNER.value, 'OWNER']
     
     @property
     def is_manager(self):
@@ -146,6 +147,10 @@ class User(AbstractUser):
         # Superusers and owners remain staff regardless of role
         if self.is_superuser or self.is_owner:
             self.is_staff = True
+        
+        # If role is OWNER, ensure the owner flag is set for downstream checks
+        if self.role in [self.Role.OWNER.value, 'OWNER'] and not self.is_owner:
+            self.is_owner = True
         
         super().save(*args, **kwargs)
 

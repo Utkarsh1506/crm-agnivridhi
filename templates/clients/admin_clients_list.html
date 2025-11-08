@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}All Clients - Admin{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+  <div class="position-sticky pt-3">
+    <ul class="nav flex-column">
+      <li class="nav-item"><a class="nav-link" href="{% url 'accounts:admin_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link active" href="{% url 'clients:admin_clients_list' %}"><i class="bi bi-building"></i> Clients</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'applications:team_applications_list' %}"><i class="bi bi-file-earmark-text"></i> Applications</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'bookings:team_bookings_list' %}"><i class="bi bi-calendar-check"></i> Bookings</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'payments:team_payments_list' %}"><i class="bi bi-credit-card"></i> Payments</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'documents:team_documents_list' %}"><i class="bi bi-file-pdf"></i> Documents</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'accounts:users_list' %}"><i class="bi bi-people"></i> Users</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'notifications:notification_list' %}"><i class="bi bi-bell"></i> Notifications</a></li>
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h2"><i class="bi bi-building"></i> All Clients</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'accounts:admin_dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Clients</li>
+      </ol>
+    </nav>
+  </div>
+  <div>
+    <a href="{% url 'clients:create_client' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> New Client</a>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small">Search</label>
+        <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm" placeholder="Company / Contact / Email / ID">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Status</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for val,label in page_obj.object_list.model.Status.choices %}
+          <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Business Type</label>
+        <select name="business_type" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for val,label in business_type_choices %}
+          <option value="{{ val }}" {% if business_type_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Sector</label>
+        <select name="sector" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for val,label in sector_choices %}
+          <option value="{{ val }}" {% if sector_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Sales</label>
+        <select name="sales" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for s in sales_team %}
+          <option value="{{ s.assigned_sales_id }}" {% if sales_filter == s.assigned_sales_id|stringformat:'s' %}selected{% endif %}>
+            {{ s.assigned_sales__first_name|default:s.assigned_sales__username }} {{ s.assigned_sales__last_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Manager</label>
+        <select name="manager" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for m in manager_team %}
+          <option value="{{ m.assigned_manager_id }}" {% if manager_filter == m.assigned_manager_id|stringformat:'s' %}selected{% endif %}>
+            {{ m.assigned_manager__first_name|default:m.assigned_manager__username }} {{ m.assigned_manager__last_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">City</label>
+        <input type="text" name="city" value="{{ city_filter }}" class="form-control form-control-sm" placeholder="City">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">State</label>
+        <input type="text" name="state" value="{{ state_filter }}" class="form-control form-control-sm" placeholder="State">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Approved</label>
+        <select name="approved" class="form-select form-select-sm">
+          <option value="">All</option>
+          <option value="yes" {% if approved_filter == 'yes' %}selected{% endif %}>Yes</option>
+          <option value="no" {% if approved_filter == 'no' %}selected{% endif %}>No</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Created From</label>
+        <input type="date" name="created_from" value="{{ created_from }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Created To</label>
+        <input type="date" name="created_to" value="{{ created_to }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Turnover Min (₹L)</label>
+        <input type="number" step="0.01" name="turnover_min" value="{{ turnover_min }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Turnover Max (₹L)</label>
+        <input type="number" step="0.01" name="turnover_max" value="{{ turnover_max }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Funding Min (₹L)</label>
+        <input type="number" step="0.01" name="funding_min" value="{{ funding_min }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">Funding Max (₹L)</label>
+        <input type="number" step="0.01" name="funding_max" value="{{ funding_max }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-1">
+        <label class="form-label small">Per Page</label>
+        <select name="page_size" class="form-select form-select-sm">
+          <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+          <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+          <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+          <option value="150" {% if page_size == 150 %}selected{% endif %}>150</option>
+          <option value="200" {% if page_size == 200 %}selected{% endif %}>200</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-sm btn-primary w-100"><i class="bi bi-search"></i> Apply</button>
+        <a href="{% url 'clients:admin_clients_list' %}" class="btn btn-sm btn-outline-secondary w-100 mt-1">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-table"></i> Clients ({{ total_clients }})</span>
+    {% if search or status_filter or sales_filter or manager_filter %}<span class="badge bg-info">Filtered</span>{% endif %}
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Company</th>
+            <th>Contact</th>
+            <th>Business</th>
+            <th>Sector</th>
+            <th>Funding Req (₹L)</th>
+            <th>Sales</th>
+            <th>Manager</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in page_obj %}
+          <tr>
+            <td><code>{{ client.client_id }}</code></td>
+            <td><strong>{{ client.company_name }}</strong><br><small class="text-muted">{{ client.created_at|date:"M d, Y" }}</small></td>
+            <td>{{ client.contact_person }}<br><small class="text-muted">{{ client.contact_email }}</small></td>
+            <td>{{ client.get_business_type_display }}</td>
+            <td>{{ client.get_sector_display }}</td>
+            <td>{{ client.funding_required }}</td>
+            <td>
+              {% if client.assigned_sales %}
+                {{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}
+              {% else %}
+                <span class="text-muted">Unassigned</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if client.assigned_manager %}
+                {{ client.assigned_manager.get_full_name|default:client.assigned_manager.username }}
+              {% else %}
+                <span class="text-muted">Unassigned</span>
+              {% endif %}
+            </td>
+            <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>
+            <td class="text-end">
+              <a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+              <a href="{% url 'edit_requests:edit_client_direct' client.pk %}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="10" class="text-center py-4 text-muted">No clients found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card-footer">
+    {% include 'partials/pagination.html' with page_obj=page_obj page_size=page_size %}
+  </div>
+</div>
+{% endblock %}

@@ -41,7 +41,7 @@ def sales_payments_list(request):
 
 @manager_required
 def team_payments_list(request):
-    """Manager view: All payments for team clients"""
+    """Manager/Admin view: Payments for team clients; Admin/Owner sees all."""
     user = request.user
     
     # Get all clients assigned to this manager's team
@@ -49,12 +49,17 @@ def team_payments_list(request):
     from clients.models import Client
     from django.db.models import Q
     
-    team_clients = Client.objects.filter(
-        Q(assigned_manager=user) | Q(assigned_sales__manager=user)
-    ).select_related('assigned_sales', 'assigned_manager').distinct()
-    
-    # Get payments for these clients
-    payments = Payment.objects.filter(client__in=team_clients).select_related('client', 'client__assigned_sales', 'booking', 'received_by').order_by('-created_at')
+    if getattr(user, 'role', None) in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False):
+        payments = Payment.objects.all().select_related('client', 'client__assigned_sales', 'booking', 'received_by').order_by('-created_at')
+        # For totals by client, include all clients
+        team_clients = Client.objects.all().select_related('assigned_sales', 'assigned_manager')
+    else:
+        team_clients = Client.objects.filter(
+            Q(assigned_manager=user) | Q(assigned_sales__manager=user)
+        ).select_related('assigned_sales', 'assigned_manager').distinct()
+        
+        # Get payments for these clients
+        payments = Payment.objects.filter(client__in=team_clients).select_related('client', 'client__assigned_sales', 'booking', 'received_by').order_by('-created_at')
     
     # Statistics
     from django.db.models import Sum, Count

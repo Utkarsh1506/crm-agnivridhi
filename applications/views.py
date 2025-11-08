@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Application
@@ -113,12 +114,17 @@ def team_applications_list(request):
     # Get all clients assigned to this manager's team
     # Include both: clients directly assigned to manager AND clients assigned to sales employees under this manager
     from django.db.models import Q
-    team_clients = Client.objects.filter(
-        Q(assigned_manager=user) | Q(assigned_sales__manager=user)
-    ).select_related('assigned_sales', 'assigned_manager').distinct()
-    
-    # Get applications for these clients
-    applications = Application.objects.filter(client__in=team_clients).select_related('client', 'client__assigned_sales', 'scheme', 'assigned_to').order_by('-created_at')
+    if getattr(user, 'role', None) in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False):
+        # Global visibility
+        applications = Application.objects.all().select_related('client', 'client__assigned_sales', 'scheme', 'assigned_to').order_by('-created_at')
+        team_clients = Client.objects.all().select_related('assigned_sales', 'assigned_manager')
+    else:
+        team_clients = Client.objects.filter(
+            Q(assigned_manager=user) | Q(assigned_sales__manager=user)
+        ).select_related('assigned_sales', 'assigned_manager').distinct()
+        
+        # Team applications only
+        applications = Application.objects.filter(client__in=team_clients).select_related('client', 'client__assigned_sales', 'scheme', 'assigned_to').order_by('-created_at')
     
     # Statistics
     from django.db.models import Sum, Count
@@ -342,6 +348,9 @@ def approve_application(request, pk):
     if request.method == 'POST':
         if application.status != 'SUBMITTED':
             messages.warning(request, 'Only submitted applications can be approved.')
+            next_url = request.POST.get('next') or request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
             return redirect('applications:manager_application_detail', pk=pk)
         
         # Get approved amount from form (optional)
@@ -351,6 +360,9 @@ def approve_application(request, pk):
                 application.approved_amount = float(approved_amount)
             except ValueError:
                 messages.error(request, 'Invalid approved amount.')
+                next_url = request.POST.get('next') or request.GET.get('next')
+                if next_url:
+                    return redirect(next_url)
                 return redirect('applications:approve_application', pk=pk)
         else:
             # If no approved amount specified, use applied amount
@@ -373,15 +385,28 @@ def approve_application(request, pk):
         application.save()
         
         messages.success(request, f'Application {application.application_id} has been approved for ₹{application.approved_amount} lakhs!')
+
+        # JSON/AJAX response support
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'ok': True,
+                'status': 'APPROVED',
+                'approved_amount': float(application.approved_amount),
+                'application_id': application.application_id,
+            })
         
         # TODO: Send notification to sales and client
         
+        next_url = request.POST.get('next') or request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
         return redirect('applications:manager_application_detail', pk=pk)
     
     # GET request - show confirmation form
     context = {
         'application': application,
         'user_role': 'manager' if user.role == 'MANAGER' else 'admin',
+        'next': request.GET.get('next', ''),
     }
     return render(request, 'applications/approve_application.html', context)
 
@@ -406,6 +431,9 @@ def reject_application(request, pk):
     if request.method == 'POST':
         if application.status != 'SUBMITTED':
             messages.warning(request, 'Only submitted applications can be rejected.')
+            next_url = request.POST.get('next') or request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
             return redirect('applications:manager_application_detail', pk=pk)
         
         reason = request.POST.get('rejection_reason', '').strip()
@@ -431,13 +459,24 @@ def reject_application(request, pk):
         application.save()
         
         messages.warning(request, f'Application {application.application_id} has been rejected.')
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'ok': True,
+                'status': 'REJECTED',
+                'reason': application.rejection_reason,
+                'application_id': application.application_id,
+            })
         
         # TODO: Send notification to sales and client
         
+        next_url = request.POST.get('next') or request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
         return redirect('applications:manager_application_detail', pk=pk)
     
-    # GET request - show confirmation
-    return render(request, 'applications/confirm_reject.html', {'application': application})
+    # GET request - show confirmation (reuse approve template style or create lightweight inline form)
+    return render(request, 'applications/reject_application.html', {'application': application, 'next': request.GET.get('next', '')})
 
 
 def _notify_sales_on_approval(application, sales_user):

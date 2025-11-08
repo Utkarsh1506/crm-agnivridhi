@@ -22,19 +22,40 @@ def role_required(*roles):
             if not request.user.is_authenticated:
                 return redirect('accounts:login')
             
-            if hasattr(request.user, 'role'):
-                if request.user.role in roles:
-                    return view_func(request, *args, **kwargs)
+            # Superusers bypass all role checks
+            if getattr(request.user, 'is_superuser', False):
+                return view_func(request, *args, **kwargs)
             
-            messages.error(request, 'You do not have permission to access this page.')
-            return redirect('accounts:dashboard')
+            if hasattr(request.user, 'role'):
+                # OWNER should inherit ADMIN + MANAGER + SALES privileges automatically
+                effective_role = request.user.role
+                if effective_role == 'OWNER':
+                    owner_equivalents = set(['OWNER','ADMIN','MANAGER','SALES'])
+                    if owner_equivalents.intersection(set(roles)):
+                        return view_func(request, *args, **kwargs)
+                if effective_role in roles:
+                    return view_func(request, *args, **kwargs)
+
+            # Return 403 Forbidden with standard message to align with tests and UX
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden(
+                """
+                <h2>403 - Access Denied</h2>
+                <p>You don't have permission to access this page.</p>
+                <p><a href='/dashboard/'>Return to Dashboard</a></p>
+                """
+            )
         return wrapper
     return decorator
 
 
 def admin_required(view_func):
-    """Decorator for admin-only views"""
-    return role_required('ADMIN')(view_func)
+    """Decorator for admin/owner-only views.
+
+    Previously only ADMIN role users passed. OWNER should also have full
+    administrative access across dashboards and direct edit actions.
+    """
+    return role_required('ADMIN', 'OWNER')(view_func)
 
 
 def staff_required(view_func):
@@ -395,15 +416,15 @@ def pending_approvals(request):
     
     user = request.user
     
-    # 1. Pending Applications (SUBMITTED status)
+    # 1. Pending Applications (SUBMITTED status) - include entire manager team scope
     pending_applications = Application.objects.filter(
-        client__assigned_manager=user,
+        Q(client__assigned_manager=user) | Q(client__assigned_sales__manager=user),
         status='SUBMITTED'
-    ).select_related('client', 'scheme', 'assigned_to').order_by('-created_at')
+    ).select_related('client', 'scheme', 'assigned_to').order_by('-created_at').distinct()
     
-    # 2. Pending Booking Payments (PENDING status)
+    # 2. Pending Booking Payments (PENDING status) - include team clients
     pending_payments = Payment.objects.filter(
-        Q(client__assigned_manager=user) | Q(received_by__manager=user),
+        (Q(client__assigned_manager=user) | Q(client__assigned_sales__manager=user) | Q(received_by__manager=user)),
         status='PENDING'
     ).select_related('booking', 'client', 'received_by').order_by('-created_at').distinct()
     
@@ -427,8 +448,8 @@ def pending_approvals(request):
     for edit_request in pending_edit_requests:
         try:
             client = Client.objects.get(pk=edit_request.entity_id)
-            # Only show if client belongs to this manager's team
-            if client.assigned_manager == user:
+            # Only show if client belongs to this manager's team (direct or via sales)
+            if client.assigned_manager == user or (getattr(client, 'assigned_sales', None) and client.assigned_sales and client.assigned_sales.manager == user):
                 edit_requests_with_details.append({
                     'edit_request': edit_request,
                     'client': client
@@ -852,7 +873,7 @@ def owner_dashboard(request):
     Owner Dashboard: accessible only to Admin role users flagged as is_owner.
     Distinct from superuser dashboard; focuses on business KPIs.
     """
-    if not getattr(request.user, 'is_owner', False):
+    if not (getattr(request.user, 'is_owner', False) or getattr(request.user, 'role', None) == 'OWNER'):
         messages.error(request, 'Only the company owner can access this dashboard.')
         return redirect('accounts:admin_dashboard')
 
@@ -951,6 +972,60 @@ def owner_dashboard(request):
     }
 
     return render(request, 'dashboards/owner_dashboard.html', context)
+
+
+@admin_required
+def users_list(request):
+    """Admin/Owner: list all users with role and manager relationships."""
+    from accounts.models import User
+    from django.core.paginator import Paginator
+    from django.db.models import Q
+
+    users_qs = User.objects.select_related('manager').order_by('-date_joined')
+
+    # Filters
+    role = request.GET.get('role', '').strip()
+    manager_id = request.GET.get('manager', '').strip()
+    q = request.GET.get('q', '').strip()
+    page_size = request.GET.get('page_size') or '50'
+    try:
+        page_size = max(1, min(200, int(page_size)))
+    except Exception:
+        page_size = 50
+
+    if role:
+        users_qs = users_qs.filter(role=role)
+    if manager_id:
+        try:
+            users_qs = users_qs.filter(manager_id=int(manager_id))
+        except Exception:
+            pass
+    if q:
+        users_qs = users_qs.filter(
+            Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(username__icontains=q) | Q(email__icontains=q)
+        )
+
+    page_number = request.GET.get('page')
+    paginator = Paginator(users_qs, page_size)
+    users_page = paginator.get_page(page_number)
+
+    # Simple role counts for header badges (dict of role -> count)
+    from collections import Counter
+    role_counts = Counter(users_qs.values_list('role', flat=True))
+
+    # Managers list for filter dropdown
+    managers = User.objects.filter(role__in=['ADMIN','MANAGER']).order_by('first_name','last_name')
+
+    return render(request, 'accounts/users_list.html', {
+        'users_page': users_page,
+        'role_counts_items': list(role_counts.items()),
+        'paginator': paginator,
+        'filter_role': role,
+        'filter_manager': manager_id,
+        'filter_q': q,
+        'page_size': page_size,
+        'managers': managers,
+    })
 
 
 @login_required

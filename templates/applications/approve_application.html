@@ -79,6 +79,9 @@
         
         <form method="post">
             {% csrf_token %}
+            {% if next %}
+            <input type="hidden" name="next" value="{{ next }}" />
+            {% endif %}
             
             <div class="mb-4">
                 <label for="approved_amount" class="form-label"><strong>Approved Amount (in Lakhs)</strong></label>
@@ -101,7 +104,7 @@
                 <a href="{% url 'applications:manager_application_detail' application.pk %}" class="btn btn-secondary">
                     <i class="bi bi-x-circle"></i> Cancel
                 </a>
-                <a href="{% url 'applications:reject_application' application.pk %}" class="btn btn-danger">
+                <a href="{% url 'applications:reject_application' application.pk %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="btn btn-danger">
                     <i class="bi bi-x-circle"></i> Reject Instead
                 </a>
                 <button type="submit" class="btn btn-success btn-lg">

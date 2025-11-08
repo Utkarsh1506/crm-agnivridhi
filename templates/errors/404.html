@@ -110,7 +110,7 @@
         {% endif %}
         
         <div class="mt-4">
-            <a href="{% url 'accounts:dashboard' %}" class="btn-custom">
+              <a href="{{ dashboard_url }}" class="btn-custom">
                 <i class="bi bi-house-door"></i> Go to Dashboard
             </a>
             {% if request.user.is_authenticated and request.user.is_staff_member %}

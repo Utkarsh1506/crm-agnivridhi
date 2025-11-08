@@ -17,4 +17,5 @@ urlpatterns = [
     # Lists
     path('my-clients/', views.sales_clients_list, name='sales_clients_list'),
     path('team-clients/', views.manager_clients_list, name='manager_clients_list'),
+    path('admin/', views.admin_clients_list, name='admin_clients_list'),
 ]

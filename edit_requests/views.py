@@ -241,25 +241,24 @@ def reject_edit_request(request, request_id):
 
 @login_required
 def edit_client_direct(request, client_id):
-    """Manager directly edits client details without approval"""
+    """Manager/Admin/Owner/Superuser directly edits client details without approval"""
     client = get_object_or_404(Client, pk=client_id)
-    
-    # Only managers can directly edit
-    if request.user.role not in ['MANAGER', 'ADMIN', 'OWNER']:
+
+    # Only manager, admin, owner, or superuser can directly edit
+    if not (request.user.is_manager or request.user.is_admin or request.user.is_owner or request.user.is_superuser):
         messages.error(request, 'You do not have permission to edit clients directly.')
         return redirect('clients:client_detail', pk=client_id)
-    
-    # Manager can only edit clients in their team
+
+    # Team restriction only for managers
     if request.user.role == 'MANAGER':
-        if client.assigned_manager != request.user and client.assigned_sales.manager != request.user:
+        sales_manager = getattr(client.assigned_sales, 'manager', None)
+        if client.assigned_manager != request.user and sales_manager != request.user:
             messages.error(request, 'You can only edit clients in your team.')
             return redirect('accounts:dashboard')
-    
+    # Admin/Owner/Superuser: no restriction
+
     if request.method == 'POST':
         # Update client fields
-        from clients.forms import ClientCreationForm
-        
-        # Simple update without creating a new user
         updateable_fields = [
             'company_name', 'business_type', 'sector', 'company_age',
             'registration_number', 'gst_number', 'pan_number',
@@ -268,7 +267,7 @@ def edit_client_direct(request, client_id):
             'contact_person', 'contact_email', 'contact_phone', 'alternate_phone',
             'business_description', 'funding_purpose'
         ]
-        
+
         updated = False
         for field in updateable_fields:
             if field in request.POST:
@@ -276,13 +275,13 @@ def edit_client_direct(request, client_id):
                 if value is not None:
                     setattr(client, field, value)
                     updated = True
-        
+
         if updated:
             client.save()
             messages.success(request, f'Client "{client.company_name}" updated successfully!')
-        
+
         return redirect('clients:client_detail', pk=client_id)
-    
+
     return render(request, 'edit_requests/edit_client_direct.html', {
         'client': client,
     })

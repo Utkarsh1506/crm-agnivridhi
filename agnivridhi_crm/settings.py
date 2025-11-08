@@ -83,6 +83,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'applications.context_processors.pending_applications_count',
+                'accounts.context_processors.dashboard_link',
             ],
         },
     },

@@ -7,12 +7,12 @@
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link active" href="{% url 'owner_dashboard' %}">
+                <a class="nav-link active" href="{% url 'accounts:owner_dashboard' %}">
                     <i class="bi bi-trophy"></i> Owner Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                <a class="nav-link" href="{% url 'accounts:admin_dashboard' %}">
                     <i class="bi bi-speedometer2"></i> Admin Dashboard
                 </a>
             </li>
@@ -40,7 +40,7 @@
                 <option value="CARD" {% if selected_method == 'CARD' %}selected{% endif %}>Card</option>
                 <option value="OTHER" {% if selected_method == 'OTHER' %}selected{% endif %}>Other</option>
             </select>
-            <a href="{% url 'owner_dashboard' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+            <a href="{% url 'accounts:owner_dashboard' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
         </form>
     </div>
 </div>
@@ -122,17 +122,7 @@
         </div>
     </div>
 
-    <!-- Method Breakdown and Last 7 Days -->
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header"><i class="bi bi-pie-chart"></i> Revenue by Method</div>
-            <div class="card-body">
-                {{ method_labels|json_script:"owner-method-labels" }}
-                {{ method_values|json_script:"owner-method-values" }}
-                <canvas id="ownerMethodChart" height="120"></canvas>
-            </div>
-        </div>
-    </div>
+    <!-- Last 7 Days (Revenue) -->
     <div class="col-lg-6 mb-4">
         <div class="card">
             <div class="card-header"><i class="bi bi-graph-up-arrow"></i> Last 7 Days (Revenue)</div>
@@ -214,13 +204,13 @@
             </div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
-                    <a class="list-group-item list-group-item-action" href="/admin/clients/client/">
+                    <a class="list-group-item list-group-item-action" href="{% url 'clients:manager_clients_list' %}">
                         <i class="bi bi-building"></i> Manage Clients
                     </a>
-                    <a class="list-group-item list-group-item-action" href="/admin/payments/payment/">
+                    <a class="list-group-item list-group-item-action" href="{% url 'payments:team_payments_list' %}">
                         <i class="bi bi-credit-card"></i> Review Payments
                     </a>
-                    <a class="list-group-item list-group-item-action" href="/admin/applications/application/">
+                    <a class="list-group-item list-group-item-action" href="{% url 'applications:pending_applications' %}">
                         <i class="bi bi-file-text"></i> Review Applications
                     </a>
                 </div>
@@ -246,28 +236,7 @@
             });
         }
 
-        // Method breakdown (doughnut)
-        const methodLabelsEl = document.getElementById('owner-method-labels');
-        const methodValuesEl = document.getElementById('owner-method-values');
-        const methodCtx = document.getElementById('ownerMethodChart');
-        if (methodCtx && methodLabelsEl && methodValuesEl) {
-            const mLabels = JSON.parse(methodLabelsEl.textContent || '[]');
-            const mValues = JSON.parse(methodValuesEl.textContent || '[]');
-            new Chart(methodCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: mLabels,
-                    datasets: [{
-                        data: mValues,
-                        backgroundColor: ['#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
-        }
+        // (Revenue by Method moved to Reports & Analytics page)
 
         // Daily revenue (last 7 days)
         const dailyLabelsEl = document.getElementById('owner-daily-labels');

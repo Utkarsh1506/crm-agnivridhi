@@ -101,43 +101,50 @@ def create_scheme_documentation_booking(request, scheme_id: int):
 
 @manager_required
 def team_bookings_list(request):
-    """Manager view: All bookings for clients under this manager's team"""
-    # Team bookings are those where:
-    # 1. Client is assigned to this manager, OR
-    # 2. Booking is assigned to a sales employee under this manager
-    from django.db.models import Q
-    bookings = (
-        Booking.objects
-        .filter(Q(client__assigned_manager=request.user) | Q(assigned_to__manager=request.user))
-        .select_related('client', 'service', 'assigned_to', 'payment')
-        .order_by('-booking_date')
-        .distinct()
-    )
+	"""Manager/Admin view: Bookings for team; Admin/Owner sees all."""
+	from django.db.models import Q
+	if getattr(request.user, 'role', None) in ['ADMIN', 'OWNER'] or getattr(request.user, 'is_superuser', False):
+		bookings = (
+			Booking.objects
+			.all()
+			.select_related('client', 'service', 'assigned_to', 'payment')
+			.order_by('-booking_date')
+			.distinct()
+		)
+	else:
+		# Team bookings: client assigned to manager OR booking assigned to manager's team sales
+		bookings = (
+			Booking.objects
+			.filter(Q(client__assigned_manager=request.user) | Q(assigned_to__manager=request.user))
+			.select_related('client', 'service', 'assigned_to', 'payment')
+			.order_by('-booking_date')
+			.distinct()
+		)
 
-    # Basic stats
-    from django.db.models import Count, Sum, Q
-    stats = bookings.aggregate(
-        total=Count('id'),
-        pending=Count('id', filter=Q(status='PENDING')),
-        paid=Count('id', filter=Q(status='PAID')),
-        completed=Count('id', filter=Q(status='COMPLETED')),
-        cancelled=Count('id', filter=Q(status='CANCELLED')),
-        total_value=Sum('final_amount'),
-    )
+	# Basic stats
+	from django.db.models import Count, Sum, Q as _Q
+	stats = bookings.aggregate(
+		total=Count('id'),
+		pending=Count('id', filter=_Q(status='PENDING')),
+		paid=Count('id', filter=_Q(status='PAID')),
+		completed=Count('id', filter=_Q(status='COMPLETED')),
+		cancelled=Count('id', filter=_Q(status='CANCELLED')),
+		total_value=Sum('final_amount'),
+	)
 
-    # Optional grouping by client
-    bookings_by_client = {}
-    for b in bookings:
-        key = b.client.company_name
-        if key not in bookings_by_client:
-            bookings_by_client[key] = { 'client': b.client, 'items': [] }
-        bookings_by_client[key]['items'].append(b)
+	# Optional grouping by client
+	bookings_by_client = {}
+	for b in bookings:
+		key = b.client.company_name
+		if key not in bookings_by_client:
+			bookings_by_client[key] = { 'client': b.client, 'items': [] }
+		bookings_by_client[key]['items'].append(b)
 
-    return render(request, 'bookings/team_bookings_list.html', {
-        'bookings': bookings,
-        'bookings_by_client': bookings_by_client,
-        'stats': stats,
-    })
+	return render(request, 'bookings/team_bookings_list.html', {
+		'bookings': bookings,
+		'bookings_by_client': bookings_by_client,
+		'stats': stats,
+	})
 
 
 @login_required

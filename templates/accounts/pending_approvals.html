@@ -38,7 +38,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:team_clients_list' %}">
+                <a class="nav-link" href="{% url 'clients:manager_clients_list' %}">
                     <i class="bi bi-building"></i>Clients
                 </a>
             </li>
@@ -138,9 +138,13 @@
                             <a href="{% url 'applications:manager_application_detail' application.pk %}" class="btn btn-sm btn-primary">
                                 <i class="bi bi-eye"></i> Review
                             </a>
-                            <a href="{% url 'applications:approve_application' application.pk %}" class="btn btn-sm btn-success">
-                                <i class="bi bi-check-circle"></i> Approve
-                            </a>
+                            <form method="post" action="{% url 'applications:approve_application' application.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}" />
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle"></i> Approve
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}
@@ -233,9 +237,13 @@
                         <td>{{ item.edit_request.requested_by.get_full_name|default:item.edit_request.requested_by.username }}</td>
                         <td>{{ item.edit_request.created_at|date:"M d, Y" }}</td>
                         <td>
-                            <a href="{% url 'edit_requests:approve_edit_request' item.edit_request.id %}" class="btn btn-sm btn-success">
-                                <i class="bi bi-check-circle"></i> Approve
-                            </a>
+                            <form method="post" action="{% url 'edit_requests:approve_edit_request' item.edit_request.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="notes" value="" />
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle"></i> Approve
+                                </button>
+                            </form>
                             <a href="{% url 'edit_requests:reject_edit_request' item.edit_request.id %}" class="btn btn-sm btn-danger">
                                 <i class="bi bi-x-circle"></i> Reject
                             </a>
@@ -285,9 +293,15 @@
                             <a href="{% url 'clients:client_detail' client.id %}" class="btn btn-sm btn-primary">
                                 <i class="bi bi-eye"></i> Review
                             </a>
-                            <a href="{% url 'clients:approve_client' client.id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-success">
-                                <i class="bi bi-check-circle"></i> Approve
-                            </a>
+                            <form method="post" action="{% url 'clients:approve_client' client.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="approve" />
+                                <input type="hidden" name="rejection_reason" value="" />
+                                <input type="hidden" name="next" value="{{ request.path }}" />
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle"></i> Approve
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}
