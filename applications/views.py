@@ -114,7 +114,8 @@ def team_applications_list(request):
     # Get all clients assigned to this manager's team
     # Include both: clients directly assigned to manager AND clients assigned to sales employees under this manager
     from django.db.models import Q
-    if getattr(user, 'role', None) in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False):
+    user_role = getattr(user, 'role', '').upper()
+    if user_role in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False):
         # Global visibility
         applications = Application.objects.all().select_related('client', 'client__assigned_sales', 'scheme', 'assigned_to').order_by('-created_at')
         team_clients = Client.objects.all().select_related('assigned_sales', 'assigned_manager')
@@ -232,18 +233,21 @@ def sales_application_detail(request, pk):
 
 @manager_required
 def manager_application_detail(request, pk):
-    """Manager view: View team applications with approval controls"""
+    """Manager/Admin/Owner view: View team applications with approval controls"""
     application = get_object_or_404(Application, pk=pk)
     
-    # Check permissions - manager can view applications from their team clients
-    if application.client.assigned_manager != request.user:
-        messages.error(request, "You don't have permission to view this application.")
-        return redirect('applications:team_applications_list')
+    # Check permissions - Admin/Owner can view all, Manager can view their team only
+    user_role = getattr(request.user, 'role', '').upper()
+    if user_role not in ['ADMIN', 'OWNER'] and not request.user.is_superuser:
+        # Manager check - only their team
+        if application.client.assigned_manager != request.user and application.client.assigned_sales.manager != request.user:
+            messages.error(request, "You don't have permission to view this application.")
+            return redirect('applications:team_applications_list')
     
     context = {
         'application': application,
-        'user_role': 'manager',
-        'can_approve': True,  # Manager has approval rights
+        'user_role': 'manager' if user_role == 'MANAGER' else 'admin',
+        'can_approve': True,  # Manager/Admin/Owner has approval rights
     }
     return render(request, 'applications/application_detail.html', context)
 
@@ -335,12 +339,13 @@ def approve_application(request, pk):
 
     # Permission check
     user = request.user
-    if user.role not in ['MANAGER', 'ADMIN', 'OWNER']:
+    user_role = getattr(user, 'role', '').upper()
+    if user_role not in ['MANAGER', 'ADMIN', 'OWNER']:
         messages.error(request, "You don't have permission to approve applications.")
         return redirect('applications:application_detail', pk=pk)
     
     # Manager can only approve applications from their team
-    if user.role == 'MANAGER':
+    if user_role == 'MANAGER':
         if application.client.assigned_manager != user and application.client.assigned_sales.manager != user:
             messages.error(request, "You can only approve applications from your team.")
             return redirect('applications:team_applications_list')

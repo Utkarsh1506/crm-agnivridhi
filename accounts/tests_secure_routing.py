@@ -12,6 +12,19 @@ from accounts.constants import (
     ROLE_MANAGER, ROLE_SALES, ROLE_CLIENT
 )
 
+# Workaround for Python 3.14 compatibility issue with Django template context copying
+# Monkey patch to prevent test instrumentation from trying to copy contexts
+import sys
+if sys.version_info >= (3, 14):
+    from django.template import context
+    original_copy = context.RequestContext.__copy__
+    def patched_copy(self):
+        # Return self instead of trying to copy dicts (which fails in Python 3.14)
+        new = context.RequestContext(self.request)
+        new.dicts = self.dicts[:]
+        return new
+    context.RequestContext.__copy__ = patched_copy
+
 
 class SecureRoutingTestCase(TestCase):
     """Test suite for role-based access control and middleware"""

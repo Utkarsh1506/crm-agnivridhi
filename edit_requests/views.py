@@ -88,12 +88,13 @@ def request_client_edit(request, client_id):
 @login_required
 def manager_edit_requests(request):
     """Manager views all pending edit requests from their team"""
-    if request.user.role not in ['MANAGER', 'ADMIN', 'OWNER']:
+    user_role = getattr(request.user, 'role', '').upper()
+    if user_role not in ['MANAGER', 'ADMIN', 'OWNER']:
         messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')
     
     # Get pending edit requests from team members
-    if request.user.role == 'MANAGER':
+    if user_role == 'MANAGER':
         pending_requests = EditRequest.objects.filter(
             status='PENDING',
             requested_by__manager=request.user
@@ -129,12 +130,13 @@ def approve_edit_request(request, request_id):
     edit_request = get_object_or_404(EditRequest, pk=request_id)
     
     # Check permissions
-    if request.user.role not in ['MANAGER', 'ADMIN', 'OWNER']:
+    user_role = getattr(request.user, 'role', '').upper()
+    if user_role not in ['MANAGER', 'ADMIN', 'OWNER']:
         messages.error(request, 'You do not have permission to approve edit requests.')
         return redirect('accounts:dashboard')
     
     # Manager can only approve requests from their team
-    if request.user.role == 'MANAGER':
+    if user_role == 'MANAGER':
         if edit_request.requested_by.manager != request.user:
             messages.error(request, 'You can only approve requests from your team.')
             return redirect('edit_requests:manager_edit_requests')
@@ -192,12 +194,13 @@ def reject_edit_request(request, request_id):
     edit_request = get_object_or_404(EditRequest, pk=request_id)
     
     # Check permissions
-    if request.user.role not in ['MANAGER', 'ADMIN', 'OWNER']:
+    user_role = getattr(request.user, 'role', '').upper()
+    if user_role not in ['MANAGER', 'ADMIN', 'OWNER']:
         messages.error(request, 'You do not have permission to reject edit requests.')
         return redirect('accounts:dashboard')
     
     # Manager can only reject requests from their team
-    if request.user.role == 'MANAGER':
+    if user_role == 'MANAGER':
         if edit_request.requested_by.manager != request.user:
             messages.error(request, 'You can only reject requests from your team.')
             return redirect('edit_requests:manager_edit_requests')
@@ -250,7 +253,8 @@ def edit_client_direct(request, client_id):
         return redirect('clients:client_detail', pk=client_id)
 
     # Team restriction only for managers
-    if request.user.role == 'MANAGER':
+    user_role = getattr(request.user, 'role', '').upper()
+    if user_role == 'MANAGER':
         sales_manager = getattr(client.assigned_sales, 'manager', None)
         if client.assigned_manager != request.user and sales_manager != request.user:
             messages.error(request, 'You can only edit clients in your team.')

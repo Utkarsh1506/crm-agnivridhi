@@ -102,12 +102,14 @@ class User(AbstractUser):
     def is_admin(self):
         """Check if user is Admin"""
         # Treat OWNER as having full admin capabilities everywhere
-        return self.role in [self.Role.ADMIN.value, 'ADMIN', self.Role.OWNER.value, 'OWNER']
+        # Handle both uppercase (enum value) and lowercase (constant) forms
+        return self.role.upper() in ['ADMIN', 'OWNER']
     
     @property
     def is_manager(self):
         """Check if user is Manager"""
-        return self.role == self.Role.MANAGER.value or self.role == 'MANAGER'
+        # Handle both uppercase (enum value) and lowercase (constant) forms
+        return self.role.upper() == 'MANAGER'
     
     @property
     def is_sales(self):
@@ -121,8 +123,9 @@ class User(AbstractUser):
     
     @property
     def is_staff_member(self):
-        """Check if user is staff (Admin, Manager, or Sales)"""
-        return self.role in [self.Role.ADMIN.value, self.Role.MANAGER.value, self.Role.SALES.value, 'ADMIN', 'MANAGER', 'SALES']
+        """Check if user is staff (Owner, Admin, Manager, or Sales)"""
+        # Handle both uppercase (enum value) and lowercase (constant) forms
+        return self.role.upper() in ['OWNER', 'ADMIN', 'MANAGER', 'SALES']
     
     @property
     def normalized_role(self):

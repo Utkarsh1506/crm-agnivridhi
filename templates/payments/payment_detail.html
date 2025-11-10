@@ -38,7 +38,7 @@
 
 {% block content %}
 <div class="mb-3">
-    <a href="{% url 'payments:payment_list' %}" class="btn btn-sm btn-outline-secondary">
+    <a href="{% url back_url|default:'payments:team_payments_list' %}" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Back to Payments
     </a>
 </div>

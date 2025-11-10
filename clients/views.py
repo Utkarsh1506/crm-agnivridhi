@@ -212,7 +212,9 @@ def admin_clients_list(request):
     - Pagination with adjustable page size
     - Direct edit link using edit_requests:edit_client_direct
     """
-    if request.user.role not in ['ADMIN', 'OWNER'] and not request.user.is_superuser:
+    # Case-insensitive role check
+    user_role = getattr(request.user, 'role', '').upper()
+    if user_role not in ['ADMIN', 'OWNER'] and not request.user.is_superuser:
         from django.contrib import messages
         messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')

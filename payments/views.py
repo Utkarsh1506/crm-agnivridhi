@@ -49,7 +49,8 @@ def team_payments_list(request):
     from clients.models import Client
     from django.db.models import Q
     
-    if getattr(user, 'role', None) in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False):
+    user_role = getattr(user, 'role', '').upper()
+    if user_role in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False):
         payments = Payment.objects.all().select_related('client', 'client__assigned_sales', 'booking', 'received_by').order_by('-created_at')
         # For totals by client, include all clients
         team_clients = Client.objects.all().select_related('assigned_sales', 'assigned_manager')
@@ -100,9 +101,21 @@ def payment_detail(request, pk):
     user = request.user
     if user.is_client and payment.client.user != user:
         messages.error(request, "You don't have permission to view this payment.")
-        return redirect('payment_list')
+        return redirect('payments:client_payments_list')
+    
+    # Determine back URL based on role
+    user_role = getattr(user, 'role', '').upper()
+    if user_role in ['ADMIN', 'OWNER', 'MANAGER'] or user.is_superuser:
+        back_url = 'payments:team_payments_list'
+    elif user_role == 'SALES':
+        back_url = 'payments:sales_payments_list'
+    elif user_role == 'CLIENT':
+        back_url = 'payments:client_payments_list'
+    else:
+        back_url = 'payments:team_payments_list'
     
     context = {
         'payment': payment,
+        'back_url': back_url,
     }
     return render(request, 'payments/payment_detail.html', context)

@@ -1,0 +1,13 @@
+[
+{
+  "model": "notifications.notification",
+  "pk": 1,
+  "fields": {
+    "recipient": [
+      "sales1"
+    ],
+    "channel": "EMAIL",
+    "notification_type": "CUSTOM",
+    "status": "QUEUED",
+    "subject": "New Application Submitted by Test Co Pvt Ltd",
+    "message": 

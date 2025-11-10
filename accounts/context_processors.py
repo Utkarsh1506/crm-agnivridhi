@@ -14,15 +14,16 @@ def dashboard_link(request):
     
     user = request.user
     
-    # Owners (either role OWNER or admin flagged is_owner) get Owner Dashboard
-    if getattr(user, 'is_owner', False) or getattr(user, 'role', None) == 'OWNER':
-        return {'dashboard_url': reverse('accounts:owner_dashboard')}
-    
-    # Superuser gets dedicated dashboard
+    # Superuser gets dedicated dashboard (check first)
     if user.is_superuser:
         return {'dashboard_url': reverse('accounts:superuser_dashboard')}
     
-    role = getattr(user, 'role', None)
+    # Owners (either role OWNER or admin flagged is_owner) get Owner Dashboard
+    if getattr(user, 'is_owner', False) or getattr(user, 'role', '').upper() == 'OWNER':
+        return {'dashboard_url': reverse('accounts:owner_dashboard')}
+    
+    # Case-insensitive role check
+    role = getattr(user, 'role', '').upper()
     if role == 'ADMIN':
         return {'dashboard_url': reverse('accounts:admin_dashboard')}
     elif role == 'MANAGER':
@@ -33,4 +34,4 @@ def dashboard_link(request):
         return {'dashboard_url': reverse('accounts:client_portal')}
     
     # Fallback to generic dashboard
-    return {'dashboard_url': reverse('accounts:dashboard')}
+    return {'dashboard_url': reverse('accounts:dashboard_view')}

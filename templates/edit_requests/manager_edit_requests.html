@@ -7,7 +7,7 @@
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                <a class="nav-link" href="{{ dashboard_url|default:'/dashboard/' }}">
                     <i class="bi bi-speedometer2"></i>Dashboard
                 </a>
             </li>
@@ -56,7 +56,8 @@
                         <th>Current Value</th>
                         <th>Requested Value</th>
                         <th>Reason</th>
-                        <th>Requested By</th>
+                        <th>Sales Employee</th>
+                        <th>Manager</th>
                         <th>Date</th>
                         <th>Actions</th>
                     </tr>
@@ -79,7 +80,28 @@
                         <td>
                             <small>{{ item.edit_request.reason|truncatewords:15 }}</small>
                         </td>
-                        <td>{{ item.edit_request.requested_by.get_full_name|default:item.edit_request.requested_by.username }}</td>
+                        <td>
+                            {% if item.client.assigned_sales %}
+                                {{ item.client.assigned_sales.get_full_name|default:item.client.assigned_sales.username }}
+                            {% elif item.edit_request.requested_by %}
+                                {{ item.edit_request.requested_by.get_full_name|default:item.edit_request.requested_by.username }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.client.assigned_sales.manager %}
+                                {{ item.client.assigned_sales.manager.get_full_name|default:item.client.assigned_sales.manager.username }}
+                            {% elif item.client.assigned_manager %}
+                                {{ item.client.assigned_manager.get_full_name|default:item.client.assigned_manager.username }}
+                                <small class="text-muted">(direct)</small>
+                            {% elif item.edit_request.requested_by.manager %}
+                                {{ item.edit_request.requested_by.manager.get_full_name|default:item.edit_request.requested_by.manager.username }}
+                                <small class="text-muted">(requester)</small>
+                            {% else %}
+                                <span class="text-muted">No manager</span>
+                            {% endif %}
+                        </td>
                         <td>{{ item.edit_request.created_at|date:"M d, Y" }}</td>
                         <td>
                             <a href="{% url 'edit_requests:approve_edit_request' item.edit_request.id %}" 
@@ -106,7 +128,7 @@
         <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
         <h3 class="mt-3">No Pending Edit Requests</h3>
         <p class="text-muted">All edit requests from your team have been processed.</p>
-        <a href="{% url 'accounts:manager_dashboard' %}" class="btn btn-primary mt-3">
+        <a href="{{ dashboard_url|default:'/dashboard/' }}" class="btn btn-primary mt-3">
             <i class="bi bi-speedometer2"></i> Back to Dashboard
         </a>
     </div>

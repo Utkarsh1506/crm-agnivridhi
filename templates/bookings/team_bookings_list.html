@@ -25,7 +25,8 @@
           <th class="text-end">Amount</th>
           <th>Payment</th>
           <th>Status</th>
-          <th>Assigned To</th>
+          <th>Sales Employee</th>
+          <th>Manager</th>
           <th>Created</th>
           <th class="text-end">Actions</th>
         </tr>
@@ -47,7 +48,29 @@
             {% endif %}
           </td>
           <td>{{ b.get_status_display }}</td>
-          <td>{{ b.assigned_to.get_full_name|default:'Unassigned' }}</td>
+          <td>
+            {% if b.assigned_to %}
+              {{ b.assigned_to.get_full_name|default:b.assigned_to.username }}
+            {% elif b.client.assigned_sales %}
+              {{ b.client.assigned_sales.get_full_name|default:b.client.assigned_sales.username }}
+              <small class="text-muted">(via client)</small>
+            {% else %}
+              <span class="text-muted">Unassigned</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if b.assigned_to.manager %}
+              {{ b.assigned_to.manager.get_full_name|default:b.assigned_to.manager.username }}
+            {% elif b.client.assigned_sales.manager %}
+              {{ b.client.assigned_sales.manager.get_full_name|default:b.client.assigned_sales.manager.username }}
+              <small class="text-muted">(via client)</small>
+            {% elif b.client.assigned_manager %}
+              {{ b.client.assigned_manager.get_full_name|default:b.client.assigned_manager.username }}
+              <small class="text-muted">(client mgr)</small>
+            {% else %}
+              <span class="text-muted">No manager</span>
+            {% endif %}
+          </td>
           <td>{{ b.booking_date|date:'M d, Y' }}</td>
           <td class="text-end">
             {% if b.payment and b.payment.status == 'PENDING' %}

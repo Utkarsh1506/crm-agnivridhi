@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+
+{% block title %}Activity Feed - Agnivridhi CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2"><i class="bi bi-activity"></i> Activity Feed</h1>
+        <a href="{{ dashboard_url|default:'/dashboard/' }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Activities</h6>
+                    <h2>{{ total_activities }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Active Users</h6>
+                    <h2>{{ active_users|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Activities by Role</h6>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        {% for role, count in role_activity_counts.items %}
+                            <span class="badge bg-info">{{ role }}: {{ count }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-funnel"></i> Filters
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label small">Action</label>
+                    <select name="action" class="form-select form-select-sm">
+                        <option value="">All Actions</option>
+                        {% for action_code, action_display in action_types %}
+                            <option value="{{ action_code }}" {% if filter_action == action_code %}selected{% endif %}>
+                                {{ action_display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Entity Type</label>
+                    <select name="entity" class="form-select form-select-sm">
+                        <option value="">All Entities</option>
+                        {% for entity_code, entity_display in entity_types %}
+                            <option value="{{ entity_code }}" {% if filter_entity == entity_code %}selected{% endif %}>
+                                {{ entity_display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Role</label>
+                    <select name="role" class="form-select form-select-sm">
+                        <option value="">All Roles</option>
+                        <option value="SALES" {% if filter_role == 'SALES' %}selected{% endif %}>Sales</option>
+                        <option value="MANAGER" {% if filter_role == 'MANAGER' %}selected{% endif %}>Manager</option>
+                        <option value="CLIENT" {% if filter_role == 'CLIENT' %}selected{% endif %}>Client</option>
+                        <option value="ADMIN" {% if filter_role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                        <option value="OWNER" {% if filter_role == 'OWNER' %}selected{% endif %}>Owner</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">User</label>
+                    <select name="user" class="form-select form-select-sm">
+                        <option value="">All Users</option>
+                        {% for user in active_users %}
+                            <option value="{{ user.id }}" {% if filter_user == user.id|stringformat:"s" %}selected{% endif %}>
+                                {{ user.get_full_name|default:user.email }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Search</label>
+                    <input type="text" name="q" value="{{ search_query }}" class="form-control form-control-sm" 
+                           placeholder="Description or user name">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">Per Page</label>
+                    <select name="page_size" class="form-select form-select-sm">
+                        <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+                        <option value="200" {% if page_size == 200 %}selected{% endif %}>200</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">&nbsp;</label>
+                    <button class="btn btn-sm btn-primary w-100" type="submit">
+                        <i class="bi bi-funnel"></i> Apply
+                    </button>
+                    <a href="{% url 'notifications:activity_feed' %}" class="btn btn-sm btn-outline-secondary w-100 mt-1">
+                        Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activity Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-bar-chart"></i> Top Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for action, count in action_counts.items %}
+                            <span class="badge bg-primary">{{ action }}: {{ count }}</span>
+                        {% empty %}
+                            <p class="text-muted mb-0">No activities found</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-file-earmark-text"></i> Top Entities
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for entity, count in entity_counts.items %}
+                            <span class="badge bg-success">{{ entity }}: {{ count }}</span>
+                        {% empty %}
+                            <p class="text-muted mb-0">No activities found</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity List -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-list-ul"></i> Recent Activities
+        </div>
+        <div class="card-body">
+            {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Action</th>
+                                <th>Entity</th>
+                                <th>Description</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in page_obj %}
+                            <tr>
+                                <td>
+                                    <small>{{ activity.timestamp|date:"M d, Y" }}</small><br>
+                                    <small class="text-muted">{{ activity.timestamp|date:"h:i A" }}</small>
+                                </td>
+                                <td>
+                                    {% if activity.user %}
+                                        <strong>{{ activity.user.get_full_name|default:activity.user.email }}</strong><br>
+                                        <small class="text-muted">{{ activity.user.email }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Unknown User</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if activity.user %}
+                                        <span class="badge bg-secondary">
+                                            {{ activity.user.role|upper }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if activity.action == 'CREATE' %}bg-success
+                                        {% elif activity.action == 'UPDATE' %}bg-info
+                                        {% elif activity.action == 'DELETE' %}bg-danger
+                                        {% elif activity.action == 'APPROVE' %}bg-primary
+                                        {% elif activity.action == 'REJECT' %}bg-warning
+                                        {% else %}bg-secondary
+                                        {% endif %}">
+                                        {{ activity.get_action_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if activity.entity_type %}
+                                        <span class="badge bg-dark">
+                                            {{ activity.get_entity_type_display }}
+                                            {% if activity.entity_id %}#{{ activity.entity_id }}{% endif %}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ activity.description|truncatewords:15 }}
+                                    {% if activity.old_value or activity.new_value %}
+                                        <button class="btn btn-sm btn-outline-info" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#details-{{ activity.id }}">
+                                            <i class="bi bi-info-circle"></i> Details
+                                        </button>
+                                        <div class="collapse mt-2" id="details-{{ activity.id }}">
+                                            <div class="card card-body bg-light">
+                                                {% if activity.old_value %}
+                                                    <p class="mb-1"><strong>Old Value:</strong> {{ activity.old_value|truncatewords:30 }}</p>
+                                                {% endif %}
+                                                {% if activity.new_value %}
+                                                    <p class="mb-0"><strong>New Value:</strong> {{ activity.new_value|truncatewords:30 }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ activity.ip_address|default:"N/A" }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No activities found matching your filters.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if filter_action %}&action={{ filter_action }}{% endif %}{% if filter_entity %}&entity={{ filter_entity }}{% endif %}{% if filter_user %}&user={{ filter_user }}{% endif %}{% if filter_role %}&role={{ filter_role }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}&page_size={{ page_size }}">
+                        First
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_action %}&action={{ filter_action }}{% endif %}{% if filter_entity %}&entity={{ filter_entity }}{% endif %}{% if filter_user %}&user={{ filter_user }}{% endif %}{% if filter_role %}&role={{ filter_role }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}&page_size={{ page_size }}">
+                        Previous
+                    </a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_action %}&action={{ filter_action }}{% endif %}{% if filter_entity %}&entity={{ filter_entity }}{% endif %}{% if filter_user %}&user={{ filter_user }}{% endif %}{% if filter_role %}&role={{ filter_role }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}&page_size={{ page_size }}">
+                        Next
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if filter_action %}&action={{ filter_action }}{% endif %}{% if filter_entity %}&entity={{ filter_entity }}{% endif %}{% if filter_user %}&user={{ filter_user }}{% endif %}{% if filter_role %}&role={{ filter_role }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}&page_size={{ page_size }}">
+                        Last
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.stats-card {
+    border-left: 4px solid #007bff;
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stats-card h2 {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.badge {
+    font-size: 0.85rem;
+}
+
+.table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

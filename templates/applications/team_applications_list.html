@@ -7,7 +7,7 @@
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                <a class="nav-link" href="{{ dashboard_url|default:'/dashboard/' }}">
                     <i class="bi bi-speedometer2"></i>Dashboard
                 </a>
             </li>
@@ -55,7 +55,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h2"><i class="bi bi-file-earmark-text"></i> Team Applications</h1>
-    <a href="{% url 'accounts:manager_dashboard' %}" class="btn btn-secondary">
+    <a href="{{ dashboard_url|default:'/dashboard/' }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Back to Dashboard
         </a>
     </div>
@@ -161,6 +161,8 @@
                                         <th>Application ID</th>
                                         <th>Scheme</th>
                                         <th>Amount</th>
+                                        <th>Sales Employee</th>
+                                        <th>Manager</th>
                                         <th>Status</th>
                                         <th>Date</th>
                                         <th>Actions</th>
@@ -176,6 +178,23 @@
                                             <i class="bi bi-award"></i> {{ app.scheme.name }}
                                         </td>
                                         <td><strong>₹{{ app.applied_amount }} L</strong></td>
+                                        <td>
+                                            {% if app.client.assigned_sales %}
+                                                {{ app.client.assigned_sales.get_full_name|default:app.client.assigned_sales.username }}
+                                            {% else %}
+                                                <span class="text-muted">Unassigned</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if app.client.assigned_sales.manager %}
+                                                {{ app.client.assigned_sales.manager.get_full_name|default:app.client.assigned_sales.manager.username }}
+                                            {% elif app.client.assigned_manager %}
+                                                {{ app.client.assigned_manager.get_full_name|default:app.client.assigned_manager.username }}
+                                                <small class="text-muted">(direct)</small>
+                                            {% else %}
+                                                <span class="text-muted">No manager</span>
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             {% if app.status == 'APPROVED' %}
                                                 <span class="badge bg-success">Approved</span>
@@ -230,7 +249,8 @@
                                         <th>Application ID</th>
                                         <th>Scheme</th>
                                         <th>Amount</th>
-                                        <th>Sales Person</th>
+                                        <th>Sales Employee</th>
+                                        <th>Manager</th>
                                         <th>Status</th>
                                         <th>Date</th>
                                         <th>Actions</th>
@@ -246,9 +266,21 @@
                                         </td>
                                         <td><strong>₹{{ app.applied_amount }} L</strong></td>
                                         <td>
-                                            <span class="badge bg-info">
-                                                {{ app.client.assigned_sales.get_full_name|default:"Unassigned" }}
-                                            </span>
+                                            {% if app.client.assigned_sales %}
+                                                {{ app.client.assigned_sales.get_full_name|default:app.client.assigned_sales.username }}
+                                            {% else %}
+                                                <span class="text-muted">Unassigned</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if app.client.assigned_sales.manager %}
+                                                {{ app.client.assigned_sales.manager.get_full_name|default:app.client.assigned_sales.manager.username }}
+                                            {% elif app.client.assigned_manager %}
+                                                {{ app.client.assigned_manager.get_full_name|default:app.client.assigned_manager.username }}
+                                                <small class="text-muted">(direct)</small>
+                                            {% else %}
+                                                <span class="text-muted">No manager</span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             {% if app.status == 'APPROVED' %}

@@ -103,7 +103,8 @@ def create_scheme_documentation_booking(request, scheme_id: int):
 def team_bookings_list(request):
 	"""Manager/Admin view: Bookings for team; Admin/Owner sees all."""
 	from django.db.models import Q
-	if getattr(request.user, 'role', None) in ['ADMIN', 'OWNER'] or getattr(request.user, 'is_superuser', False):
+	user_role = getattr(request.user, 'role', '').upper()
+	if user_role in ['ADMIN', 'OWNER'] or getattr(request.user, 'is_superuser', False):
 		bookings = (
 			Booking.objects
 			.all()

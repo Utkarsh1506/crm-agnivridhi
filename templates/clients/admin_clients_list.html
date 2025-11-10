@@ -190,8 +190,11 @@
             <td>
               {% if client.assigned_manager %}
                 {{ client.assigned_manager.get_full_name|default:client.assigned_manager.username }}
+              {% elif client.assigned_sales.manager %}
+                {{ client.assigned_sales.manager.get_full_name|default:client.assigned_sales.manager.username }}
+                <small class="text-muted">(via sales)</small>
               {% else %}
-                <span class="text-muted">Unassigned</span>
+                <span class="text-muted">No manager</span>
               {% endif %}
             </td>
             <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>

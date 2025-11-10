@@ -1,0 +1,11 @@
+[
+{
+  "model": "schemes.scheme",
+  "pk": 1,
+  "fields": {
+    "name": "Credit Guarantee Scheme (CGTMSE)",
+    "full_name": "Credit Guarantee Fund Trust for Micro and Small Enterprises",
+    "scheme_code": "CGTMSE-2025",
+    "category": "LOAN",
+    "status": "ACTIVE",
+    "description": 

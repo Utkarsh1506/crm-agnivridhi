@@ -1,0 +1,410 @@
+[
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$itI4aEtGb4twpMyiCg7yZj$j1KJp0dGTObACepDLRCEqe+Z+HnN04tiQ+pX9RrmSkg=",
+    "last_login": "2025-11-08T08:59:34.522Z",
+    "is_superuser": true,
+    "username": "admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-05T09:06:39.537Z",
+    "role": "ADMIN",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": null,
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$SmmQmbP9fX385myUBKmsJ1$uFUngVkwY9loiPZM1Rj76JjiQYdAwqxIZy6lxAkabE4=",
+    "last_login": "2025-11-10T08:20:04.245Z",
+    "is_superuser": false,
+    "username": "owner",
+    "first_name": "Owner",
+    "last_name": "",
+    "email": "akash@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-05T09:48:30.902Z",
+    "role": "owner",
+    "phone": null,
+    "designation": "Owner",
+    "employee_id": null,
+    "manager": null,
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": true,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$6mr0u4mt4RxfKHzR6OUZTo$M5+RT8wtljOQ/Pptx2C61dQRlt0LdgNXsTxyznEsdps=",
+    "last_login": "2025-11-10T06:24:44.248Z",
+    "is_superuser": false,
+    "username": "sales1",
+    "first_name": "Utkarsh",
+    "last_name": "Choudhary",
+    "email": "sales1@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-05T10:09:42.270Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager1"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$npxwlNEzmxKgd8LvLiD1tw$5p7Cpu7c1bMOTlhIrBw24UxMJ8BG5lX+sp1Kmg4QWxU=",
+    "last_login": "2025-11-10T06:22:25.592Z",
+    "is_superuser": false,
+    "username": "client1",
+    "first_name": "Client",
+    "last_name": "One",
+    "email": "client1@agnivridhiindia.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2025-11-05T10:09:44.088Z",
+    "role": "CLIENT",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": null,
+    "profile_picture": "profile_pictures/qrchimpX512_1.png",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$QrlRK9I9BBO8kk6AdzJSrQ$rTc8pGHP2DzmgDUt3JcAGTtsnJvL7FjyXcn6USql9ss=",
+    "last_login": "2025-11-10T06:25:30.145Z",
+    "is_superuser": false,
+    "username": "manager1",
+    "first_name": "Rajdeep",
+    "last_name": "Singh",
+    "email": "manager1@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-05T11:37:16.379Z",
+    "role": "MANAGER",
+    "phone": "9627992635",
+    "designation": null,
+    "employee_id": null,
+    "manager": null,
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$PXXe5wQOsFVyoCywKmq2cO$5BQMwGZeFJmb8qudeOhq7dw6XOXgF735w7Gfn27I3cI=",
+    "last_login": "2025-11-07T08:35:20.342Z",
+    "is_superuser": false,
+    "username": "manager2",
+    "first_name": "Priya",
+    "last_name": "Sharma",
+    "email": "manager2@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:07.329Z",
+    "role": "MANAGER",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": null,
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$4WFr06MgFEHcumhMNHjn1J$MXZIDVXmSTmowf5+CLSzufa9vf24xLrATjxQE8F8shg=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "manager3",
+    "first_name": "Amit",
+    "last_name": "Patel",
+    "email": "manager3@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:08.933Z",
+    "role": "MANAGER",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": null,
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$SiIt87xdoPKAG2SrCPqOq0$PN+PqZB/yRb1z6yHDxkvRj/dWwNrA7cw830s9EHEJSw=",
+    "last_login": "2025-11-07T11:09:40.896Z",
+    "is_superuser": false,
+    "username": "sales2",
+    "first_name": "Neha",
+    "last_name": "Gupta",
+    "email": "sales2@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:10.629Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager1"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$u4Ob5318OIOUUzGzoQgyhU$vcz16Da76JxtYGJDkmUdnVNEUlFBu1fez/lkbQMh4t4=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "sales3",
+    "first_name": "Rohit",
+    "last_name": "Singh",
+    "email": "sales3@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:11.991Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager1"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$7ynxTT9sVJw3XDVz9Su6cA$+aaQYCTuzISLsC/77EuYZeY2NDm3rMioX4nEIHuKtF4=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "sales4",
+    "first_name": "Anjali",
+    "last_name": "Verma",
+    "email": "sales4@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:13.386Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager2"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$575lbm5TBos9GCCcwQHrX1$Skp3Fcy+wpfs0X/5gLbbnTPkB14HeBCiS0R9CJTrk6w=",
+    "last_login": "2025-11-07T08:18:59.454Z",
+    "is_superuser": false,
+    "username": "sales5",
+    "first_name": "Vikram",
+    "last_name": "Reddy",
+    "email": "sales5@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:14.862Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager2"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$1AkcMtiVJ39mNk5pnNFsiY$eWs/9RhjvLxpf8H8/FLtiuFi5CTKsWHJdQCe19apgtU=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "sales6",
+    "first_name": "Pooja",
+    "last_name": "Nair",
+    "email": "sales6@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:16.236Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager2"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$3cazc4Rts8M1De7q73sO8C$RVCr1O3HJO0ddE2dbnfW8gzri1Ys3V/APYmoPHNgNIs=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "sales7",
+    "first_name": "Karan",
+    "last_name": "Malhotra",
+    "email": "sales7@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:17.562Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager3"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$v6K7uC7ioug51xfVchww0V$+vqInd9pyb8fJNSUX7Nyi+2RxYKzdAorBfsmay+kcaU=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "sales8",
+    "first_name": "Divya",
+    "last_name": "Iyer",
+    "email": "sales8@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:18.949Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager3"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$4pl94ija5BJd06kYrBvlPv$GsxghHKaLC1GiAD4bvjCZSBlE5jFjARY9ngMW6uwbuc=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "sales9",
+    "first_name": "Arjun",
+    "last_name": "Kapoor",
+    "email": "sales9@agnivridhiindia.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-07T08:14:20.451Z",
+    "role": "SALES",
+    "phone": null,
+    "designation": null,
+    "employee_id": null,
+    "manager": [
+      "manager3"
+    ],
+    "profile_picture": "",
+    "whatsapp_opt_in": true,
+    "email_opt_in": true,
+    "is_owner": false,
+    "groups": [],
+    "user_permissions": []
+  }
+}
+]

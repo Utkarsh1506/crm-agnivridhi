@@ -27,45 +27,32 @@ def role_required(*roles):
                 return view_func(request, *args, **kwargs)
             
             if hasattr(request.user, 'role'):
-                # OWNER should inherit ADMIN + MANAGER + SALES privileges automatically
-                effective_role = request.user.role
-                if effective_role == 'OWNER':
-                    owner_equivalents = set(['OWNER','ADMIN','MANAGER','SALES'])
-                    if owner_equivalents.intersection(set(roles)):
-                        return view_func(request, *args, **kwargs)
-                if effective_role in roles:
+                # Case-insensitive role comparison
+                user_role = request.user.role.upper() if request.user.role else ''
+                allowed_roles = [r.upper() for r in roles]
+                if user_role in allowed_roles:
                     return view_func(request, *args, **kwargs)
-
-            # Return 403 Forbidden with standard message to align with tests and UX
-            from django.http import HttpResponseForbidden
-            return HttpResponseForbidden(
-                """
-                <h2>403 - Access Denied</h2>
-                <p>You don't have permission to access this page.</p>
-                <p><a href='/dashboard/'>Return to Dashboard</a></p>
-                """
-            )
+            
+            # Return 403 using the dedicated template
+            from django.shortcuts import render
+            return render(request, 'errors/403.html', status=403)
         return wrapper
     return decorator
 
 
 def admin_required(view_func):
-    """Decorator for admin/owner-only views.
-
-    Previously only ADMIN role users passed. OWNER should also have full
-    administrative access across dashboards and direct edit actions.
-    """
+    """Decorator for admin-only views (ADMIN and OWNER roles have admin privileges)"""
     return role_required('ADMIN', 'OWNER')(view_func)
 
 
 def staff_required(view_func):
-    """Decorator for staff (Admin, Manager, Sales) views"""
-    return role_required('ADMIN', 'MANAGER', 'SALES')(view_func)
+    """Decorator for staff (Admin, Manager, Sales) views - OWNER inherits staff privileges"""
+    return role_required('ADMIN', 'MANAGER', 'SALES', 'OWNER')(view_func)
 
 
 def manager_required(view_func):
-    """Decorator for manager-only views"""
-    return role_required('ADMIN', 'MANAGER')(view_func)
+    """Decorator for manager-only views - OWNER inherits manager privileges"""
+    return role_required('ADMIN', 'MANAGER', 'OWNER')(view_func)
 
 
 def sales_required(view_func):
@@ -159,22 +146,24 @@ def dashboard_view(request):
     """
     user = request.user
     
-    # Owner Admin gets Owner Dashboard
-    if getattr(user, 'is_owner', False) and getattr(user, 'role', None) == 'ADMIN':
-        return redirect('accounts:owner_dashboard')
     # Superuser gets dedicated dashboard
     if user.is_superuser:
         return redirect('accounts:superuser_dashboard')
+    
+    # Owner gets Owner Dashboard (either by flag or role)
+    if getattr(user, 'is_owner', False) or getattr(user, 'role', '').upper() == 'OWNER':
+        return redirect('accounts:owner_dashboard')
 
     role = getattr(user, 'role', None)
     if role:
-        if role == 'ADMIN':
+        role_upper = role.upper()
+        if role_upper == 'ADMIN':
             return redirect('accounts:admin_dashboard')
-        elif role == 'MANAGER':
+        elif role_upper == 'MANAGER':
             return redirect('accounts:manager_dashboard')
-        elif role == 'SALES':
+        elif role_upper == 'SALES':
             return redirect('accounts:sales_dashboard')
-        elif role == 'CLIENT':
+        elif role_upper == 'CLIENT':
             return redirect('accounts:client_portal')
     
     # Fallback generic dashboard (shouldn't generally hit)
@@ -873,7 +862,8 @@ def owner_dashboard(request):
     Owner Dashboard: accessible only to Admin role users flagged as is_owner.
     Distinct from superuser dashboard; focuses on business KPIs.
     """
-    if not (getattr(request.user, 'is_owner', False) or getattr(request.user, 'role', None) == 'OWNER'):
+    user_role = getattr(request.user, 'role', '')
+    if not (getattr(request.user, 'is_owner', False) or user_role.upper() == 'OWNER'):
         messages.error(request, 'Only the company owner can access this dashboard.')
         return redirect('accounts:admin_dashboard')
 
