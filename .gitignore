@@ -55,9 +55,9 @@ htmlcov/
 celerybeat-schedule
 celerybeat.pid
 
-# Documents
+# Document uploads (not the documents/ app folder!)
 /uploads/
-/documents/
+/media/documents/
 /generated_pdfs/
 
 # Logs
