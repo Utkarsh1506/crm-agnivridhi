@@ -1,0 +1,265 @@
+================================================
+FIX: Authentication Not Working on PythonAnywhere
+================================================
+
+SYMPTOMS:
+- Login page shows but can't login
+- "Invalid username or password" error
+- Database connection issues
+
+================================================
+MOST COMMON CAUSES & FIXES
+================================================
+
+ISSUE 1: NO SUPERUSER CREATED
+------------------------------
+After migrations, you need to create a user!
+
+Solution:
+cd ~/crm-agnivridhi
+workon crm-env
+python manage.py createsuperuser
+
+Enter:
+- Username: admin
+- Email: admin@agnivridhiindia.com
+- Password: [create strong password]
+- Password (again): [same password]
+
+Then try logging in with these credentials.
+
+================================================
+
+ISSUE 2: SESSION/COOKIE PROBLEMS
+---------------------------------
+If ALLOWED_HOSTS is wrong, sessions won't work.
+
+Solution:
+nano .env
+
+Make sure:
+ALLOWED_HOSTS=agnivridhicrm.pythonanywhere.com
+
+No extra spaces, no quotes!
+
+Save and reload web app.
+
+================================================
+
+ISSUE 3: DATABASE NOT MIGRATED
+-------------------------------
+Tables might not exist yet.
+
+Solution:
+workon crm-env
+cd ~/crm-agnivridhi
+python manage.py migrate
+
+Look for:
+✓ Running migrations for accounts
+✓ Running migrations for auth
+
+Then reload web app.
+
+================================================
+
+ISSUE 4: CSRF TOKEN ISSUES
+---------------------------
+If .env has wrong security settings.
+
+Solution:
+nano .env
+
+For testing, temporarily set:
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
+SECURE_SSL_REDIRECT=False
+
+(PythonAnywhere already provides HTTPS, so these can be False)
+
+Save, reload web app, try login again.
+
+================================================
+
+ISSUE 5: STATIC FILES NOT LOADING
+----------------------------------
+If CSS/JS doesn't load, forms might not work.
+
+Solution:
+python manage.py collectstatic --noinput
+
+Check Web tab → Static files mapping:
+/static/ → /home/agnivridhicrm/crm-agnivridhi/staticfiles
+
+Reload web app.
+
+================================================
+
+DEBUGGING STEPS
+================================================
+
+1. CHECK IF DATABASE CONNECTED
+-------------------------------
+workon crm-env
+cd ~/crm-agnivridhi
+python manage.py shell
+
+In shell:
+>>> from accounts.models import User
+>>> User.objects.count()
+
+If you see a number (even 0), database works!
+If error, check DB credentials in .env
+
+Exit: Ctrl+D
+
+2. CREATE TEST USER
+-------------------
+python manage.py shell
+
+>>> from accounts.models import User
+>>> user = User.objects.create_user(
+...     username='testadmin',
+...     email='test@test.com',
+...     password='Test123!@#',
+...     role='ADMIN'
+... )
+>>> exit()
+
+Try logging in:
+Username: testadmin
+Password: Test123!@#
+
+3. CHECK AUTHENTICATION BACKEND
+--------------------------------
+python manage.py shell
+
+>>> from django.contrib.auth import authenticate
+>>> user = authenticate(username='testadmin', password='Test123!@#')
+>>> print(user)
+
+Should print: <User: testadmin>
+If None, password is wrong or user doesn't exist.
+
+4. VIEW ERROR LOG
+-----------------
+Go to Web tab → Log files → Error log
+
+Look for:
+- Database connection errors
+- Import errors
+- CSRF errors
+- Session errors
+
+5. CHECK CONSOLE FOR ERRORS
+----------------------------
+In browser, press F12 (Developer Tools)
+Go to Console tab
+Try to login
+Look for JavaScript errors or 403/500 errors
+
+================================================
+
+COMPLETE .ENV TEMPLATE FOR PYTHONANYWHERE
+================================================
+
+SECRET_KEY=YOUR-GENERATED-SECRET-KEY
+DEBUG=False
+ALLOWED_HOSTS=agnivridhicrm.pythonanywhere.com
+
+DB_ENGINE=django.db.backends.mysql
+DB_NAME=agnivridhicrm$crm_agnivridhi
+DB_USER=agnivridhicrm
+DB_PASSWORD=YOUR_MYSQL_PASSWORD
+DB_HOST=agnivridhicrm.mysql.pythonanywhere-services.com
+DB_PORT=3306
+
+# These should be False on PythonAnywhere (HTTPS is automatic)
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
+SECURE_SSL_REDIRECT=False
+SECURE_HSTS_SECONDS=0
+
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+
+SESSION_COOKIE_AGE=86400
+SESSION_IDLE_TIMEOUT=1800
+SESSION_EXPIRE_AT_BROWSER_CLOSE=False
+
+STATIC_ROOT=/home/agnivridhicrm/crm-agnivridhi/staticfiles
+MEDIA_ROOT=/home/agnivridhicrm/crm-agnivridhi/media
+
+CORS_ALLOWED_ORIGINS=https://agnivridhicrm.pythonanywhere.com
+
+================================================
+
+QUICK FIX CHECKLIST
+================================================
+
+Run these in order:
+
+□ cd ~/crm-agnivridhi
+□ workon crm-env
+□ git pull origin main
+□ pip install -r requirements-minimal.txt
+□ python manage.py migrate
+□ python manage.py createsuperuser
+□ python manage.py collectstatic --noinput
+□ nano .env (verify all settings)
+□ chmod 600 .env
+
+Then in Web tab:
+□ Verify WSGI file is correct
+□ Verify static files mapping
+□ Python version set to 3.10
+□ Click Reload button
+
+Wait 30 seconds, then test login.
+
+================================================
+
+TEST LOGIN
+================================================
+
+1. Go to: https://agnivridhicrm.pythonanywhere.com/login/
+
+2. Try superuser credentials you created
+
+3. If successful → You'll see dashboard
+
+4. If "Invalid username or password":
+   - Double-check username (case-sensitive!)
+   - Try creating new user in shell
+   - Check error log for clues
+
+================================================
+
+RESET EVERYTHING (LAST RESORT)
+================================================
+
+If nothing works, reset database:
+
+workon crm-env
+cd ~/crm-agnivridhi
+
+# Backup (optional)
+python manage.py dumpdata > backup.json
+
+# Reset migrations
+find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+find . -path "*/migrations/*.pyc" -delete
+
+# Drop and recreate database in PythonAnywhere Databases tab
+# Then:
+
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py collectstatic --noinput
+
+Reload web app.
+
+================================================
