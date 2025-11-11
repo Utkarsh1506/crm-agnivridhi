@@ -1,0 +1,217 @@
+=====================================
+FIX: Disk Quota Exceeded on PythonAnywhere
+=====================================
+
+PROBLEM: Free tier has 512MB disk space, full requirements.txt is too large.
+
+SOLUTION: Use minimal requirements file.
+
+=====================================
+STEPS TO FIX (Run on PythonAnywhere)
+=====================================
+
+1. CLEAN UP CURRENT INSTALLATION
+---------------------------------
+cd ~/crm-agnivridhi
+workon crm-env
+
+# Remove the virtualenv and start fresh
+deactivate
+rmvirtualenv crm-env
+
+2. CREATE NEW MINIMAL VIRTUALENV
+---------------------------------
+cd ~/crm-agnivridhi
+mkvirtualenv --python=/usr/bin/python3.10 crm-env
+
+# You should now be in the (crm-env) environment
+
+3. PULL LATEST CODE FROM GITHUB
+--------------------------------
+git pull origin main
+
+# This will get the requirements-minimal.txt file
+
+4. INSTALL MINIMAL REQUIREMENTS
+--------------------------------
+pip install -r requirements-minimal.txt
+
+# This should work without disk quota error!
+
+5. CREATE .env FILE
+-------------------
+nano .env
+
+Paste (replace YOUR_USERNAME and YOUR_PASSWORD):
+
+SECRET_KEY=django-insecure-TEMP-KEY
+DEBUG=False
+ALLOWED_HOSTS=YOUR_USERNAME.pythonanywhere.com
+
+DB_ENGINE=django.db.backends.mysql
+DB_NAME=YOUR_USERNAME$crm_agnivridhi
+DB_USER=YOUR_USERNAME
+DB_PASSWORD=YOUR_MYSQL_PASSWORD
+DB_HOST=YOUR_USERNAME.mysql.pythonanywhere-services.com
+DB_PORT=3306
+
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+SECURE_SSL_REDIRECT=True
+
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+
+STATIC_ROOT=/home/YOUR_USERNAME/crm-agnivridhi/staticfiles
+MEDIA_ROOT=/home/YOUR_USERNAME/crm-agnivridhi/media
+
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+
+Save: Ctrl+O, Enter, Ctrl+X
+
+6. GENERATE SECRET KEY
+-----------------------
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+# Copy output and update SECRET_KEY in .env
+nano .env
+# Paste the new SECRET_KEY
+# Save and exit
+
+chmod 600 .env
+
+7. RUN MIGRATIONS
+------------------
+python manage.py migrate
+
+8. CREATE SUPERUSER
+-------------------
+python manage.py createsuperuser
+
+Username: admin
+Email: your-email@example.com
+Password: [strong password]
+
+9. COLLECT STATIC FILES
+------------------------
+python manage.py collectstatic --noinput
+
+10. TEST
+--------
+python manage.py check
+
+=====================================
+CONFIGURE WEB APP
+=====================================
+
+Go to Web tab:
+
+1. Virtualenv: /home/YOUR_USERNAME/.virtualenvs/crm-env
+
+2. WSGI file - Edit and replace with:
+
+import os, sys
+USERNAME = 'YOUR_USERNAME'  # <-- CHANGE
+project_path = f'/home/{USERNAME}/crm-agnivridhi'
+sys.path.insert(0, project_path)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'agnivridhi_crm.settings'
+
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv(Path(f'{project_path}/.env'))
+
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+
+3. Static files mapping:
+   /static/ → /home/YOUR_USERNAME/crm-agnivridhi/staticfiles
+   /media/  → /home/YOUR_USERNAME/crm-agnivridhi/media
+
+4. RELOAD web app (green button)
+
+=====================================
+WHAT WAS REMOVED?
+=====================================
+
+These large packages were removed:
+
+❌ WeasyPrint (60MB) - PDF generation
+   → Use reportlab instead (included)
+
+❌ Celery + Redis (20MB) - Async tasks
+   → Use synchronous processing
+
+❌ Pandas + Numpy (50MB) - Analytics
+   → Use Django ORM queries
+
+❌ django-ses - Email via AWS
+   → Use Gmail SMTP instead (works fine)
+
+❌ openpyxl + xlsxwriter - Excel export
+   → Generate CSV files instead
+
+❌ faker - Test data generation
+   → Not needed in production
+
+❌ django-debug-toolbar - Development tool
+   → Not needed in production
+
+❌ gunicorn - Server
+   → PythonAnywhere uses its own WSGI
+
+❌ psycopg2-binary - PostgreSQL
+   → Using MySQL instead
+
+Total saved: ~150MB
+
+=====================================
+FEATURES STILL WORK
+=====================================
+
+✅ User authentication & roles
+✅ Client management
+✅ Application processing
+✅ Scheme management
+✅ Bookings
+✅ Payments (Razorpay)
+✅ Documents upload
+✅ Notifications
+✅ PDF reports (reportlab)
+✅ Email notifications (Gmail SMTP)
+✅ WhatsApp (Twilio)
+✅ REST API
+✅ Admin panel
+✅ All dashboards
+
+=====================================
+IF YOU NEED FULL FEATURES
+=====================================
+
+Upgrade to PythonAnywhere Hacker plan ($5/month):
+- 1GB disk space (vs 512MB free)
+- Can install full requirements.txt
+- Custom domain support
+- Better performance
+
+To upgrade:
+1. Go to Account → Upgrade
+2. Choose Hacker plan
+3. Install full requirements:
+   pip install -r requirements.txt
+
+=====================================
+DISK USAGE CHECK
+=====================================
+
+Check your disk usage:
+du -sh ~/.virtualenvs/crm-env
+du -sh ~/crm-agnivridhi
+
+Should be under 500MB total.
+
+=====================================

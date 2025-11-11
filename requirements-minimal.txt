@@ -1,0 +1,52 @@
+# Minimal Requirements for PythonAnywhere Free Tier
+# Only essential packages to get CRM running
+
+# Core Django
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.0
+django-filter==23.5
+
+# Database - MySQL only (PythonAnywhere uses MySQL)
+mysqlclient==2.2.0
+
+# Authentication
+djangorestframework-simplejwt==5.3.0
+django-allauth==0.57.0
+
+# Document Generation (lightweight - only Pillow and reportlab)
+Pillow==10.1.0
+reportlab==4.0.7
+
+# Payment Gateway (lightweight)
+razorpay==1.4.1
+
+# HTTP requests
+requests==2.31.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Static files
+whitenoise==6.6.0
+
+# API Documentation (lightweight)
+drf-spectacular==0.29.0
+
+# REMOVED FROM FREE TIER (too large):
+# - WeasyPrint (60MB+)
+# - celery + redis (async tasks)
+# - pandas + numpy (analytics - 50MB+)
+# - django-ses (email)
+# - python-magic (file handling)
+# - openpyxl + xlsxwriter (Excel)
+# - faker (testing)
+# - django-debug-toolbar (development)
+# - gunicorn (not needed on PythonAnywhere)
+# - psycopg2-binary (PostgreSQL not used)
+
+# ALTERNATIVE SOLUTIONS:
+# - PDF: Use reportlab instead of WeasyPrint
+# - Analytics: Use Django queries instead of pandas
+# - Excel: Generate CSV instead of Excel files
+# - Email: Use Gmail SMTP instead of django-ses

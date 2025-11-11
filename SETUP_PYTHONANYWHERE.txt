@@ -1,0 +1,204 @@
+========================================
+PYTHONANYWHERE SETUP COMMANDS
+========================================
+
+Run these commands in your PythonAnywhere Bash console:
+
+1. NAVIGATE TO PROJECT
+-----------------------
+cd ~/crm-agnivridhi
+
+2. ACTIVATE VIRTUAL ENVIRONMENT
+--------------------------------
+workon crm-env
+
+(If venv doesn't exist, create it first:)
+mkvirtualenv --python=/usr/bin/python3.10 crm-env
+pip install -r requirements.txt
+
+3. CREATE .env FILE
+-------------------
+nano .env
+
+Paste this and update YOUR values:
+
+SECRET_KEY=GENERATE-NEW-KEY-HERE
+DEBUG=False
+ALLOWED_HOSTS=YOUR_USERNAME.pythonanywhere.com
+
+DB_ENGINE=django.db.backends.mysql
+DB_NAME=YOUR_USERNAME$crm_agnivridhi
+DB_USER=YOUR_USERNAME
+DB_PASSWORD=YOUR_MYSQL_PASSWORD
+DB_HOST=YOUR_USERNAME.mysql.pythonanywhere-services.com
+DB_PORT=3306
+
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+SECURE_SSL_REDIRECT=True
+
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+DEFAULT_FROM_EMAIL=noreply@agnivridhiindia.com
+
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+
+SESSION_COOKIE_AGE=86400
+SESSION_IDLE_TIMEOUT=1800
+SESSION_EXPIRE_AT_BROWSER_CLOSE=False
+
+CORS_ALLOWED_ORIGINS=https://YOUR_USERNAME.pythonanywhere.com
+
+STATIC_ROOT=/home/YOUR_USERNAME/crm-agnivridhi/staticfiles
+MEDIA_ROOT=/home/YOUR_USERNAME/crm-agnivridhi/media
+
+Save: Ctrl+O, Enter, Ctrl+X
+
+4. GENERATE SECRET KEY
+-----------------------
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+Copy the output and paste it in .env as SECRET_KEY value
+
+5. SECURE .env FILE
+-------------------
+chmod 600 .env
+
+6. RUN MIGRATIONS
+-----------------
+python manage.py makemigrations
+python manage.py migrate
+
+7. CREATE SUPERUSER
+-------------------
+python manage.py createsuperuser
+
+Enter:
+- Username: admin (or your choice)
+- Email: your-email@example.com
+- Password: [create strong password]
+
+8. COLLECT STATIC FILES
+------------------------
+python manage.py collectstatic --noinput
+
+9. TEST DJANGO
+--------------
+python manage.py check
+
+========================================
+CONFIGURE WEB APP
+========================================
+
+Go to PythonAnywhere Web tab:
+
+1. SOURCE CODE
+   /home/YOUR_USERNAME/crm-agnivridhi
+
+2. WORKING DIRECTORY
+   /home/YOUR_USERNAME/crm-agnivridhi
+
+3. VIRTUALENV
+   /home/YOUR_USERNAME/.virtualenvs/crm-env
+
+4. WSGI CONFIGURATION FILE (click to edit)
+   Replace ALL contents with:
+
+import os
+import sys
+
+USERNAME = 'YOUR_USERNAME'  # <-- CHANGE THIS
+PROJECT_NAME = 'crm-agnivridhi'
+
+project_path = f'/home/{USERNAME}/{PROJECT_NAME}'
+if project_path not in sys.path:
+    sys.path.insert(0, project_path)
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'agnivridhi_crm.settings'
+
+from pathlib import Path
+from dotenv import load_dotenv
+
+env_path = Path(f'/home/{USERNAME}/{PROJECT_NAME}/.env')
+if env_path.exists():
+    load_dotenv(env_path)
+
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+
+5. STATIC FILES MAPPING
+   Click "Add new static file mapping"
+   
+   URL: /static/
+   Directory: /home/YOUR_USERNAME/crm-agnivridhi/staticfiles
+   
+   Click "Add another"
+   URL: /media/
+   Directory: /home/YOUR_USERNAME/crm-agnivridhi/media
+
+6. RELOAD WEB APP
+   Click the big green "Reload YOUR_USERNAME.pythonanywhere.com" button
+
+========================================
+TEST YOUR CRM
+========================================
+
+Visit: https://YOUR_USERNAME.pythonanywhere.com
+
+You should see:
+- Login page at root URL
+- Admin at /admin/
+- Dashboard after login
+
+========================================
+TROUBLESHOOTING
+========================================
+
+If you see errors:
+
+1. CHECK ERROR LOG
+   Web tab → Log files → Error log
+
+2. COMMON ISSUES:
+
+   a) "No module named 'X'"
+      workon crm-env
+      pip install X
+      [Reload web app]
+
+   b) "OperationalError: no such table"
+      python manage.py migrate
+      [Reload web app]
+
+   c) "DisallowedHost"
+      Update ALLOWED_HOSTS in .env
+      [Reload web app]
+
+   d) Static files not loading
+      python manage.py collectstatic --noinput
+      Check static files mapping in Web tab
+      [Reload web app]
+
+========================================
+RELOAD APP AFTER CHANGES
+========================================
+
+Whenever you:
+- Update code (git pull)
+- Change .env
+- Install packages
+- Run migrations
+
+You MUST reload the web app:
+Web tab → Green "Reload" button
+
+OR via console:
+touch /var/www/YOUR_USERNAME_pythonanywhere_com_wsgi.py
+
+========================================
