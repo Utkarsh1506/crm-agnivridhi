@@ -1,0 +1,163 @@
+===============================================
+FIX: Database Access Denied on PythonAnywhere
+===============================================
+
+ERROR: Access denied for user 'agnivridhicrm'@'%' to database 'agnivridhicrm$crm_agnivridhi'
+
+PROBLEM: Database name or credentials in .env don't match PythonAnywhere settings.
+
+===============================================
+SOLUTION: Update .env with correct values
+===============================================
+
+1. CHECK YOUR PYTHONANYWHERE USERNAME
+--------------------------------------
+Run in PythonAnywhere console:
+whoami
+
+Output will be your username (e.g., agnivridhicrm)
+
+2. CHECK YOUR DATABASE NAME
+---------------------------
+Go to PythonAnywhere Dashboard → Databases tab
+
+You'll see something like:
+- Database: agnivridhicrm$crm_agnivridhi
+  OR
+- Database: agnivridhicrm$default
+
+Note the EXACT database name!
+
+3. GET MYSQL PASSWORD
+---------------------
+If you forgot it:
+- Databases tab → MySQL password section
+- You can reset it if needed
+
+4. UPDATE .env FILE
+-------------------
+cd ~/crm-agnivridhi
+nano .env
+
+Update these lines (replace with YOUR actual values):
+
+DB_ENGINE=django.db.backends.mysql
+DB_NAME=agnivridhicrm$crm_agnivridhi
+DB_USER=agnivridhicrm
+DB_PASSWORD=YOUR_ACTUAL_MYSQL_PASSWORD
+DB_HOST=agnivridhicrm.mysql.pythonanywhere-services.com
+DB_PORT=3306
+
+IMPORTANT:
+- DB_NAME format: username$database_name
+- DB_USER: same as your PythonAnywhere username
+- DB_HOST: username.mysql.pythonanywhere-services.com
+
+Save: Ctrl+O, Enter, Ctrl+X
+
+5. TEST DATABASE CONNECTION
+----------------------------
+python manage.py check --database default
+
+If successful, you'll see:
+"System check identified no issues (0 silenced)."
+
+6. RUN MIGRATIONS
+-----------------
+python manage.py migrate
+
+7. CREATE SUPERUSER
+-------------------
+python manage.py createsuperuser
+
+8. COLLECT STATIC FILES
+-----------------------
+python manage.py collectstatic --noinput
+
+9. RELOAD WEB APP
+-----------------
+Go to Web tab → Click green "Reload" button
+
+===============================================
+COMMON MISTAKES
+===============================================
+
+❌ Wrong: DB_NAME=crm_agnivridhi
+✅ Right: DB_NAME=agnivridhicrm$crm_agnivridhi
+
+❌ Wrong: DB_USER=agnivridhi
+✅ Right: DB_USER=agnivridhicrm
+
+❌ Wrong: DB_HOST=localhost
+✅ Right: DB_HOST=agnivridhicrm.mysql.pythonanywhere-services.com
+
+❌ Wrong: Password with special characters not escaped
+✅ Right: Use the exact password (no quotes in .env)
+
+===============================================
+IF DATABASE DOESN'T EXIST
+===============================================
+
+Create it in Databases tab:
+
+1. Go to Databases tab
+2. Scroll to "Create database"
+3. Enter database name: crm_agnivridhi
+4. Click "Create"
+5. Full name will be: agnivridhicrm$crm_agnivridhi
+
+===============================================
+COMPLETE .env TEMPLATE
+===============================================
+
+# Replace ALL-CAPS values with your actual values
+
+SECRET_KEY=YOUR-GENERATED-SECRET-KEY-HERE
+DEBUG=False
+ALLOWED_HOSTS=agnivridhicrm.pythonanywhere.com
+
+# MySQL Database
+DB_ENGINE=django.db.backends.mysql
+DB_NAME=agnivridhicrm$crm_agnivridhi
+DB_USER=agnivridhicrm
+DB_PASSWORD=YOUR_MYSQL_PASSWORD
+DB_HOST=agnivridhicrm.mysql.pythonanywhere-services.com
+DB_PORT=3306
+
+# Security
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+SECURE_SSL_REDIRECT=True
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+SECURE_HSTS_PRELOAD=True
+
+# Email
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+
+# Paths
+STATIC_ROOT=/home/agnivridhicrm/crm-agnivridhi/staticfiles
+MEDIA_ROOT=/home/agnivridhicrm/crm-agnivridhi/media
+
+# Optional
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+
+===============================================
+VERIFY AFTER FIX
+===============================================
+
+python manage.py check
+python manage.py showmigrations
+python manage.py migrate
+
+All should work without errors.
+
+Then reload your web app!
+
+===============================================
