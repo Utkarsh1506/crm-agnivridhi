@@ -31,7 +31,8 @@ db.sqlite3
 db.sqlite3-journal
 /media
 /staticfiles
-/static
+# Note: /static folder should be tracked (contains source static files)
+# /staticfiles is for collectstatic output only
 
 # Environment
 .env
