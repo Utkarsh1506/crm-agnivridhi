@@ -283,3 +283,8 @@ handler403 = 'accounts.views.custom_403_view'
 handler404 = 'accounts.views.custom_404_view'
 handler500 = 'accounts.views.custom_500_view'
 
+# File Upload Settings
+# Maximum file upload size: 1MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1048576  # 1MB in bytes
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1048576  # 1MB in bytes
+
