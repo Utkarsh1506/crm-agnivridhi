@@ -89,7 +89,8 @@ def create_test_users():
     existing_count = 0
     
     for user_data in test_users:
-        username = user_data['username']
+        # Avoid passing duplicate 'username' to create_user
+        username = user_data.pop('username')
         password = user_data.pop('password')
         
         try:

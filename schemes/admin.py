@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from .models import Scheme
 
 
@@ -14,29 +13,29 @@ class SchemeAdmin(admin.ModelAdmin):
     ordering = ('category', 'name')
     
     fieldsets = (
-        (_('Basic Information'), {
+        ('Basic Information', {
             'fields': ('name', 'full_name', 'scheme_code', 'category', 'status')
         }),
-        (_('Description'), {
+        ('Description', {
             'fields': ('description', 'benefits')
         }),
-        (_('Eligibility - Business Criteria'), {
+        ('Eligibility - Business Criteria', {
             'fields': ('eligible_sectors', 'eligible_business_types', 'min_company_age', 'max_company_age')
         }),
-        (_('Eligibility - Financial Criteria'), {
+        ('Eligibility - Financial Criteria', {
             'fields': ('min_turnover', 'max_turnover', 'min_funding', 'max_funding')
         }),
-        (_('Financial Details'), {
+        ('Financial Details', {
             'fields': ('interest_rate', 'subsidy_percent', 'processing_time_days')
         }),
-        (_('Required Documents'), {
+        ('Required Documents', {
             'fields': ('required_documents',)
         }),
-        (_('Additional Information'), {
+        ('Additional Information', {
             'fields': ('eligibility_notes', 'exclusion_criteria'),
             'classes': ('collapse',)
         }),
-        (_('External Links'), {
+        ('External Links', {
             'fields': ('official_website', 'application_url'),
             'classes': ('collapse',)
         }),

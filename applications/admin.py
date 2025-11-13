@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from .models import Application
 
 
@@ -17,27 +16,27 @@ class ApplicationAdmin(admin.ModelAdmin):
     date_hierarchy = 'application_date'
     
     fieldsets = (
-        (_('Application ID'), {'fields': ('application_id',)}),
-        (_('Application Details'), {
+        ('Application ID', {'fields': ('application_id',)}),
+        ('Application Details', {
             'fields': ('client', 'scheme', 'status', 'applied_amount', 'approved_amount')
         }),
-        (_('Dates'), {
+        ('Dates', {
             'fields': ('application_date', 'submission_date', 'approval_date', 'rejection_date')
         }),
-        (_('Purpose & Documents'), {
+        ('Purpose & Documents', {
             'fields': ('purpose', 'documents_submitted')
         }),
-        (_('Government Reference'), {
+        ('Government Reference', {
             'fields': ('government_ref_number',)
         }),
-        (_('Assignment & Notes'), {
+        ('Assignment & Notes', {
             'fields': ('assigned_to', 'internal_notes', 'rejection_reason')
         }),
-        (_('Timeline'), {
+        ('Timeline', {
             'fields': ('timeline',),
             'classes': ('collapse',)
         }),
-        (_('Metadata'), {
+        ('Metadata', {
             'fields': ('created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),

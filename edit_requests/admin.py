@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from .models import EditRequest
 
 
@@ -16,16 +15,16 @@ class EditRequestAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     
     fieldsets = (
-        (_('Request Details'), {
+        ('Request Details', {
             'fields': ('entity_type', 'entity_id', 'status')
         }),
-        (_('Changes Requested'), {
+        ('Changes Requested', {
             'fields': ('field_name', 'current_value', 'requested_value', 'reason')
         }),
-        (_('Approval Details'), {
+        ('Approval Details', {
             'fields': ('approved_by', 'approval_notes', 'approval_date')
         }),
-        (_('Requester'), {
+        ('Requester', {
             'fields': ('requested_by',)
         }),
     )

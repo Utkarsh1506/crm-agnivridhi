@@ -39,6 +39,16 @@
                     <i class="bi bi-credit-card"></i> Payments
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'documents:sales_documents_list' %}">
+                    <i class="bi bi-file-earmark-pdf"></i> Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'documents:sales_client_uploads_list' %}">
+                    <i class="bi bi-upload"></i> Client Uploads
+                </a>
+            </li>
         </ul>
     </div>
 </nav>

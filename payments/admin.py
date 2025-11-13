@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from .models import Payment
 
 
@@ -16,23 +15,23 @@ class PaymentAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     
     fieldsets = (
-        (_('Razorpay Details (optional)'), {
+        ('Razorpay Details (optional)', {
             'fields': ('razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature')
         }),
-        (_('Relationships'), {
+        ('Relationships', {
             'fields': ('booking', 'client')
         }),
-        (_('Amount Details'), {
+        ('Amount Details', {
             'fields': ('amount', 'currency', 'status')
         }),
-        (_('Payment Info'), {
+        ('Payment Info', {
             'fields': ('payment_method', 'reference_id', 'received_by', 'payment_date', 'proof', 'notes')
         }),
-        (_('Refund Details'), {
+        ('Refund Details', {
             'fields': ('refund_amount', 'refund_reason', 'refund_date'),
             'classes': ('collapse',)
         }),
-        (_('Technical Details'), {
+        ('Technical Details', {
             'fields': ('razorpay_response', 'error_message'),
             'classes': ('collapse',)
         }),

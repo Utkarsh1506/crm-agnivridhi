@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from .models import Client
 
 
@@ -17,32 +16,32 @@ class ClientAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     
     fieldsets = (
-        (_('Client ID'), {'fields': ('client_id',)}),
-        (_('Company Information'), {
+        ('Client ID', {'fields': ('client_id',)}),
+        ('Company Information', {
             'fields': ('company_name', 'business_type', 'sector', 'company_age', 
                       'registration_number', 'gst_number', 'pan_number')
         }),
-        (_('Financial Information'), {
+        ('Financial Information', {
             'fields': ('annual_turnover', 'funding_required', 'existing_loans')
         }),
-        (_('Contact Information'), {
+        ('Contact Information', {
             'fields': ('contact_person', 'contact_email', 'contact_phone', 'alternate_phone')
         }),
-        (_('Address'), {
+        ('Address', {
             'fields': ('address_line1', 'address_line2', 'city', 'state', 'pincode'),
             'classes': ('collapse',)
         }),
-        (_('Assignment & Status'), {
+        ('Assignment & Status', {
             'fields': ('assigned_sales', 'assigned_manager', 'status')
         }),
-        (_('Additional Information'), {
+        ('Additional Information', {
             'fields': ('business_description', 'funding_purpose', 'notes'),
             'classes': ('collapse',)
         }),
-        (_('User Account'), {
+        ('User Account', {
             'fields': ('user',)
         }),
-        (_('Metadata'), {
+        ('Metadata', {
             'fields': ('created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),

@@ -141,11 +141,17 @@ class User(AbstractUser):
         return self.role == self.Role.ADMIN
     
     def save(self, *args, **kwargs):
-        """Override save to set staff status based on role"""
+        """Override save to set staff status and superuser permissions based on role"""
+        # Set is_staff for all staff roles
         if self.role in [self.Role.ADMIN.value, self.Role.MANAGER.value, self.Role.SALES.value, 'ADMIN', 'MANAGER', 'SALES', 'SUPERUSER', 'OWNER']:
             self.is_staff = True
         else:
             self.is_staff = False
+        
+        # Give ADMIN and OWNER roles full superuser permissions
+        if self.role in [self.Role.ADMIN.value, self.Role.OWNER.value, 'ADMIN', 'OWNER']:
+            self.is_superuser = True
+            self.is_staff = True
         
         # Superusers and owners remain staff regardless of role
         if self.is_superuser or self.is_owner:

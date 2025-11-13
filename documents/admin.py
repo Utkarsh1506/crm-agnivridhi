@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from .models import Document
 
 
@@ -16,20 +15,20 @@ class DocumentAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     
     fieldsets = (
-        (_('Document Details'), {
+        ('Document Details', {
             'fields': ('document_type', 'title', 'description', 'status')
         }),
-        (_('Relationships'), {
+        ('Relationships', {
             'fields': ('client', 'application', 'booking')
         }),
-        (_('File Details'), {
+        ('File Details', {
             'fields': ('file', 'file_size', 'file_format')
         }),
-        (_('Generation Details'), {
+        ('Generation Details', {
             'fields': ('generated_by', 'template_used', 'generation_data'),
             'classes': ('collapse',)
         }),
-        (_('Download Tracking'), {
+        ('Download Tracking', {
             'fields': ('download_count', 'last_downloaded_at', 'last_downloaded_by'),
             'classes': ('collapse',)
         }),

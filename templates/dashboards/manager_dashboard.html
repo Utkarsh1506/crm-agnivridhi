@@ -53,6 +53,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{% url 'documents:team_client_uploads_list' %}">
+                    <i class="bi bi-upload"></i>Client Uploads
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="{% url 'payments:team_payments_list' %}">
                     <i class="bi bi-credit-card"></i>Payments
                     {% if pending_payments_count > 0 %}

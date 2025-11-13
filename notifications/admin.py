@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from .models import Notification
 
 
@@ -17,31 +16,31 @@ class NotificationAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     
     fieldsets = (
-        (_('Recipient & Type'), {
+        ('Recipient & Type', {
             'fields': ('recipient', 'notification_type', 'channel', 'status')
         }),
-        (_('Content'), {
+        ('Content', {
             'fields': ('subject', 'message', 'html_content')
         }),
-        (_('Contact Details'), {
+        ('Contact Details', {
             'fields': ('email_to', 'whatsapp_to')
         }),
-        (_('Attachments'), {
+        ('Attachments', {
             'fields': ('attachments',),
             'classes': ('collapse',)
         }),
-        (_('Tracking'), {
+        ('Tracking', {
             'fields': ('sent_at', 'failed_at', 'error_message', 'retry_count')
         }),
-        (_('External IDs'), {
+        ('External IDs', {
             'fields': ('email_message_id', 'whatsapp_message_id'),
             'classes': ('collapse',)
         }),
-        (_('Related Objects'), {
+        ('Related Objects', {
             'fields': ('related_booking', 'related_application', 'related_payment'),
             'classes': ('collapse',)
         }),
-        (_('Sender'), {
+        ('Sender', {
             'fields': ('sent_by',)
         }),
     )

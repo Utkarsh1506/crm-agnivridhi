@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from .models import Service, Booking
 
 
@@ -14,16 +13,16 @@ class ServiceAdmin(admin.ModelAdmin):
     ordering = ('category', 'name')
     
     fieldsets = (
-        (_('Service Information'), {
+        ('Service Information', {
             'fields': ('name', 'category', 'short_description', 'description')
         }),
-        (_('Pricing & Duration'), {
+        ('Pricing & Duration', {
             'fields': ('price', 'duration_days')
         }),
-        (_('Features & Deliverables'), {
+        ('Features & Deliverables', {
             'fields': ('features', 'deliverables')
         }),
-        (_('Status'), {
+        ('Status', {
             'fields': ('is_active',)
         }),
     )
@@ -42,24 +41,24 @@ class BookingAdmin(admin.ModelAdmin):
     date_hierarchy = 'booking_date'
     
     fieldsets = (
-        (_('Booking ID'), {'fields': ('booking_id',)}),
-        (_('Booking Details'), {
+        ('Booking ID', {'fields': ('booking_id',)}),
+        ('Booking Details', {
             'fields': ('client', 'service', 'status', 'priority')
         }),
-        (_('Amount'), {
+        ('Amount', {
             'fields': ('amount', 'discount_percent', 'final_amount')
         }),
-        (_('Dates'), {
+        ('Dates', {
             'fields': ('booking_date', 'payment_date', 'expected_completion_date', 'actual_completion_date')
         }),
-        (_('Requirements & Assignment'), {
+        ('Requirements & Assignment', {
             'fields': ('requirements', 'assigned_to', 'progress_percent')
         }),
-        (_('Internal Notes'), {
+        ('Internal Notes', {
             'fields': ('internal_notes',),
             'classes': ('collapse',)
         }),
-        (_('Metadata'), {
+        ('Metadata', {
             'fields': ('created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
