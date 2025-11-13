@@ -11,6 +11,8 @@ urlpatterns = [
     path('client/upload/', views.client_document_upload, name='client_document_upload'),
     path('sales/', views.sales_documents_list, name='sales_documents_list'),
     path('sales/uploads/', views.sales_client_uploads_list, name='sales_client_uploads_list'),
+    path('sales/upload/', views.sales_upload_for_client, name='sales_upload_document'),
+    path('sales/upload/<int:client_id>/', views.sales_upload_for_client, name='sales_upload_for_client'),
     path('team/', views.team_documents_list, name='team_documents_list'),
     path('team/uploads/', views.team_client_uploads_list, name='team_client_uploads_list'),
 

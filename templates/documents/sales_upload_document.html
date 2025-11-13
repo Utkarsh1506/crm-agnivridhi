@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Document for Client - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:sales_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'clients:sales_clients_list' %}">
+                    <i class="bi bi-people"></i> My Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'bookings:sales_bookings_list' %}">
+                    <i class="bi bi-calendar-check"></i> Total Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'applications:sales_applications_list' %}">
+                    <i class="bi bi-file-earmark-text"></i> My Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments:sales_payments_list' %}">
+                    <i class="bi bi-credit-card"></i> Payments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'documents:sales_documents_list' %}">
+                    <i class="bi bi-file-earmark-pdf"></i> Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'documents:sales_client_uploads_list' %}">
+                    <i class="bi bi-upload"></i> Client Uploads
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="h2 mb-4">
+    <i class="bi bi-cloud-arrow-up"></i> Upload Document 
+    {% if client %}for {{ client.company_name }}{% endif %}
+</h1>
+
+{% if client %}
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle"></i> 
+    Uploading document for <strong>{{ client.company_name }}</strong>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            
+            {% if not client %}
+            <div class="mb-3">
+                <label class="form-label">Select Client *</label>
+                {{ form.client }}
+                {% if form.client.errors %}
+                    <div class="text-danger small">{{ form.client.errors.0 }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="mb-3">
+                <label class="form-label">Document Type *</label>
+                {{ form.document_type }}
+                {% if form.document_type.errors %}
+                    <div class="text-danger small">{{ form.document_type.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Title *</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">File *</label>
+                {{ form.file }}
+                <div class="form-text">Max size 25 MB. Allowed formats: PDF, DOCX, XLSX, JPG, PNG, etc.</div>
+                {% if form.file.errors %}
+                    <div class="text-danger small">{{ form.file.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex gap-2">
+                <a href="{% url 'documents:sales_client_uploads_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-cloud-arrow-up"></i> Upload Document
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h5>Tips for uploading documents:</h5>
+    <ul class="text-muted">
+        <li>Choose the correct document type to help organize files</li>
+        <li>Use clear, descriptive titles (e.g., "MSME Registration Certificate - 2024")</li>
+        <li>Add descriptions for context (optional but helpful)</li>
+        <li>Supported formats: PDF, Word, Excel, Images, etc.</li>
+        <li>Maximum file size: 25 MB</li>
+    </ul>
+</div>
+{% endblock %}

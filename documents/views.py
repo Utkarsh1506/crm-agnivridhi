@@ -4,7 +4,7 @@ from django.http import FileResponse, Http404
 from django.contrib import messages
 from .models import Document
 from accounts.views import manager_required, client_required, sales_required
-from .forms import DocumentUploadForm
+from .forms import DocumentUploadForm, SalesDocumentUploadForm
 
 @login_required
 def document_list(request):
@@ -183,3 +183,43 @@ def document_download(request, pk):
     except Exception as e:
         messages.error(request, f"Error downloading file: {str(e)}")
         return redirect('document_detail', pk=pk)
+
+
+@sales_required
+def sales_upload_for_client(request, client_id=None):
+    """Allow sales employees to upload documents for their assigned clients"""
+    from clients.models import Client
+    from django.db.models import Q
+    
+    # Get client if client_id provided, otherwise None
+    client = None
+    if client_id:
+        client = get_object_or_404(Client, pk=client_id)
+        # Verify this sales user has access to this client
+        if not (client.assigned_sales == request.user or client.created_by == request.user):
+            messages.error(request, "You don't have permission to upload documents for this client.")
+            return redirect('documents:sales_client_uploads_list')
+    
+    if request.method == 'POST':
+        form = SalesDocumentUploadForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            doc: Document = form.save(commit=False)
+            doc.generated_by = request.user
+            doc.status = Document.Status.GENERATED
+            doc.save()
+            messages.success(request, f'Document uploaded successfully for {doc.client.company_name}.')
+            return redirect('documents:sales_client_uploads_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        # Pre-populate client field if client_id provided
+        if client:
+            form = SalesDocumentUploadForm(user=request.user, initial={'client': client})
+        else:
+            form = SalesDocumentUploadForm(user=request.user)
+    
+    context = {
+        'form': form,
+        'client': client,
+    }
+    return render(request, 'documents/sales_upload_document.html', context)
