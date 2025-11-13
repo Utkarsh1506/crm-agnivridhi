@@ -135,7 +135,13 @@
                         <td>{{ client.get_business_type_display }}</td>
                         <td>{{ client.get_sector_display }}</td>
                         <td><strong>₹{{ client.funding_required }} L</strong></td>
-                        <td>{{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}</td>
+                        <td>
+                            {% if client.assigned_sales %}
+                                {{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}
+                            {% else %}
+                                <span class="text-muted">Not Assigned</span>
+                            {% endif %}
+                        </td>
                         <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>
                         <td>
                             <a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-sm btn-primary">
@@ -185,7 +191,13 @@
                         <td>{{ client.contact_person }}</td>
                         <td>{{ client.get_business_type_display }}</td>
                         <td><strong>₹{{ client.funding_required }} L</strong></td>
-                        <td>{{ client.created_by.get_full_name|default:client.created_by.username }}</td>
+                        <td>
+                            {% if client.created_by %}
+                                {{ client.created_by.get_full_name|default:client.created_by.username }}
+                            {% else %}
+                                <span class="text-muted">Unknown</span>
+                            {% endif %}
+                        </td>
                         <td>{{ client.created_at|date:"M d, Y" }}</td>
                         <td>
                             <a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-sm btn-primary">

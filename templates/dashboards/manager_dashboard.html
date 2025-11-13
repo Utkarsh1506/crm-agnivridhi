@@ -103,6 +103,44 @@
 </div>
 {% endif %}
 
+<!-- Quick Actions -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Quick Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <a href="{% url 'clients:create_client' %}" class="btn btn-success w-100 btn-lg">
+                    <i class="bi bi-person-plus-fill"></i><br>
+                    <span class="small">Create Client</span>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'clients:manager_clients_list' %}" class="btn btn-info w-100 btn-lg">
+                    <i class="bi bi-building"></i><br>
+                    <span class="small">View Clients</span>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'bookings:team_bookings_list' %}" class="btn btn-primary w-100 btn-lg">
+                    <i class="bi bi-calendar-check"></i><br>
+                    <span class="small">View Bookings</span>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'applications:team_applications_list' %}" class="btn btn-warning w-100 btn-lg">
+                    <i class="bi bi-file-earmark-text"></i><br>
+                    <span class="small">View Applications</span>
+                </a>
+            </div>
+        </div>
+        <div class="alert alert-info mt-3 mb-0">
+            <i class="bi bi-info-circle"></i> <strong>Tip:</strong> To create a booking or application, first go to <strong>View Clients</strong>, select a client, then click <strong>Create Booking</strong> or <strong>Create Application</strong> from their detail page.
+        </div>
+    </div>
+</div>
+
 <!-- Team Overview -->
 <div class="row mb-4">
     <div class="col-md-4 mb-3">

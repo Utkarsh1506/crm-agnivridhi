@@ -99,6 +99,111 @@ def create_scheme_documentation_booking(request, scheme_id: int):
 	return redirect('booking_list')
 
 
+@login_required
+def create_booking_for_client(request, client_id):
+	"""
+	Staff (Manager/Admin/Sales) can create a booking for a client.
+	"""
+	from clients.models import Client
+	from django.db.models import Q
+	
+	# Check permissions - only staff can create bookings for clients
+	if request.user.role not in ['SALES', 'MANAGER', 'ADMIN', 'OWNER']:
+		messages.error(request, 'You do not have permission to create bookings.')
+		return redirect('accounts:dashboard')
+	
+	# Get client and verify access
+	client = get_object_or_404(Client, id=client_id)
+	
+	# Permission check: can only create booking for clients you have access to
+	if request.user.role == 'SALES':
+		if client.assigned_sales != request.user:
+			messages.error(request, 'You can only create bookings for your assigned clients.')
+			return redirect('clients:sales_clients_list')
+	elif request.user.role == 'MANAGER':
+		# Manager can create for clients assigned to them OR their team's clients
+		if not (client.assigned_manager == request.user or 
+		        (client.assigned_sales and client.assigned_sales.manager == request.user)):
+			messages.error(request, 'You can only create bookings for your team clients.')
+			return redirect('clients:manager_clients_list')
+	# Admin/Owner can create for any client
+	
+	if request.method == 'POST':
+		service_id = request.POST.get('service_id')
+		scheme_id = request.POST.get('scheme_id')
+		amount = request.POST.get('amount')
+		upfront_amount = request.POST.get('upfront_amount', '0')
+		discount = request.POST.get('discount', '0')
+		funding_amount = request.POST.get('funding_amount', '0')
+		requirements = request.POST.get('requirements', '')
+		priority = request.POST.get('priority', 'MEDIUM')
+		
+		if not service_id or not amount:
+			messages.error(request, 'Please select a service and enter the amount.')
+		else:
+			try:
+				from decimal import Decimal
+				service = get_object_or_404(Service, id=service_id)
+				
+				# Convert amounts
+				amount_decimal = Decimal(amount)
+				discount_decimal = Decimal(discount)
+				upfront_decimal = Decimal(upfront_amount)
+				funding_decimal = Decimal(funding_amount) if funding_amount else Decimal('0')
+				
+				# Determine who to assign the booking to
+				assigned_to = client.assigned_sales if client.assigned_sales else request.user
+				
+				# Build internal notes with all details
+				notes_parts = [f'Created by {request.user.get_full_name()}']
+				if scheme_id:
+					from schemes.models import Scheme
+					scheme = Scheme.objects.filter(id=scheme_id).first()
+					if scheme:
+						notes_parts.append(f'Scheme: {scheme.name} ({scheme.get_category_display()})')
+						notes_parts.append(f'Funding Amount: ₹{funding_decimal:,.2f}')
+				if upfront_decimal > 0:
+					notes_parts.append(f'Upfront Payment: ₹{upfront_decimal:,.2f}')
+				
+				internal_notes = ' | '.join(notes_parts)
+				
+				# Create booking
+				booking = Booking.objects.create(
+					client=client,
+					service=service,
+					status='PENDING',
+					priority=priority,
+					amount=amount_decimal,
+					discount_percent=discount_decimal,
+					final_amount=amount_decimal - (amount_decimal * discount_decimal / 100),
+					requirements=requirements or f'Booking for {service.name}',
+					assigned_to=assigned_to,
+					created_by=request.user,
+					internal_notes=internal_notes
+				)
+				
+				messages.success(
+					request,
+					f'Booking created successfully (ID: {booking.booking_id}) for {client.company_name}. Final Amount: ₹{booking.final_amount:,.2f}'
+				)
+				return redirect('clients:client_detail', pk=client.id)
+			except Exception as e:
+				messages.error(request, f'Error creating booking: {str(e)}')
+	
+	# GET request - show form
+	from schemes.models import Scheme
+	active_services = Service.objects.filter(is_active=True).order_by('category', 'name')
+	active_schemes = Scheme.objects.filter(status='ACTIVE').order_by('category', 'name')
+	
+	context = {
+		'client': client,
+		'services': active_services,
+		'schemes': active_schemes,
+		'page_title': f'Create Booking for {client.company_name}'
+	}
+	return render(request, 'bookings/create_booking_for_client.html', context)
+
+
 @manager_required
 def team_bookings_list(request):
 	"""Manager/Admin view: Bookings for team; Admin/Owner sees all."""

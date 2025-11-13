@@ -13,6 +13,7 @@ urlpatterns = [
 
     # Actions
     path('create/scheme/<int:scheme_id>/', views.create_scheme_documentation_booking, name='create_documentation_booking'),
+    path('create/client/<int:client_id>/', views.create_booking_for_client, name='create_booking_for_client'),
 
     # Detail
     path('<int:id>/', views.booking_detail, name='booking_detail'),
