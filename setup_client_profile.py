@@ -70,30 +70,29 @@ def setup_client_profile():
         registration_number='U12345AB2020PTC123456',
         gst_number='27AABCU1234D1Z5',
         pan_number='AABCU1234D',
-        contact_person_name=f"{client_user.first_name} {client_user.last_name}",
-        contact_person_designation='Director',
-        mobile_number='9876543210',
-        email=client_user.email,
-        registered_address='123, Test Street, Mumbai',
+        annual_turnover=50.00,  # in lakhs
+        funding_required=25.00,  # in lakhs
+        contact_person=f"{client_user.first_name} {client_user.last_name}",
+        contact_email=client_user.email,
+        contact_phone='9876543210',
+        address_line1='123, Test Street',
         city='Mumbai',
         state='Maharashtra',
         pincode='400001',
-        annual_turnover=5000000.00,
-        employee_count=15,
         assigned_sales=sales_user,
         created_by=sales_user if sales_user else None,
-        client_status='ACTIVE'
+        status='ACTIVE'
     )
     
     print(f"✅ Created client profile: {client.company_name}")
     print(f"   Company Name: {client.company_name}")
     print(f"   Business Type: {client.business_type}")
     print(f"   Sector: {client.sector}")
-    print(f"   Contact: {client.contact_person_name}")
-    print(f"   Mobile: {client.mobile_number}")
-    print(f"   Email: {client.email}")
+    print(f"   Contact: {client.contact_person}")
+    print(f"   Phone: {client.contact_phone}")
+    print(f"   Email: {client.contact_email}")
     print(f"   City: {client.city}, {client.state}")
-    print(f"   Status: {client.client_status}")
+    print(f"   Status: {client.status}")
     if sales_user:
         print(f"   Assigned to: {sales_user.first_name} {sales_user.last_name}")
     
