@@ -64,8 +64,9 @@ def setup_client_profile():
     client = Client.objects.create(
         user=client_user,
         company_name='Test Company Pvt Ltd',
-        business_type='Private Limited',
-        sector='Technology',
+        business_type='PVT_LTD',
+        sector='IT_SOFTWARE',
+        company_age=3,
         registration_number='U12345AB2020PTC123456',
         gst_number='27AABCU1234D1Z5',
         pan_number='AABCU1234D',
@@ -77,6 +78,8 @@ def setup_client_profile():
         city='Mumbai',
         state='Maharashtra',
         pincode='400001',
+        annual_turnover=5000000.00,
+        employee_count=15,
         assigned_sales=sales_user,
         created_by=sales_user if sales_user else None,
         client_status='ACTIVE'
