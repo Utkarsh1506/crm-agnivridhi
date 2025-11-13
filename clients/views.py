@@ -29,15 +29,15 @@ def create_client(request):
                 messages.success(
                     request, 
                     f'Client "{client.company_name}" created successfully! '
-                    f'Login credentials have been auto-generated. '
-                    f'Client can login and complete their profile.'
+                    f'Waiting for your manager approval. '
+                    f'Login credentials will be generated after approval.'
                 )
                 # TODO: Send notification to manager
-                return redirect('clients:manager_clients_list')
+                return redirect('clients:sales_clients_list')
             else:
                 messages.success(
                     request, 
-                    f'Client "{client.company_name}" created successfully! '
+                    f'Client "{client.company_name}" created and approved successfully! '
                     f'Check Owner Dashboard for login credentials to share with client.'
                 )
                 # TODO: Send welcome email to client

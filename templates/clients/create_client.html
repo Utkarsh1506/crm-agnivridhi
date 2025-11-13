@@ -88,12 +88,14 @@
     {% if user.role == 'SALES' %}
     <div class="alert alert-info">
         <i class="bi bi-info-circle"></i> 
-        <strong>Quick Client Creation:</strong> Just provide basic contact details. The client will complete their profile after login.
+        <strong>Quick Client Creation:</strong> Just provide basic contact details. 
+        <br><small>Your manager will need to approve this client before login credentials are generated.</small>
     </div>
     {% else %}
     <div class="alert alert-success">
         <i class="bi bi-info-circle"></i> 
         <strong>Quick Client Creation:</strong> Only 4 fields required. Client will fill remaining details after login.
+        <br><small>Login credentials will be auto-generated and shown on Owner Dashboard.</small>
     </div>
     {% endif %}
 
@@ -163,10 +165,18 @@
                 <div class="alert alert-warning">
                     <i class="bi bi-lightbulb"></i> <strong>What happens next?</strong>
                     <ul class="mb-0 mt-2">
+                        {% if user.role == 'SALES' %}
+                        <li>Client request will be sent to your manager for approval</li>
+                        <li>After manager approval, system will auto-generate login credentials</li>
+                        <li>Credentials will appear on Owner Dashboard</li>
+                        <li>Owner/Admin will share credentials with client</li>
+                        <li>Client logs in and completes their profile</li>
+                        {% else %}
                         <li>System will auto-generate secure login credentials</li>
                         <li>Credentials will appear on Owner Dashboard</li>
                         <li>Share credentials with client via email/WhatsApp</li>
                         <li>Client logs in and completes their profile</li>
+                        {% endif %}
                     </ul>
                 </div>
 
