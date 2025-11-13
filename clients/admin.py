@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Client
+from .models import Client, ClientCredential
 
 
 @admin.register(Client)
@@ -67,3 +67,44 @@ class ClientAdmin(admin.ModelAdmin):
         if not change:  # Creating new client
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(ClientCredential)
+class ClientCredentialAdmin(admin.ModelAdmin):
+    """
+    ClientCredential Admin interface - for viewing auto-generated login credentials
+    """
+    list_display = ('client', 'username', 'email', 'is_sent', 'created_at', 'sent_at', 'sent_by')
+    list_filter = ('is_sent', 'created_at', 'sent_at')
+    search_fields = ('client__company_name', 'username', 'email')
+    ordering = ('-created_at',)
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        ('Client & Credentials', {
+            'fields': ('client', 'username', 'email', 'plain_password')
+        }),
+        ('Status', {
+            'fields': ('is_sent', 'sent_at', 'sent_by')
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at')
+        }),
+    )
+    
+    readonly_fields = ('client', 'username', 'email', 'plain_password', 'sent_at', 'sent_by', 'created_by', 'created_at')
+    
+    def has_add_permission(self, request):
+        # Credentials are auto-generated, can't manually add
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # Can delete old credentials if needed
+        return request.user.is_superuser
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # Only superuser and admin/owner can view
+        if request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'OWNER']):
+            return qs
+        return qs.none()

@@ -28,6 +28,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('dashboard/superuser/', views.superuser_dashboard, name='superuser_dashboard'),
     path('dashboard/owner/', views.owner_dashboard, name='owner_dashboard'),
+    path('dashboard/owner/mark-credential-sent/<int:credential_id>/', views.mark_credential_as_sent, name='mark_credential_as_sent'),
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/manager/', views.manager_dashboard, name='manager_dashboard'),
     path('users/', views.users_list, name='users_list'),

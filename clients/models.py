@@ -334,3 +334,76 @@ class Client(models.Model):
         self.approved_at = timezone.now()
         self.rejection_reason = reason
         self.save()
+
+
+class ClientCredential(models.Model):
+    """
+    Store generated login credentials for new clients
+    Only visible to Admin/Owner for security
+    """
+    client = models.OneToOneField(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='credentials',
+        help_text=_('Client these credentials belong to')
+    )
+    
+    username = models.CharField(
+        max_length=150,
+        help_text=_('Generated username')
+    )
+    
+    email = models.EmailField(
+        help_text=_('Client email')
+    )
+    
+    plain_password = models.CharField(
+        max_length=100,
+        help_text=_('Plain text password (only stored once)')
+    )
+    
+    is_sent = models.BooleanField(
+        default=False,
+        help_text=_('Whether credentials have been sent to client')
+    )
+    
+    sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_('When credentials were sent')
+    )
+    
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='credentials_sent',
+        help_text=_('Who sent the credentials')
+    )
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='credentials_created',
+        help_text=_('Who created this client')
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _('Client Credential')
+        verbose_name_plural = _('Client Credentials')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Credentials for {self.client.company_name}"
+    
+    def mark_as_sent(self, user):
+        """Mark credentials as sent"""
+        from django.utils import timezone
+        self.is_sent = True
+        self.sent_at = timezone.now()
+        self.sent_by = user
+        self.save()

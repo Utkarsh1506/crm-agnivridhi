@@ -115,6 +115,64 @@
     </div>
 </div>
 
+<!-- New Client Credentials Section -->
+{% if unsent_credentials %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-start border-danger border-4">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-key-fill"></i> New Client Login Credentials
+                <span class="badge bg-light text-danger ms-2">{{ unsent_credentials|length }} New</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> 
+                    Share these credentials with the clients securely. Once sent, click "Mark as Sent" to remove from this list.
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Password</th>
+                                <th>Created On</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for credential in unsent_credentials %}
+                            <tr>
+                                <td><strong>{{ credential.client.company_name }}</strong></td>
+                                <td><code>{{ credential.username }}</code></td>
+                                <td>{{ credential.email }}</td>
+                                <td>
+                                    <code class="text-danger fw-bold">{{ credential.plain_password }}</code>
+                                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ credential.plain_password }}')">
+                                        <i class="bi bi-clipboard"></i> Copy
+                                    </button>
+                                </td>
+                                <td>{{ credential.created_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'accounts:mark_credential_as_sent' credential.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Mark credentials as sent to {{ credential.client.company_name }}?');">
+                                            <i class="bi bi-check-circle"></i> Mark as Sent
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row">
     <div class="col-12 mb-4">
         <div class="card">
@@ -296,5 +354,14 @@
             });
         }
     })();
+    
+    // Copy to clipboard function for credentials
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Password copied to clipboard!');
+        }, function(err) {
+            console.error('Could not copy text: ', err);
+        });
+    }
 </script>
 {% endblock %}

@@ -867,7 +867,7 @@ def owner_dashboard(request):
         messages.error(request, 'Only the company owner can access this dashboard.')
         return redirect('accounts:admin_dashboard')
 
-    from clients.models import Client
+    from clients.models import Client, ClientCredential
     from bookings.models import Booking
     from applications.models import Application
     from payments.models import Payment
@@ -879,6 +879,9 @@ def owner_dashboard(request):
     active_clients = Client.objects.filter(status='ACTIVE').count()
     total_bookings = Booking.objects.count()
     total_applications = Application.objects.count()
+    
+    # Get unsent client credentials
+    unsent_credentials = ClientCredential.objects.filter(is_sent=False).select_related('client').order_by('-created_at')
     
     # Filter support
     method_filter = request.GET.get('method')
@@ -959,9 +962,26 @@ def owner_dashboard(request):
         'status_sales_approved': status_sales_approved,
         'pending_payments_count': pending_payments_count,
         'selected_method': method_filter or '',
+        'unsent_credentials': unsent_credentials,
     }
 
     return render(request, 'dashboards/owner_dashboard.html', context)
+
+
+@admin_required
+def mark_credential_as_sent(request, credential_id):
+    """Mark client credential as sent by owner/admin."""
+    from clients.models import ClientCredential
+    from django.utils import timezone
+    
+    credential = get_object_or_404(ClientCredential, id=credential_id)
+    
+    if request.method == 'POST':
+        credential.mark_as_sent(request.user)
+        messages.success(request, f'Credentials for {credential.client.company_name} marked as sent.')
+        return redirect('accounts:owner_dashboard')
+    
+    return redirect('accounts:owner_dashboard')
 
 
 @admin_required
