@@ -60,10 +60,44 @@ def client_document_upload(request):
 def sales_documents_list(request):
     # Documents for clients assigned to this sales user or created by them
     from django.db.models import Q
-    documents = Document.objects.filter(
-        Q(client__assigned_sales=request.user) | Q(client__created_by=request.user)
-    ).select_related('client', 'application', 'booking').order_by('-created_at')
-    return render(request, 'documents/document_list.html', {'documents': documents})
+    from .models import DocumentChecklist
+    from clients.models import Client
+    
+    # Get clients for this sales user
+    clients = Client.objects.filter(
+        Q(assigned_sales=request.user) | Q(created_by=request.user)
+    ).select_related('assigned_sales').order_by('company_name')
+    
+    # Group documents and checklists by client
+    client_data = []
+    for client in clients:
+        # Get checklist for this client
+        checklist = DocumentChecklist.objects.filter(client=client).select_related('uploaded_document')
+        
+        # Get client uploaded documents (role=CLIENT)
+        uploaded_docs = Document.objects.filter(
+            client=client,
+            generated_by__role='CLIENT'
+        ).select_related('generated_by').order_by('-created_at')
+        
+        # Calculate progress
+        total_required = checklist.filter(is_required=True).count()
+        uploaded_required = checklist.filter(is_required=True, is_uploaded=True).count()
+        progress = int((uploaded_required / total_required) * 100) if total_required > 0 else 0
+        
+        client_data.append({
+            'client': client,
+            'checklist': checklist,
+            'uploaded_docs': uploaded_docs,
+            'total_required': total_required,
+            'uploaded_required': uploaded_required,
+            'progress': progress,
+        })
+    
+    context = {
+        'client_data': client_data,
+    }
+    return render(request, 'documents/sales_documents_with_checklist.html', context)
 
 
 @sales_required

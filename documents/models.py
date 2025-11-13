@@ -9,20 +9,37 @@ class Document(models.Model):
     """
     
     class DocumentType(models.TextChoices):
-        DPR = 'DPR', _('Detailed Project Report')
-        PITCH_DECK = 'PITCH_DECK', _('Pitch Deck')
-        FINANCIAL_PROJECTION = 'FINANCIAL_PROJECTION', _('Financial Projections')
-        FUND_UTILIZATION = 'FUND_UTILIZATION', _('Fund Utilisation Report')
-        APPLICATION_FORM = 'APPLICATION_FORM', _('Scheme Application Form')
-        CERTIFICATE = 'CERTIFICATE', _('Certificate/Registration')
-        INVOICE = 'INVOICE', _('Invoice/Receipt')
-        OTHER = 'OTHER', _('Other Document')
+        # Professional documents (uploaded by Sales/Team)
+        DPR = 'DPR', 'Detailed Project Report (DPR)'
+        PITCH_DECK = 'PITCH_DECK', 'Pitch Deck'
+        FINANCIAL_PROJECTION = 'FINANCIAL_PROJECTION', 'Financial Projections'
+        FUND_UTILIZATION = 'FUND_UTILIZATION', 'Fund Utilisation Report'
+        AGREEMENT = 'AGREEMENT', 'Agreement/Contract'
+        
+        # Client required documents
+        COMPANY_REG = 'COMPANY_REG', 'Company Registration Certificate'
+        GST_CERT = 'GST_CERT', 'GST Registration Certificate'
+        PAN_CARD = 'PAN_CARD', 'PAN Card'
+        MSME_CERT = 'MSME_CERT', 'MSME/Udyam Registration'
+        BANK_STATEMENT = 'BANK_STATEMENT', 'Bank Statements (6 months)'
+        ITR = 'ITR', 'Income Tax Returns (Last 2 years)'
+        BALANCE_SHEET = 'BALANCE_SHEET', 'Balance Sheet & P&L'
+        INCORPORATION_CERT = 'INCORPORATION_CERT', 'Certificate of Incorporation'
+        MOA_AOA = 'MOA_AOA', 'MOA & AOA'
+        BOARD_RESOLUTION = 'BOARD_RESOLUTION', 'Board Resolution'
+        
+        # Application forms
+        APPLICATION_FORM = 'APPLICATION_FORM', 'Scheme Application Form'
+        
+        # Other
+        INVOICE = 'INVOICE', 'Invoice/Receipt'
+        OTHER = 'OTHER', 'Other Document'
     
     class Status(models.TextChoices):
-        DRAFT = 'DRAFT', _('Draft')
-        GENERATED = 'GENERATED', _('Generated')
-        SENT = 'SENT', _('Sent to Client')
-        DOWNLOADED = 'DOWNLOADED', _('Downloaded by Client')
+        DRAFT = 'DRAFT', 'Draft'
+        GENERATED = 'GENERATED', 'Generated'
+        SENT = 'SENT', 'Sent to Client'
+        DOWNLOADED = 'DOWNLOADED', 'Downloaded by Client'
     
     # Document Details
     document_type = models.CharField(
@@ -177,3 +194,87 @@ class Document(models.Model):
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} TB"
+
+
+class DocumentChecklist(models.Model):
+    """
+    Required documents checklist created by Sales for each client
+    """
+    client = models.ForeignKey(
+        'clients.Client',
+        on_delete=models.CASCADE,
+        related_name='document_checklist',
+        help_text='Client for this checklist'
+    )
+    
+    document_type = models.CharField(
+        max_length=25,
+        choices=Document.DocumentType.choices,
+        help_text='Type of required document'
+    )
+    
+    is_required = models.BooleanField(
+        default=True,
+        help_text='Is this document mandatory?'
+    )
+    
+    is_uploaded = models.BooleanField(
+        default=False,
+        help_text='Has client uploaded this document?'
+    )
+    
+    uploaded_document = models.ForeignKey(
+        Document,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='checklist_items',
+        help_text='Link to uploaded document if available'
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Special instructions or notes for this document'
+    )
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='checklists_created',
+        help_text='Sales employee who created this checklist item'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Document Checklist Item'
+        verbose_name_plural = 'Document Checklist Items'
+        ordering = ['client', 'is_required', 'document_type']
+        unique_together = ['client', 'document_type']
+        indexes = [
+            models.Index(fields=['client', 'is_uploaded']),
+            models.Index(fields=['client', 'is_required']),
+        ]
+    
+    def __str__(self):
+        status = "✓" if self.is_uploaded else "✗"
+        required = "(Required)" if self.is_required else "(Optional)"
+        return f"{status} {self.get_document_type_display()} - {self.client.company_name} {required}"
+    
+    def mark_as_uploaded(self, document):
+        """Mark checklist item as uploaded and link document"""
+        self.is_uploaded = True
+        self.uploaded_document = document
+        self.save()
+    
+    def get_completion_percentage(client):
+        """Get percentage of required documents uploaded for a client"""
+        checklist = DocumentChecklist.objects.filter(client=client, is_required=True)
+        if not checklist.exists():
+            return 0
+        total = checklist.count()
+        uploaded = checklist.filter(is_uploaded=True).count()
+        return int((uploaded / total) * 100)
