@@ -88,13 +88,19 @@
     {% if user.role == 'SALES' %}
     <div class="alert alert-info">
         <i class="bi bi-info-circle"></i> 
-        <strong>Note:</strong> New clients created by you will require manager approval before they can access the system.
+        <strong>Quick Client Creation:</strong> Just provide basic contact details. The client will complete their profile after login.
+    </div>
+    {% else %}
+    <div class="alert alert-success">
+        <i class="bi bi-info-circle"></i> 
+        <strong>Quick Client Creation:</strong> Only 4 fields required. Client will fill remaining details after login.
     </div>
     {% endif %}
 
     <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="bi bi-building"></i> Client Information</h5>
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-person-plus"></i> Quick Client Creation</h5>
+            <small>Client will complete their profile after receiving login credentials</small>
         </div>
         <div class="card-body">
             <form method="post" novalidate>
@@ -106,245 +112,91 @@
                 </div>
                 {% endif %}
 
-                <!-- User Account Section -->
-                <h6 class="border-bottom pb-2 mb-3"><i class="bi bi-person-circle"></i> Contact Person Details</h6>
-                <div class="row mb-3">
+                <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
-                            First Name <span class="text-danger">*</span>
-                        </label>
-                        {{ form.first_name }}
-                        {% if form.first_name.errors %}
-                        <div class="text-danger">{{ form.first_name.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
-                            Last Name <span class="text-danger">*</span>
-                        </label>
-                        {{ form.last_name }}
-                        {% if form.last_name.errors %}
-                        <div class="text-danger">{{ form.last_name.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="{{ form.email.id_for_label }}" class="form-label">
-                            Email <span class="text-danger">*</span>
-                        </label>
-                        {{ form.email }}
-                        <div class="form-text">Will be used for login credentials</div>
-                        {% if form.email.errors %}
-                        <div class="text-danger">{{ form.email.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <label for="{{ form.phone.id_for_label }}" class="form-label">
-                            Phone <span class="text-danger">*</span>
-                        </label>
-                        {{ form.phone }}
-                        {% if form.phone.errors %}
-                        <div class="text-danger">{{ form.phone.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Company Information Section -->
-                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-building"></i> Company Information</h6>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="{{ form.company_name.id_for_label }}" class="form-label">
-                            Company Name <span class="text-danger">*</span>
+                        <label for="{{ form.company_name.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-building"></i> Company Name <span class="text-danger">*</span>
                         </label>
                         {{ form.company_name }}
+                        <div class="form-text">Registered company or business name</div>
                         {% if form.company_name.errors %}
-                        <div class="text-danger">{{ form.company_name.errors }}</div>
+                        <div class="text-danger mt-1">{{ form.company_name.errors }}</div>
                         {% endif %}
                     </div>
-                    <div class="col-md-3">
-                        <label for="{{ form.business_type.id_for_label }}" class="form-label">
-                            Business Type <span class="text-danger">*</span>
-                        </label>
-                        {{ form.business_type }}
-                        {% if form.business_type.errors %}
-                        <div class="text-danger">{{ form.business_type.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-3">
-                        <label for="{{ form.sector.id_for_label }}" class="form-label">
-                            Sector <span class="text-danger">*</span>
-                        </label>
-                        {{ form.sector }}
-                        {% if form.sector.errors %}
-                        <div class="text-danger">{{ form.sector.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label for="{{ form.company_age.id_for_label }}" class="form-label">
-                            Company Age (Years) <span class="text-danger">*</span>
-                        </label>
-                        {{ form.company_age }}
-                        {% if form.company_age.errors %}
-                        <div class="text-danger">{{ form.company_age.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-3">
-                        <label for="{{ form.registration_number.id_for_label }}" class="form-label">
-                            Registration Number
-                        </label>
-                        {{ form.registration_number }}
-                        {% if form.registration_number.errors %}
-                        <div class="text-danger">{{ form.registration_number.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-3">
-                        <label for="{{ form.gst_number.id_for_label }}" class="form-label">
-                            GST Number
-                        </label>
-                        {{ form.gst_number }}
-                        {% if form.gst_number.errors %}
-                        <div class="text-danger">{{ form.gst_number.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-3">
-                        <label for="{{ form.pan_number.id_for_label }}" class="form-label">
-                            PAN Number
-                        </label>
-                        {{ form.pan_number }}
-                        {% if form.pan_number.errors %}
-                        <div class="text-danger">{{ form.pan_number.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Address Section -->
-                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-geo-alt"></i> Address</h6>
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <label for="{{ form.registered_address.id_for_label }}" class="form-label">
-                            Registered Address <span class="text-danger">*</span>
-                        </label>
-                        {{ form.registered_address }}
-                        {% if form.registered_address.errors %}
-                        <div class="text-danger">{{ form.registered_address.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="{{ form.city.id_for_label }}" class="form-label">
-                            City <span class="text-danger">*</span>
-                        </label>
-                        {{ form.city }}
-                        {% if form.city.errors %}
-                        <div class="text-danger">{{ form.city.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-4">
-                        <label for="{{ form.state.id_for_label }}" class="form-label">
-                            State <span class="text-danger">*</span>
-                        </label>
-                        {{ form.state }}
-                        {% if form.state.errors %}
-                        <div class="text-danger">{{ form.state.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-4">
-                        <label for="{{ form.pincode.id_for_label }}" class="form-label">
-                            Pincode <span class="text-danger">*</span>
-                        </label>
-                        {{ form.pincode }}
-                        {% if form.pincode.errors %}
-                        <div class="text-danger">{{ form.pincode.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="row mb-3">
+                    
                     <div class="col-md-6">
-                        <label for="{{ form.website.id_for_label }}" class="form-label">
-                            Website
+                        <label for="{{ form.contact_person.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-person"></i> Contact Person <span class="text-danger">*</span>
                         </label>
-                        {{ form.website }}
-                        {% if form.website.errors %}
-                        <div class="text-danger">{{ form.website.errors }}</div>
+                        {{ form.contact_person }}
+                        <div class="form-text">Primary contact person's full name</div>
+                        {% if form.contact_person.errors %}
+                        <div class="text-danger mt-1">{{ form.contact_person.errors }}</div>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Financial Information -->
-                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-currency-rupee"></i> Financial Information</h6>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="{{ form.annual_turnover.id_for_label }}" class="form-label">
-                            Annual Turnover (₹) <span class="text-danger">*</span>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="{{ form.contact_email.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-envelope"></i> Email <span class="text-danger">*</span>
                         </label>
-                        {{ form.annual_turnover }}
-                        {% if form.annual_turnover.errors %}
-                        <div class="text-danger">{{ form.annual_turnover.errors }}</div>
+                        {{ form.contact_email }}
+                        <div class="form-text">Will be used for login credentials</div>
+                        {% if form.contact_email.errors %}
+                        <div class="text-danger mt-1">{{ form.contact_email.errors }}</div>
                         {% endif %}
                     </div>
-                    <div class="col-md-4">
-                        <label for="{{ form.funding_required.id_for_label }}" class="form-label">
-                            Funding Required (₹ Lakhs) <span class="text-danger">*</span>
+                    
+                    <div class="col-md-6">
+                        <label for="{{ form.contact_phone.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-phone"></i> Phone <span class="text-danger">*</span>
                         </label>
-                        {{ form.funding_required }}
-                        {% if form.funding_required.errors %}
-                        <div class="text-danger">{{ form.funding_required.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-4">
-                        <label for="{{ form.existing_loans.id_for_label }}" class="form-label">
-                            Existing Loans (₹ Lakhs)
-                        </label>
-                        {{ form.existing_loans }}
-                        {% if form.existing_loans.errors %}
-                        <div class="text-danger">{{ form.existing_loans.errors }}</div>
+                        {{ form.contact_phone }}
+                        <div class="form-text">Primary contact number</div>
+                        {% if form.contact_phone.errors %}
+                        <div class="text-danger mt-1">{{ form.contact_phone.errors }}</div>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Additional Details -->
-                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-card-text"></i> Additional Details</h6>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="{{ form.business_description.id_for_label }}" class="form-label">
-                            Business Description
-                        </label>
-                        {{ form.business_description }}
-                        {% if form.business_description.errors %}
-                        <div class="text-danger">{{ form.business_description.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <label for="{{ form.funding_purpose.id_for_label }}" class="form-label">
-                            Funding Purpose
-                        </label>
-                        {{ form.funding_purpose }}
-                        {% if form.funding_purpose.errors %}
-                        <div class="text-danger">{{ form.funding_purpose.errors }}</div>
-                        {% endif %}
-                    </div>
+                <div class="alert alert-warning">
+                    <i class="bi bi-lightbulb"></i> <strong>What happens next?</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>System will auto-generate secure login credentials</li>
+                        <li>Credentials will appear on Owner Dashboard</li>
+                        <li>Share credentials with client via email/WhatsApp</li>
+                        <li>Client logs in and completes their profile</li>
+                    </ul>
                 </div>
 
                 <!-- Form Actions -->
                 <div class="row mt-4">
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary btn-lg">
                             <i class="bi bi-check-circle"></i> Create Client
                         </button>
-                            <a href="{{ dashboard_url }}" class="btn btn-secondary">
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary btn-lg">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+    
+    <div class="card mt-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-question-circle"></i> Why only 4 fields?</h6>
+        </div>
+        <div class="card-body">
+            <p class="mb-2"><strong>Benefits of Quick Creation:</strong></p>
+            <ul class="mb-0">
+                <li><strong>Faster onboarding:</strong> Create client in 30 seconds</li>
+                <li><strong>Accurate data:</strong> Client provides their own details</li>
+                <li><strong>Less errors:</strong> No guessing client information</li>
+                <li><strong>Better experience:</strong> Client completes profile at their convenience</li>
+            </ul>
         </div>
     </div>
 </div>
