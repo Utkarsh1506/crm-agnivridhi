@@ -35,6 +35,7 @@ urlpatterns = [
     path('clients/', include(('clients.urls', 'clients'))),
     path('edit-requests/', include(('edit_requests.urls', 'edit_requests'))),
     path('notifications/', include(('notifications.urls', 'notifications'))),
+    path('tracking/', include(('tracking.urls', 'tracking'))),
     
     # API endpoints with namespace
     path('api/', include(('api.urls', 'api'))),
