@@ -5,6 +5,111 @@ from .models import Client
 User = get_user_model()
 
 
+class QuickClientCreationForm(forms.Form):
+    """
+    Simplified form for quick client creation.
+    Only requires: company name, contact person, email, phone.
+    Client fills remaining details after login.
+    """
+    company_name = forms.CharField(
+        max_length=200,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'ABC Pvt Ltd'
+        }),
+        help_text='Company or business name'
+    )
+    
+    contact_person = forms.CharField(
+        max_length=200,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'John Doe'
+        }),
+        help_text='Primary contact person name'
+    )
+    
+    contact_email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'john@company.com'
+        }),
+        help_text='Primary contact email (will be used for login)'
+    )
+    
+    contact_phone = forms.CharField(
+        max_length=15,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '+91 9876543210'
+        }),
+        help_text='Primary contact phone'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        self.created_by = kwargs.pop('created_by', None)
+        super().__init__(*args, **kwargs)
+    
+    def clean_contact_email(self):
+        """Check if email already exists"""
+        email = self.cleaned_data.get('contact_email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('A user with this email already exists.')
+        return email
+    
+    def save(self):
+        """Create minimal client profile with user account"""
+        # Generate username from email
+        email = self.cleaned_data.get('contact_email')
+        username = email.split('@')[0]
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{email.split('@')[0]}{counter}"
+            counter += 1
+        
+        # Create user account
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            first_name=self.cleaned_data.get('contact_person').split()[0],
+            last_name=' '.join(self.cleaned_data.get('contact_person').split()[1:]) if len(self.cleaned_data.get('contact_person').split()) > 1 else '',
+            phone=self.cleaned_data.get('contact_phone'),
+            role='CLIENT',
+            password=User.objects.make_random_password(12)
+        )
+        
+        # Create minimal client profile
+        client = Client.objects.create(
+            user=user,
+            company_name=self.cleaned_data.get('company_name'),
+            contact_person=self.cleaned_data.get('contact_person'),
+            contact_email=email,
+            contact_phone=self.cleaned_data.get('contact_phone'),
+            created_by=self.created_by,
+            status='PENDING_DOCS',  # Client needs to complete profile
+            is_approved=True if self.created_by and self.created_by.role in ['ADMIN', 'MANAGER', 'OWNER'] else False
+        )
+        
+        # Set assigned sales
+        if self.created_by and self.created_by.role == 'SALES':
+            client.assigned_sales = self.created_by
+            if hasattr(self.created_by, 'manager'):
+                client.assigned_manager = self.created_by.manager
+        
+        # Auto-approve if created by admin/manager/owner
+        if self.created_by and self.created_by.role in ['ADMIN', 'MANAGER', 'OWNER']:
+            from django.utils import timezone
+            client.approved_by = self.created_by
+            client.approved_at = timezone.now()
+        
+        client.save()
+        return client
+
+
 class ClientCreationForm(forms.ModelForm):
     """Form for creating a new client"""
     
@@ -153,3 +258,126 @@ class ClientApprovalForm(forms.Form):
             raise forms.ValidationError('Rejection reason is required when rejecting a client.')
         
         return cleaned_data
+
+
+class ClientProfileCompletionForm(forms.ModelForm):
+    """
+    Form for clients to complete their profile after initial creation.
+    Allows clients to fill in business details, financial info, and address.
+    """
+    class Meta:
+        model = Client
+        fields = [
+            'business_type', 'sector', 'company_age',
+            'registration_number', 'gst_number', 'pan_number',
+            'address_line1', 'address_line2', 'city', 'state', 'pincode',
+            'annual_turnover', 'funding_required', 'existing_loans',
+            'alternate_phone', 'business_description', 'funding_purpose'
+        ]
+        widgets = {
+            'business_type': forms.Select(attrs={'class': 'form-select'}),
+            'sector': forms.Select(attrs={'class': 'form-select'}),
+            'company_age': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'placeholder': 'Years in business'
+            }),
+            'registration_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'U12345AB2020PTC123456'
+            }),
+            'gst_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '22AAAAA0000A1Z5'
+            }),
+            'pan_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'ABCDE1234F'
+            }),
+            'address_line1': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Building/Street'
+            }),
+            'address_line2': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Locality/Area'
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Mumbai'
+            }),
+            'state': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Maharashtra'
+            }),
+            'pincode': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '400001'
+            }),
+            'annual_turnover': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'Annual turnover in lakhs'
+            }),
+            'funding_required': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'Funding required in lakhs'
+            }),
+            'existing_loans': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'Existing loans in lakhs (if any)'
+            }),
+            'alternate_phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '+91 9876543210'
+            }),
+            'business_description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Describe your business activities, products, or services'
+            }),
+            'funding_purpose': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Explain the purpose of funding you are seeking'
+            }),
+        }
+        help_texts = {
+            'business_type': 'Select your business entity type',
+            'sector': 'Select your primary business sector',
+            'company_age': 'How many years has your company been operating?',
+            'annual_turnover': 'Your annual business turnover (in lakhs)',
+            'funding_required': 'Total funding amount you are seeking (in lakhs)',
+            'existing_loans': 'Outstanding loan amount if any (in lakhs)',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # All fields are optional for progressive completion
+        for field in self.fields:
+            self.fields[field].required = False
+    
+    def save(self, commit=True):
+        """Save the profile and update status if profile is complete"""
+        client = super().save(commit=False)
+        
+        # Check if profile is complete
+        required_fields = ['business_type', 'sector', 'company_age', 'address_line1',
+                          'city', 'state', 'pincode', 'annual_turnover', 'funding_required']
+        
+        profile_complete = all([
+            getattr(client, field) for field in required_fields
+        ])
+        
+        # Update status if profile is now complete
+        if profile_complete and client.status == 'PENDING_DOCS':
+            client.status = 'ACTIVE'
+        
+        if commit:
+            client.save()
+        
+        return client

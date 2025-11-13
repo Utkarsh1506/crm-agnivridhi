@@ -4,20 +4,23 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from .models import Client
-from .forms import ClientCreationForm, ClientApprovalForm
+from .forms import ClientCreationForm, ClientApprovalForm, QuickClientCreationForm, ClientProfileCompletionForm
 from django.core.paginator import Paginator
 
 
 @login_required
 def create_client(request):
-    """Create a new client (Sales/Manager/Admin)"""
+    """
+    Quick client creation - Only requires: company name, contact person, email, phone.
+    Client fills remaining details after login.
+    """
     # Check permissions
     if request.user.role not in ['SALES', 'MANAGER', 'ADMIN', 'OWNER']:
         messages.error(request, 'You do not have permission to create clients.')
         return redirect('accounts:dashboard')
     
     if request.method == 'POST':
-        form = ClientCreationForm(request.POST, created_by=request.user)
+        form = QuickClientCreationForm(request.POST, created_by=request.user)
         if form.is_valid():
             client = form.save()
             
@@ -25,25 +28,29 @@ def create_client(request):
             if request.user.role == 'SALES':
                 messages.success(
                     request, 
-                    f'Client "{client.company_name}" created successfully! Waiting for manager approval.'
+                    f'Client "{client.company_name}" created successfully! '
+                    f'Login credentials have been auto-generated. '
+                    f'Client can login and complete their profile.'
                 )
                 # TODO: Send notification to manager
-                return redirect('clients:pending_approval_clients')
+                return redirect('clients:manager_clients_list')
             else:
                 messages.success(
                     request, 
-                    f'Client "{client.company_name}" created and approved successfully!'
+                    f'Client "{client.company_name}" created successfully! '
+                    f'Check Owner Dashboard for login credentials to share with client.'
                 )
                 # TODO: Send welcome email to client
-                return redirect('clients:client_detail', pk=client.pk)
+                return redirect('accounts:owner_dashboard')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = ClientCreationForm(created_by=request.user)
+        form = QuickClientCreationForm(created_by=request.user)
     
     return render(request, 'clients/create_client.html', {
         'form': form,
-        'page_title': 'Create New Client'
+        'page_title': 'Create New Client',
+        'is_quick_form': True
     })
 
 
@@ -314,5 +321,50 @@ def admin_clients_list(request):
         'business_type_choices': Client.BusinessType.choices,
         'sector_choices': Client.Sector.choices,
         'page_title': 'All Clients'
+    })
+
+
+@login_required
+def complete_client_profile(request):
+    """
+    Allow clients to complete their profile after initial creation.
+    Only accessible to CLIENT role users.
+    """
+    if request.user.role != 'CLIENT':
+        messages.error(request, 'This page is only accessible to client users.')
+        return redirect('accounts:dashboard')
+    
+    try:
+        client = request.user.client_profile
+    except Client.DoesNotExist:
+        messages.error(request, 'No client profile found for your account.')
+        return redirect('accounts:dashboard')
+    
+    if request.method == 'POST':
+        form = ClientProfileCompletionForm(request.POST, instance=client)
+        if form.is_valid():
+            client = form.save()
+            messages.success(
+                request,
+                'Your profile has been updated successfully! '
+                'Our team will review and get back to you soon.'
+            )
+            return redirect('accounts:client_portal')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ClientProfileCompletionForm(instance=client)
+    
+    # Calculate profile completion percentage
+    required_fields = ['business_type', 'sector', 'company_age', 'address_line1',
+                      'city', 'state', 'pincode', 'annual_turnover', 'funding_required']
+    completed_fields = sum([1 for field in required_fields if getattr(client, field)])
+    completion_percentage = int((completed_fields / len(required_fields)) * 100)
+    
+    return render(request, 'clients/complete_profile.html', {
+        'form': form,
+        'client': client,
+        'completion_percentage': completion_percentage,
+        'page_title': 'Complete Your Profile'
     })
 

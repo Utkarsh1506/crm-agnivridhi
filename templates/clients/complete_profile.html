@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block title %}Complete Your Profile - Agnivridhi CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:client_portal' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Complete Profile</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Profile Completion Progress -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-percent"></i> Profile Completion
+                    </h5>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar {% if completion_percentage == 100 %}bg-success{% elif completion_percentage >= 70 %}bg-info{% elif completion_percentage >= 40 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ completion_percentage }}%;" 
+                             aria-valuenow="{{ completion_percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ completion_percentage }}% Complete
+                        </div>
+                    </div>
+                    {% if completion_percentage < 100 %}
+                    <p class="text-muted mt-2 mb-0">
+                        <i class="bi bi-info-circle"></i> 
+                        Please complete your profile to help us serve you better. Fill in as much detail as possible.
+                    </p>
+                    {% else %}
+                    <p class="text-success mt-2 mb-0">
+                        <i class="bi bi-check-circle-fill"></i> 
+                        Your profile is complete! You can still update any information below.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Profile Form -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-building"></i> Complete Your Business Profile
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Company Information -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">
+                                <i class="bi bi-info-circle"></i> Company Information
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.business_type.id_for_label }}" class="form-label">
+                                        Business Type
+                                    </label>
+                                    {{ form.business_type }}
+                                    {% if form.business_type.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.business_type.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.business_type.help_text }}</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.sector.id_for_label }}" class="form-label">
+                                        Business Sector
+                                    </label>
+                                    {{ form.sector }}
+                                    {% if form.sector.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.sector.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.sector.help_text }}</small>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.company_age.id_for_label }}" class="form-label">
+                                        Company Age (Years)
+                                    </label>
+                                    {{ form.company_age }}
+                                    {% if form.company_age.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.company_age.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.company_age.help_text }}</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.registration_number.id_for_label }}" class="form-label">
+                                        Registration Number
+                                    </label>
+                                    {{ form.registration_number }}
+                                    {% if form.registration_number.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.registration_number.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">CIN/LLPIN (Optional)</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.gst_number.id_for_label }}" class="form-label">
+                                        GST Number
+                                    </label>
+                                    {{ form.gst_number }}
+                                    {% if form.gst_number.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.gst_number.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Optional</small>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.pan_number.id_for_label }}" class="form-label">
+                                        PAN Number
+                                    </label>
+                                    {{ form.pan_number }}
+                                    {% if form.pan_number.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.pan_number.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Company PAN (Optional)</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.alternate_phone.id_for_label }}" class="form-label">
+                                        Alternate Phone
+                                    </label>
+                                    {{ form.alternate_phone }}
+                                    {% if form.alternate_phone.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.alternate_phone.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Optional</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Information -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">
+                                <i class="bi bi-currency-rupee"></i> Financial Information
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.annual_turnover.id_for_label }}" class="form-label">
+                                        Annual Turnover (₹ Lakhs) <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.annual_turnover }}
+                                    {% if form.annual_turnover.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.annual_turnover.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.annual_turnover.help_text }}</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.funding_required.id_for_label }}" class="form-label">
+                                        Funding Required (₹ Lakhs) <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.funding_required }}
+                                    {% if form.funding_required.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.funding_required.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.funding_required.help_text }}</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.existing_loans.id_for_label }}" class="form-label">
+                                        Existing Loans (₹ Lakhs)
+                                    </label>
+                                    {{ form.existing_loans }}
+                                    {% if form.existing_loans.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.existing_loans.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.existing_loans.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Information -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">
+                                <i class="bi bi-geo-alt"></i> Address Information
+                            </h5>
+                            <div class="mb-3">
+                                <label for="{{ form.address_line1.id_for_label }}" class="form-label">
+                                    Address Line 1 <span class="text-danger">*</span>
+                                </label>
+                                {{ form.address_line1 }}
+                                {% if form.address_line1.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.address_line1.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.address_line2.id_for_label }}" class="form-label">
+                                    Address Line 2
+                                </label>
+                                {{ form.address_line2 }}
+                                {% if form.address_line2.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.address_line2.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">
+                                        City <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.city.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.state.id_for_label }}" class="form-label">
+                                        State <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.state }}
+                                    {% if form.state.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.state.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.pincode.id_for_label }}" class="form-label">
+                                        Pincode <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.pincode }}
+                                    {% if form.pincode.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.pincode.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Business Description -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">
+                                <i class="bi bi-file-text"></i> Additional Details
+                            </h5>
+                            <div class="mb-3">
+                                <label for="{{ form.business_description.id_for_label }}" class="form-label">
+                                    Business Description
+                                </label>
+                                {{ form.business_description }}
+                                {% if form.business_description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.business_description.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Describe your business activities, products, or services</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.funding_purpose.id_for_label }}" class="form-label">
+                                    Funding Purpose
+                                </label>
+                                {{ form.funding_purpose }}
+                                {% if form.funding_purpose.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.funding_purpose.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Explain how you plan to use the funding</small>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'accounts:client_portal' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

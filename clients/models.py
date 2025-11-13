@@ -70,17 +70,23 @@ class Client(models.Model):
     business_type = models.CharField(
         max_length=20,
         choices=BusinessType.choices,
+        blank=True,
+        null=True,
         help_text=_('Type of business entity')
     )
     
     sector = models.CharField(
         max_length=20,
         choices=Sector.choices,
+        blank=True,
+        null=True,
         help_text=_('Primary business sector')
     )
     
     company_age = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(100)],
+        blank=True,
+        null=True,
         help_text=_('Age of company in years')
     )
     
@@ -109,12 +115,16 @@ class Client(models.Model):
     annual_turnover = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        blank=True,
+        null=True,
         help_text=_('Annual turnover in lakhs')
     )
     
     funding_required = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        blank=True,
+        null=True,
         help_text=_('Total funding required in lakhs')
     )
     
@@ -150,6 +160,8 @@ class Client(models.Model):
     # Address
     address_line1 = models.CharField(
         max_length=200,
+        blank=True,
+        null=True,
         help_text=_('Address line 1')
     )
     
@@ -162,16 +174,22 @@ class Client(models.Model):
     
     city = models.CharField(
         max_length=100,
+        blank=True,
+        null=True,
         help_text=_('City')
     )
     
     state = models.CharField(
         max_length=100,
+        blank=True,
+        null=True,
         help_text=_('State')
     )
     
     pincode = models.CharField(
         max_length=6,
+        blank=True,
+        null=True,
         help_text=_('Pincode')
     )
     

@@ -83,13 +83,15 @@ def login_view(request):
             messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
             
             # Role-based redirect
-            # Route Owner Admins to the Owner Dashboard
-            if getattr(user, 'is_owner', False) and getattr(user, 'role', None) == 'ADMIN':
+            # PRIORITY 1: Owner gets Owner Dashboard (not superuser dashboard)
+            if getattr(user, 'is_owner', False) or getattr(user, 'role', '').upper() == 'OWNER':
                 return redirect('accounts:owner_dashboard')
-            # Superuser gets dedicated dashboard
+            
+            # PRIORITY 2: Superuser (if not owner) gets superuser dashboard
             if user.is_superuser:
                 return redirect('accounts:superuser_dashboard')
 
+            # PRIORITY 3: Role-based routing
             role = getattr(user, 'role', None)
             if role:
                 if role == 'CLIENT':
@@ -146,14 +148,15 @@ def dashboard_view(request):
     """
     user = request.user
     
-    # Superuser gets dedicated dashboard
-    if user.is_superuser:
-        return redirect('accounts:superuser_dashboard')
-    
-    # Owner gets Owner Dashboard (either by flag or role)
+    # PRIORITY 1: Owner gets Owner Dashboard (not superuser dashboard)
     if getattr(user, 'is_owner', False) or getattr(user, 'role', '').upper() == 'OWNER':
         return redirect('accounts:owner_dashboard')
+    
+    # PRIORITY 2: Superuser (if not owner) gets dedicated dashboard
+    if user.is_superuser:
+        return redirect('accounts:superuser_dashboard')
 
+    # PRIORITY 3: Role-based routing
     role = getattr(user, 'role', None)
     if role:
         role_upper = role.upper()
@@ -773,6 +776,13 @@ def client_portal(request):
         messages.error(request, 'Client profile not found.')
         return redirect('accounts:dashboard')
     
+    # Check profile completion
+    required_fields = ['business_type', 'sector', 'company_age', 'address_line1',
+                      'city', 'state', 'pincode', 'annual_turnover', 'funding_required']
+    completed_fields = sum([1 for field in required_fields if getattr(client, field)])
+    completion_percentage = int((completed_fields / len(required_fields)) * 100)
+    profile_incomplete = completion_percentage < 100
+    
     # Client data
     applications = Application.objects.filter(client=client).order_by('-application_date')
     documents = Document.objects.filter(client=client).order_by('-created_at')
@@ -802,6 +812,8 @@ def client_portal(request):
         'documents': documents,
         'bookings': bookings,
         'recommended_schemes': recommended_schemes,
+        'profile_incomplete': profile_incomplete,
+        'completion_percentage': completion_percentage,
     }
     
     return render(request, 'dashboards/client_portal.html', context)

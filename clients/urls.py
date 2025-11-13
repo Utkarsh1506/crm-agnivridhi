@@ -7,6 +7,9 @@ urlpatterns = [
     # Client creation
     path('create/', views.create_client, name='create_client'),
     
+    # Client profile completion (for clients to fill details after creation)
+    path('complete-profile/', views.complete_client_profile, name='complete_profile'),
+    
     # Client detail
     path('<int:pk>/', views.client_detail, name='client_detail'),
     
