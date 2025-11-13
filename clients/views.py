@@ -34,7 +34,15 @@ def create_client(request):
                 )
                 # TODO: Send notification to manager
                 return redirect('clients:sales_clients_list')
-            else:
+            elif request.user.role == 'MANAGER':
+                messages.success(
+                    request, 
+                    f'Client "{client.company_name}" created and approved successfully! '
+                    f'Login credentials have been generated. Check Owner Dashboard to share with client.'
+                )
+                # TODO: Send welcome email to client
+                return redirect('accounts:dashboard')  # Manager dashboard
+            else:  # ADMIN or OWNER
                 messages.success(
                     request, 
                     f'Client "{client.company_name}" created and approved successfully! '

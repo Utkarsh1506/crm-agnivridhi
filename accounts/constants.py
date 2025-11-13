@@ -92,6 +92,7 @@ ROLE_NAMESPACE_MAP = {
     ],
     ROLE_CLIENT: [
         "accounts",      # Client portal, profile
+        "clients",       # Complete profile, view own client details
         "applications",  # Own applications
         "bookings",      # Own bookings
         "documents",     # Own documents

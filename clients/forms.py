@@ -50,9 +50,40 @@ class QuickClientCreationForm(forms.Form):
         help_text='Primary contact phone'
     )
     
+    assigned_manager = forms.ModelChoiceField(
+        queryset=User.objects.none(),  # Will be set in __init__
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        help_text='Select manager to assign this client (optional for sales)'
+    )
+    
     def __init__(self, *args, **kwargs):
         self.created_by = kwargs.pop('created_by', None)
         super().__init__(*args, **kwargs)
+        
+        # Setup manager choices based on user role
+        if self.created_by:
+            if self.created_by.role == 'SALES':
+                # Sales can select from available managers
+                # Prioritize their own manager first
+                self.fields['assigned_manager'].queryset = User.objects.filter(
+                    role__in=['MANAGER', 'ADMIN']
+                ).order_by('first_name', 'last_name')
+                
+                # Set default to sales person's manager if available
+                if hasattr(self.created_by, 'manager') and self.created_by.manager:
+                    self.fields['assigned_manager'].initial = self.created_by.manager
+                    self.fields['assigned_manager'].help_text = f'Default: Your manager ({self.created_by.manager.get_full_name()})'
+            elif self.created_by.role in ['ADMIN', 'OWNER']:
+                # Admin/Owner can see all managers
+                self.fields['assigned_manager'].queryset = User.objects.filter(
+                    role='MANAGER'
+                ).order_by('first_name', 'last_name')
+            else:
+                # Manager creating client - no need to show this field
+                self.fields['assigned_manager'].widget = forms.HiddenInput()
     
     def clean_contact_email(self):
         """Check if email already exists"""
@@ -94,11 +125,24 @@ class QuickClientCreationForm(forms.Form):
             is_approved=True if self.created_by and self.created_by.role in ['ADMIN', 'MANAGER', 'OWNER'] else False
         )
         
-        # Set assigned sales
+        # Set assigned sales and manager
         if self.created_by and self.created_by.role == 'SALES':
             client.assigned_sales = self.created_by
-            if hasattr(self.created_by, 'manager'):
+            
+            # Use selected manager or fall back to sales person's default manager
+            selected_manager = self.cleaned_data.get('assigned_manager')
+            if selected_manager:
+                client.assigned_manager = selected_manager
+            elif hasattr(self.created_by, 'manager') and self.created_by.manager:
                 client.assigned_manager = self.created_by.manager
+        elif self.created_by and self.created_by.role == 'MANAGER':
+            # Manager creating client - assign to themselves
+            client.assigned_manager = self.created_by
+        elif self.created_by and self.created_by.role in ['ADMIN', 'OWNER']:
+            # Admin/Owner can optionally assign manager
+            selected_manager = self.cleaned_data.get('assigned_manager')
+            if selected_manager:
+                client.assigned_manager = selected_manager
         
         # Auto-approve if created by admin/manager/owner
         if self.created_by and self.created_by.role in ['ADMIN', 'MANAGER', 'OWNER']:
@@ -357,9 +401,16 @@ class ClientProfileCompletionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # All fields are optional for progressive completion
-        for field in self.fields:
-            self.fields[field].required = False
+        # Mark essential fields as required
+        required_fields = [
+            'business_type', 'sector', 'company_age',
+            'address_line1', 'city', 'state', 'pincode',
+            'annual_turnover', 'funding_required'
+        ]
+        
+        for field_name in required_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = True
     
     def save(self, commit=True):
         """Save the profile and update status if profile is complete"""

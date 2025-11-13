@@ -162,6 +162,29 @@
                     </div>
                 </div>
 
+                <!-- Manager Selection (for Sales and Admin/Owner) -->
+                {% if user.role == 'SALES' or user.role in 'ADMIN,OWNER' %}
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="{{ form.assigned_manager.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-person-badge"></i> Assign to Manager 
+                            {% if user.role == 'SALES' %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ form.assigned_manager }}
+                        <div class="form-text">
+                            {% if user.role == 'SALES' %}
+                                Select manager for approval and client management
+                            {% else %}
+                                Optional: Assign client to a specific manager
+                            {% endif %}
+                        </div>
+                        {% if form.assigned_manager.errors %}
+                        <div class="text-danger mt-1">{{ form.assigned_manager.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="alert alert-warning">
                     <i class="bi bi-lightbulb"></i> <strong>What happens next?</strong>
                     <ul class="mb-0 mt-2">

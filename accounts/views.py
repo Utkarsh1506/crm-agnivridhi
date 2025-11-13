@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
@@ -782,6 +782,11 @@ def client_portal(request):
     completed_fields = sum([1 for field in required_fields if getattr(client, field)])
     completion_percentage = int((completed_fields / len(required_fields)) * 100)
     profile_incomplete = completion_percentage < 100
+    
+    # If profile is incomplete, redirect to profile completion page
+    if profile_incomplete:
+        messages.warning(request, 'Please complete your profile to access all features.')
+        return redirect('clients:complete_profile')
     
     # Client data
     applications = Application.objects.filter(client=client).order_by('-application_date')

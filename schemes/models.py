@@ -239,17 +239,17 @@ class Scheme(models.Model):
             score += 20
         
         # Funding range match
-        if self.min_funding and self.max_funding:
+        if self.min_funding and self.max_funding and client.funding_required:
             if self.min_funding <= client.funding_required <= self.max_funding:
                 score += 25
         
         # Turnover range match
-        if self.min_turnover and self.max_turnover:
+        if self.min_turnover and self.max_turnover and client.annual_turnover:
             if self.min_turnover <= client.annual_turnover <= self.max_turnover:
                 score += 15
         
         # Company age match
-        if self.min_company_age and self.max_company_age:
+        if self.min_company_age and self.max_company_age and client.company_age:
             if self.min_company_age <= client.company_age <= self.max_company_age:
                 score += 10
         

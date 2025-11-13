@@ -164,7 +164,13 @@
                             <td><strong>₹{{ booking.payment.amount }}</strong></td>
                             <td>{{ booking.payment.get_payment_method_display }}</td>
                             <td><code>{{ booking.payment.reference_id|default:'-' }}</code></td>
-                            <td>{{ booking.payment.received_by.get_full_name|default:booking.payment.received_by.username }}</td>
+                            <td>
+                                {% if booking.payment.received_by %}
+                                    {{ booking.payment.received_by.get_full_name|default:booking.payment.received_by.username }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
                             <td>{{ booking.payment.created_at|date:"M d, Y H:i" }}</td>
                             <td>
                                 <a href="{% url 'accounts:approve_payment' booking.payment.id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-success me-1">
@@ -252,7 +258,13 @@
                             <td>{{ client.company_name }}</td>
                             <td>{{ client.get_sector_display }}</td>
                             <td>₹{{ client.funding_required }} lakhs</td>
-                            <td>{{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}</td>
+                            <td>
+                                {% if client.assigned_sales %}
+                                    {{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}
+                                {% else %}
+                                    <span class="text-muted">Not assigned</span>
+                                {% endif %}
+                            </td>
                             <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>
                         </tr>
                         {% endfor %}
@@ -358,7 +370,13 @@
                             <td>{{ application.client.company_name }}</td>
                             <td>{{ application.scheme.name }}</td>
                             <td>₹{{ application.applied_amount }} L</td>
-                            <td>{{ application.assigned_to.get_full_name|default:application.assigned_to.username }}</td>
+                            <td>
+                                {% if application.assigned_to %}
+                                    {{ application.assigned_to.get_full_name|default:application.assigned_to.username }}
+                                {% else %}
+                                    <span class="text-muted">Unassigned</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if application.status == 'SUBMITTED' %}
                                     <span class="badge bg-info">Submitted</span>
