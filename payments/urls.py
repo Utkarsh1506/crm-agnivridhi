@@ -13,4 +13,9 @@ urlpatterns = [
 
     # Detail
     path('<int:pk>/', views.payment_detail, name='payment_detail'),
+    
+    # Payment actions
+    path('record/<int:booking_id>/', views.record_payment, name='record_payment'),
+    path('approve/<int:payment_id>/', views.approve_payment, name='approve_payment'),
+    path('reject/<int:payment_id>/', views.reject_payment, name='reject_payment'),
 ]

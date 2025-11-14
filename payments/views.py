@@ -119,3 +119,112 @@ def payment_detail(request, pk):
         'back_url': back_url,
     }
     return render(request, 'payments/payment_detail.html', context)
+
+
+@login_required
+def record_payment(request, booking_id):
+    """Record payment for a booking"""
+    from bookings.models import Booking
+    from django.utils import timezone
+    
+    booking = get_object_or_404(Booking, id=booking_id)
+    
+    # Check if payment already exists
+    if hasattr(booking, 'payment'):
+        messages.warning(request, 'Payment already recorded for this booking.')
+        return redirect('clients:client_detail', pk=booking.client.id)
+    
+    # Permission check
+    user = request.user
+    if user.role == 'SALES' and booking.client.assigned_sales != user:
+        messages.error(request, 'You can only record payments for your assigned clients.')
+        return redirect('clients:sales_clients_list')
+    elif user.role == 'MANAGER':
+        if not (booking.client.assigned_manager == user or 
+                (booking.client.assigned_sales and booking.client.assigned_sales.manager == user)):
+            messages.error(request, 'You can only record payments for your team clients.')
+            return redirect('clients:manager_clients_list')
+    
+    if request.method == 'POST':
+        try:
+            from decimal import Decimal
+            
+            amount = Decimal(request.POST.get('amount'))
+            payment_method = request.POST.get('payment_method')
+            reference_id = request.POST.get('reference_id', '').strip()
+            notes = request.POST.get('notes', '').strip()
+            proof = request.FILES.get('proof')
+            
+            if not reference_id:
+                messages.error(request, 'Transaction reference is required.')
+                return redirect('payments:record_payment', booking_id=booking_id)
+            
+            # Create payment record
+            payment = Payment.objects.create(
+                booking=booking,
+                client=booking.client,
+                amount=amount,
+                payment_method=payment_method,
+                reference_id=reference_id,
+                notes=notes,
+                proof=proof,
+                received_by=user,
+                status='PENDING'  # Awaiting approval
+            )
+            
+            messages.success(
+                request, 
+                f'Payment recorded successfully! Reference: {reference_id}. Awaiting manager approval.'
+            )
+            return redirect('clients:client_detail', pk=booking.client.id)
+            
+        except Exception as e:
+            messages.error(request, f'Error recording payment: {str(e)}')
+            return redirect('payments:record_payment', booking_id=booking_id)
+    
+    context = {
+        'booking': booking,
+        'page_title': f'Record Payment - {booking.booking_id}'
+    }
+    return render(request, 'payments/record_payment.html', context)
+
+
+@manager_required
+def approve_payment(request, payment_id):
+    """Manager/Admin approves a payment"""
+    payment = get_object_or_404(Payment, id=payment_id)
+    
+    if payment.status != 'PENDING':
+        messages.warning(request, f'Payment is already {payment.get_status_display()}.')
+        return redirect('accounts:manager_dashboard')
+    
+    # Approve the payment (uses model method)
+    payment.approve(request.user)
+    
+    messages.success(
+        request, 
+        f'Payment approved! Booking #{payment.booking.booking_id} is now PAID. You can now create an application.'
+    )
+    return redirect('accounts:manager_dashboard')
+
+
+@manager_required
+def reject_payment(request, payment_id):
+    """Manager/Admin rejects a payment"""
+    payment = get_object_or_404(Payment, id=payment_id)
+    
+    if payment.status != 'PENDING':
+        messages.warning(request, f'Payment is already {payment.get_status_display()}.')
+        return redirect('accounts:manager_dashboard')
+    
+    if request.method == 'POST':
+        reason = request.POST.get('reason', 'Payment verification failed')
+        payment.reject(request.user, reason)
+        
+        messages.warning(request, f'Payment rejected. Reason: {reason}')
+        return redirect('accounts:manager_dashboard')
+    
+    context = {
+        'payment': payment
+    }
+    return render(request, 'payments/reject_payment.html', context)

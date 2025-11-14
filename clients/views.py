@@ -164,8 +164,13 @@ def client_detail(request, pk):
             messages.error(request, 'You can only view clients in your team.')
             return redirect('accounts:dashboard')
     
+    # Get bookings for this client
+    from bookings.models import Booking
+    bookings = Booking.objects.filter(client=client).select_related('service').order_by('-created_at')
+    
     return render(request, 'clients/client_detail.html', {
         'client': client,
+        'bookings': bookings,
         'page_title': f'Client - {client.company_name}'
     })
 

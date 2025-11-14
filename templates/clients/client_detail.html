@@ -186,6 +186,71 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- Bookings Section -->
+            {% if bookings %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Bookings ({{ bookings.count }})</h5>
+                </div>
+                <div class="card-body">
+                    {% for booking in bookings %}
+                    <div class="card mb-3 border-start border-4 {% if booking.status == 'PAID' %}border-success{% elif booking.status == 'PENDING' %}border-warning{% else %}border-secondary{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">{{ booking.service.name }}</h6>
+                                    <small class="text-muted">#{{ booking.booking_id }}</small>
+                                </div>
+                                <span class="badge 
+                                    {% if booking.status == 'PAID' %}bg-success
+                                    {% elif booking.status == 'PENDING' %}bg-warning text-dark
+                                    {% elif booking.status == 'CANCELLED' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ booking.status }}
+                                </span>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong>Amount:</strong> ₹{{ booking.final_amount|floatformat:2 }}
+                                {% if booking.discount_percent %}
+                                <small class="text-success">({{ booking.discount_percent }}% off)</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar3"></i> {{ booking.created_at|date:"d M Y, g:i A" }}
+                                </small>
+                            </div>
+                            
+                            {% if user.role == 'SALES' or user.role == 'MANAGER' or user.role == 'ADMIN' or user.role == 'OWNER' %}
+                            <div class="d-flex gap-2 mt-3">
+                                {% if booking.status == 'PENDING' %}
+                                    {% if not booking.payment %}
+                                        <a href="{% url 'payments:record_payment' booking.id %}" class="btn btn-success btn-sm">
+                                            <i class="bi bi-cash-coin"></i> Record Payment
+                                        </a>
+                                    {% else %}
+                                        {% if booking.payment.status == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-clock"></i> Payment Pending Approval
+                                            </span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% elif booking.status == 'PAID' %}
+                                    <a href="{% url 'applications:create_application' 1 %}?client={{ client.id }}&booking={{ booking.id }}" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-file-earmark-plus"></i> Create Application
+                                    </a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Sidebar -->

@@ -1,49 +1,146 @@
 {% extends 'base.html' %}
-{% block title %}Record Payment - Agnivridhi CRM{% endblock %}
+{% load static %}
+
+{% block title %}Record Payment - {{ booking.booking_id }}{% endblock %}
 
 {% block content %}
-<div class="container py-3">
-  <h2 class="mb-3"><i class="bi bi-cash-coin"></i> Record Payment</h2>
-  <div class="card">
-    <div class="card-body">
-      <form method="post" enctype="multipart/form-data" class="row g-3">
-        {% csrf_token %}
-        <div class="col-md-6">
-          <label class="form-label">Booking</label>
-          <input class="form-control" value="{{ booking.booking_id }} - {{ booking.client.company_name }}" disabled>
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' booking.client.id %}">{{ booking.client.full_name }}</a></li>
+            <li class="breadcrumb-item active">Record Payment</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Left: Payment Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cash-coin"></i>
+                        Record Payment for Booking #{{ booking.booking_id }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <!-- Amount -->
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">
+                                <i class="bi bi-currency-rupee"></i> Payment Amount <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" step="0.01" class="form-control form-control-lg" id="amount" name="amount" 
+                                   value="{{ booking.final_amount }}" required>
+                            <small class="text-muted">Booking Amount: ₹{{ booking.final_amount|floatformat:2 }}</small>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="mb-3">
+                            <label for="payment_method" class="form-label">
+                                <i class="bi bi-credit-card"></i> Payment Method <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="">Choose payment method...</option>
+                                <option value="CASH">Cash</option>
+                                <option value="BANK_TRANSFER">Bank Transfer / NEFT / RTGS</option>
+                                <option value="UPI">UPI</option>
+                                <option value="CHEQUE">Cheque</option>
+                                <option value="CARD">Credit/Debit Card</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Transaction Reference -->
+                        <div class="mb-3">
+                            <label for="reference_id" class="form-label">
+                                <i class="bi bi-hash"></i> Transaction Reference / UTR / Cheque No. <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="reference_id" name="reference_id" 
+                                   placeholder="e.g., UTR123456789 or Cheque #123456" required>
+                            <small class="text-muted">Enter transaction ID, UTR number, cheque number, or receipt number</small>
+                        </div>
+
+                        <!-- Payment Proof -->
+                        <div class="mb-3">
+                            <label for="proof" class="form-label">
+                                <i class="bi bi-file-earmark-arrow-up"></i> Upload Payment Proof (Optional)
+                            </label>
+                            <input type="file" class="form-control" id="proof" name="proof" 
+                                   accept="image/*,application/pdf">
+                            <small class="text-muted">Screenshot, receipt, or scanned document</small>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">
+                                <i class="bi bi-chat-left-text"></i> Notes (Optional)
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="Any additional payment details or comments..."></textarea>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> After recording, this payment will be marked as <strong>PENDING</strong> 
+                            and sent to your manager for approval. Once approved, the booking status will change to <strong>PAID</strong>.
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Record Payment
+                            </button>
+                            <a href="{% url 'clients:client_detail' booking.client.id %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Amount (INR)</label>
-          <input name="amount" type="number" step="0.01" min="0" class="form-control" value="{{ default_amount }}" required>
+
+        <!-- Right: Booking Details -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-receipt"></i> Booking Details</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
+                    <p><strong>Client:</strong> {{ booking.client.full_name }}</p>
+                    <p><strong>Service:</strong> {{ booking.service.name }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge bg-warning">{{ booking.status }}</span>
+                    </p>
+                    <hr>
+                    <p><strong>Service Amount:</strong> ₹{{ booking.amount|floatformat:2 }}</p>
+                    {% if booking.discount_percent %}
+                    <p><strong>Discount:</strong> {{ booking.discount_percent }}%</p>
+                    {% endif %}
+                    <p><strong>Final Amount:</strong> 
+                        <span class="text-success fs-5">₹{{ booking.final_amount|floatformat:2 }}</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Quick Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li>Double-check payment amount before recording</li>
+                        <li>Transaction reference is mandatory for tracking</li>
+                        <li>Upload proof for faster approval</li>
+                        <li>Manager will be notified for approval</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Payment Method</label>
-          <select name="payment_method" class="form-select">
-            <option value="UPI_QR">UPI QR</option>
-            <option value="BANK_TRANSFER">Bank Transfer</option>
-            <option value="CASH">Cash</option>
-            <option value="CARD">Card</option>
-            <option value="OTHER">Other</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Reference / UTR / Receipt No.</label>
-          <input name="reference_id" type="text" class="form-control" placeholder="Enter reference number (if any)">
-        </div>
-        <div class="col-12">
-          <label class="form-label">Notes</label>
-          <textarea name="notes" class="form-control" rows="3" placeholder="Any additional details"></textarea>
-        </div>
-        <div class="col-12">
-          <label class="form-label">Upload Proof (optional)</label>
-          <input name="proof" type="file" class="form-control" accept="image/*,application/pdf">
-        </div>
-        <div class="col-12">
-          <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Save Payment</button>
-          <a href="{% url 'accounts:sales_dashboard' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
 {% endblock %}
