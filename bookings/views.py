@@ -129,8 +129,8 @@ def create_booking_for_client(request, client_id):
 	# Admin/Owner can create for any client
 	
 	if request.method == 'POST':
-		service_id = request.POST.get('service_id')
-		scheme_id = request.POST.get('scheme_id')
+		service_name = request.POST.get('service_name', '').strip()
+		scheme_name = request.POST.get('scheme_name', '').strip()
 		amount = request.POST.get('amount')
 		upfront_amount = request.POST.get('upfront_amount', '0')
 		discount = request.POST.get('discount', '0')
@@ -138,12 +138,11 @@ def create_booking_for_client(request, client_id):
 		requirements = request.POST.get('requirements', '')
 		priority = request.POST.get('priority', 'MEDIUM')
 		
-		if not service_id or not amount:
-			messages.error(request, 'Please select a service and enter the amount.')
+		if not service_name or not amount:
+			messages.error(request, 'Please enter service name and amount.')
 		else:
 			try:
 				from decimal import Decimal
-				service = get_object_or_404(Service, id=service_id)
 				
 				# Convert amounts
 				amount_decimal = Decimal(amount)
@@ -151,16 +150,27 @@ def create_booking_for_client(request, client_id):
 				upfront_decimal = Decimal(upfront_amount)
 				funding_decimal = Decimal(funding_amount) if funding_amount else Decimal('0')
 				
+				# Try to find existing service or create a temporary one
+				service = Service.objects.filter(name__iexact=service_name).first()
+				if not service:
+					# Create a basic service entry (can be cleaned up later)
+					service = Service.objects.create(
+						name=service_name,
+						category='CONSULTING',  # Default category
+						description=f'Service: {service_name}',
+						short_description=service_name,
+						price=amount_decimal,
+						is_active=True
+					)
+				
 				# Determine who to assign the booking to
 				assigned_to = client.assigned_sales if client.assigned_sales else request.user
 				
 				# Build internal notes with all details
 				notes_parts = [f'Created by {request.user.get_full_name()}']
-				if scheme_id:
-					from schemes.models import Scheme
-					scheme = Scheme.objects.filter(id=scheme_id).first()
-					if scheme:
-						notes_parts.append(f'Scheme: {scheme.name} ({scheme.get_category_display()})')
+				if scheme_name:
+					notes_parts.append(f'Scheme: {scheme_name}')
+					if funding_decimal > 0:
 						notes_parts.append(f'Funding Amount: ₹{funding_decimal:,.2f}')
 				if upfront_decimal > 0:
 					notes_parts.append(f'Upfront Payment: ₹{upfront_decimal:,.2f}')
@@ -176,7 +186,7 @@ def create_booking_for_client(request, client_id):
 					amount=amount_decimal,
 					discount_percent=discount_decimal,
 					final_amount=amount_decimal - (amount_decimal * discount_decimal / 100),
-					requirements=requirements or f'Booking for {service.name}',
+					requirements=requirements or f'Booking for {service_name}',
 					assigned_to=assigned_to,
 					created_by=request.user,
 					internal_notes=internal_notes
@@ -191,14 +201,8 @@ def create_booking_for_client(request, client_id):
 				messages.error(request, f'Error creating booking: {str(e)}')
 	
 	# GET request - show form
-	from schemes.models import Scheme
-	active_services = Service.objects.filter(is_active=True).order_by('category', 'name')
-	active_schemes = Scheme.objects.filter(status='ACTIVE').order_by('category', 'name')
-	
 	context = {
 		'client': client,
-		'services': active_services,
-		'schemes': active_schemes,
 		'page_title': f'Create Booking for {client.company_name}'
 	}
 	return render(request, 'bookings/create_booking_for_client.html', context)

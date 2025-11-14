@@ -30,43 +30,21 @@
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="service_id" class="form-label fw-bold">
-                                    Service <span class="text-danger">*</span>
+                                <label for="service_name" class="form-label fw-bold">
+                                    Service Name <span class="text-danger">*</span>
                                 </label>
-                                <select name="service_id" id="service_id" class="form-select" required>
-                                    <option value="">-- Select Service --</option>
-                                    {% regroup services by category as service_groups %}
-                                    {% for group in service_groups %}
-                                        <optgroup label="{{ group.grouper }}">
-                                            {% for service in group.list %}
-                                                <option value="{{ service.id }}" data-price="{{ service.price }}">
-                                                    {{ service.name }} - ₹{{ service.price }}
-                                                </option>
-                                            {% endfor %}
-                                        </optgroup>
-                                    {% endfor %}
-                                </select>
-                                <div class="form-text">Service to be provided</div>
+                                <input type="text" name="service_name" id="service_name" class="form-control" 
+                                       placeholder="e.g., CGTMSE Loan Application" required>
+                                <div class="form-text">Name of the service being provided</div>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="scheme_id" class="form-label fw-bold">
-                                    Scheme (if applicable)
+                                <label for="scheme_name" class="form-label fw-bold">
+                                    Scheme Name (if applicable)
                                 </label>
-                                <select name="scheme_id" id="scheme_id" class="form-select">
-                                    <option value="">-- No Scheme / Direct Service --</option>
-                                    {% regroup schemes by category as scheme_groups %}
-                                    {% for group in scheme_groups %}
-                                        <optgroup label="{{ group.grouper }}">
-                                            {% for scheme in group.list %}
-                                                <option value="{{ scheme.id }}">
-                                                    {{ scheme.name }}
-                                                </option>
-                                            {% endfor %}
-                                        </optgroup>
-                                    {% endfor %}
-                                </select>
-                                <div class="form-text">Select if applying for a government scheme</div>
+                                <input type="text" name="scheme_name" id="scheme_name" class="form-control" 
+                                       placeholder="e.g., PMEGP, Startup India, CGTMSE">
+                                <div class="form-text">Government scheme name (if any)</div>
                             </div>
                         </div>
 
@@ -226,16 +204,6 @@ function calculateAmounts() {
     document.getElementById('display-upfront').textContent = '₹' + upfront.toFixed(2);
     document.getElementById('display-balance').textContent = '₹' + balance.toFixed(2);
 }
-
-// Auto-fill amount from service selection
-document.getElementById('service_id').addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    const price = selectedOption.getAttribute('data-price');
-    if (price) {
-        document.getElementById('amount').value = price;
-        calculateAmounts();
-    }
-});
 
 // Recalculate on input change
 document.getElementById('amount').addEventListener('input', calculateAmounts);
