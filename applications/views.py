@@ -51,60 +51,103 @@ def create_application_from_booking(request, booking_id: int):
     """Staff creates an application from a paid/approved booking."""
     from bookings.models import Booking
     from payments.models import Payment
+    import json
 
     booking = get_object_or_404(Booking, id=booking_id)
+    client = booking.client
+
+    # Permission check
+    user = request.user
+    if user.role == 'SALES' and client.assigned_sales != user:
+        messages.error(request, 'You can only create applications for your assigned clients.')
+        return redirect('clients:sales_clients_list')
+    elif user.role == 'MANAGER':
+        if not (client.assigned_manager == user or 
+                (client.assigned_sales and client.assigned_sales.manager == user)):
+            messages.error(request, 'You can only create applications for your team clients.')
+            return redirect('clients:manager_clients_list')
+
+    # Validate: booking must be PAID
+    if booking.status != 'PAID':
+        messages.error(request, 'Booking must be PAID before creating an application.')
+        return redirect('clients:client_detail', pk=client.id)
 
     # Validate: must have payment captured (manager approved)
     payment = getattr(booking, 'payment', None)
     if not payment or payment.status != 'CAPTURED':
         messages.error(request, 'Payment must be approved before creating an application.')
-        return redirect('accounts:sales_dashboard')
+        return redirect('clients:client_detail', pk=client.id)
 
-    # Pick a scheme id from internal notes if available
-    scheme = None
-    if booking.internal_notes and 'SCHEME_ID=' in booking.internal_notes:
-        try:
-            scheme_id = int(booking.internal_notes.split('SCHEME_ID=')[-1].split()[0])
-            scheme = Scheme.objects.filter(id=scheme_id).first()
-        except Exception:
-            scheme = None
+    # Check if application already exists for this booking
+    existing_app = Application.objects.filter(
+        client=client,
+        internal_notes__contains=f'Booking: {booking.booking_id}'
+    ).first()
+    
+    if existing_app:
+        messages.warning(request, f'Application already exists for this booking (App ID: {existing_app.application_id}).')
+        return redirect('applications:application_detail', pk=existing_app.id)
 
-    client = booking.client
+    # Get all active schemes for dropdown
+    all_schemes = Scheme.objects.filter(is_active=True).order_by('name')
 
     if request.method == 'POST':
+        scheme_id = request.POST.get('scheme_id')
         applied_amount = request.POST.get('applied_amount')
-        purpose = request.POST.get('purpose', '')
+        purpose = request.POST.get('purpose', '').strip()
 
-        if not scheme:
-            messages.error(request, 'Scheme missing. Please select a scheme.')
+        if not scheme_id or not applied_amount:
+            messages.error(request, 'Scheme and applied amount are required.')
             return redirect('applications:create_application_from_booking', booking_id=booking.id)
 
+        scheme = get_object_or_404(Scheme, id=scheme_id)
+
         try:
-            # Create application referencing booking and assign to current sales
+            from decimal import Decimal
+            applied_amount_decimal = Decimal(applied_amount)
+
+            # Initialize timeline
+            timeline = [{
+                'date': timezone.now().isoformat(),
+                'status': 'DRAFT',
+                'user': user.get_full_name() or user.username,
+                'notes': f'Application created from booking {booking.booking_id}'
+            }]
+
+            # Create application
             application = Application.objects.create(
                 client=client,
                 scheme=scheme,
-                applied_amount=applied_amount,
+                applied_amount=applied_amount_decimal,
                 purpose=purpose,
-                status='SUBMITTED',
-                created_by=request.user,
-                assigned_to=getattr(booking, 'assigned_to', None)
+                status='DRAFT',
+                created_by=user,
+                assigned_to=client.assigned_sales or user,
+                timeline=timeline,
+                internal_notes=f'Booking: {booking.booking_id}\nPayment: ₹{payment.amount}\nCreated by: {user.get_full_name()}'
             )
 
-            # Notify manager for approval
-            if getattr(client, 'assigned_manager', None):
-                _notify_manager_for_approval(application, client.assigned_manager)
-
-            messages.success(request, f'Application created from booking {booking.booking_id}.')
-            return redirect('applications:application_detail', pk=application.pk)
+            messages.success(
+                request, 
+                f'Application {application.application_id} created successfully! Status: DRAFT'
+            )
+            return redirect('applications:application_detail', pk=application.id)
+            
         except Exception as e:
             messages.error(request, f'Error creating application: {str(e)}')
+            return redirect('applications:create_application_from_booking', booking_id=booking.id)
 
-    return render(request, 'applications/create_application_from_booking.html', {
+    # Pre-fill suggested amount from booking
+    suggested_amount = booking.final_amount
+
+    context = {
         'booking': booking,
-        'client': booking.client,
-        'scheme': scheme,
-    })
+        'client': client,
+        'payment': payment,
+        'all_schemes': all_schemes,
+        'suggested_amount': suggested_amount,
+    }
+    return render(request, 'applications/create_application_from_booking.html', context)
 
 @manager_required
 def team_applications_list(request):
@@ -610,3 +653,72 @@ def pending_applications(request):
         'user_role': user.role.lower() if user.role else 'staff',
     }
     return render(request, 'applications/pending_applications.html', context)
+
+
+@staff_required
+def update_application_status(request, pk):
+    """Update application status with timeline tracking"""
+    import json
+    
+    application = get_object_or_404(Application, pk=pk)
+    
+    # Permission check
+    user = request.user
+    if user.role == 'SALES' and application.assigned_to != user:
+        messages.error(request, 'You can only update applications assigned to you.')
+        return redirect('applications:sales_applications_list')
+    elif user.role == 'MANAGER':
+        if not (application.client.assigned_manager == user or 
+                (application.client.assigned_sales and application.client.assigned_sales.manager == user)):
+            messages.error(request, 'You can only update applications for your team.')
+            return redirect('applications:team_applications_list')
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        notes = request.POST.get('notes', '').strip()
+        
+        # Validate status transition
+        valid_statuses = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'WITHDRAWN', 'ON_HOLD']
+        if new_status not in valid_statuses:
+            messages.error(request, 'Invalid status selected.')
+            return redirect('applications:application_detail', pk=pk)
+        
+        # Update status
+        old_status = application.status
+        application.status = new_status
+        
+        # Update timeline
+        timeline = application.timeline or []
+        timeline_entry = {
+            'date': timezone.now().isoformat(),
+            'status': new_status,
+            'user': user.get_full_name() or user.username,
+            'notes': notes or f'Status changed from {old_status} to {new_status}'
+        }
+        timeline.append(timeline_entry)
+        application.timeline = timeline
+        
+        # Update specific date fields based on status
+        if new_status == 'SUBMITTED':
+            application.submission_date = timezone.now().date()
+        elif new_status == 'APPROVED':
+            application.approval_date = timezone.now().date()
+        elif new_status == 'REJECTED':
+            application.rejection_date = timezone.now().date()
+            if notes:
+                application.rejection_reason = notes
+        
+        application.save()
+        
+        messages.success(
+            request, 
+            f'Application {application.application_id} status updated to {application.get_status_display()}'
+        )
+        return redirect('applications:application_detail', pk=pk)
+    
+    # GET request - show status update form
+    context = {
+        'application': application,
+        'status_choices': Application.Status.choices,
+    }
+    return render(request, 'applications/update_status.html', context)

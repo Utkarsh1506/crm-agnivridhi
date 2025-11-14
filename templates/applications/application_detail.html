@@ -171,6 +171,21 @@
             </div>
         </div>
         {% endif %}
+        
+        <!-- Update Status Button for Staff -->
+        {% if user_role == 'sales' or user_role == 'manager' or user_role == 'admin' %}
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="mb-3"><i class="bi bi-arrow-repeat"></i> Application Progress</h6>
+                <a href="{% url 'applications:update_application_status' application.pk %}" class="btn btn-primary">
+                    <i class="bi bi-pencil-square"></i> Update Status
+                </a>
+                <small class="text-muted d-block mt-2">
+                    Track and update application progress through different stages
+                </small>
+            </div>
+        </div>
+        {% endif %}
         {% endif %}
         
         {% if application.status == 'SUBMITTED' %}

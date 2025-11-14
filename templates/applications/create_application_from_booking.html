@@ -1,47 +1,162 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Create Application from Booking - Agnivridhi CRM{% endblock %}
+{% block title %}Create Application - {{ booking.booking_id }}{% endblock %}
 
 {% block content %}
-<h1 class="h3 mb-4"><i class="bi bi-file-earmark-plus"></i> Create Application (from Booking {{ booking.booking_id }})</h1>
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' client.id %}">{{ client.full_name }}</a></li>
+            <li class="breadcrumb-item active">Create Application</li>
+        </ol>
+    </nav>
 
-<div class="card mb-4">
-  <div class="card-header">Booking & Client</div>
-  <div class="card-body">
     <div class="row">
-      <div class="col-md-6">
-        <p><strong>Client:</strong> {{ client.company_name }}</p>
-        <p><strong>Service:</strong> {{ booking.service.name }}</p>
-        <p><strong>Status:</strong> <span class="badge bg-success">{{ booking.get_status_display }}</span></p>
-      </div>
-      <div class="col-md-6">
-        <p><strong>Payment:</strong> {% if booking.payment %}<span class="badge bg-success">{{ booking.payment.get_status_display }}</span>{% else %}<span class="badge bg-warning">No Payment</span>{% endif %}</p>
-        <p><strong>Scheme:</strong> {% if scheme %}{{ scheme.name }}{% else %}<span class="text-danger">Not detected</span>{% endif %}</p>
-      </div>
-    </div>
-  </div>
-</div>
+        <!-- Left: Application Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-plus"></i>
+                        Create Application from Booking #{{ booking.booking_id }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
 
-<form method="post">
-  {% csrf_token %}
-  <div class="card">
-    <div class="card-header">Application Details</div>
-    <div class="card-body">
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label class="form-label">Applied Amount (Lakhs)</label>
-          <input type="number" name="applied_amount" step="0.01" class="form-control" required>
+                        <!-- Scheme Selection -->
+                        <div class="mb-3">
+                            <label for="scheme_id" class="form-label">
+                                <i class="bi bi-tag"></i> Scheme <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select form-select-lg" id="scheme_id" name="scheme_id" required>
+                                <option value="">Select a government scheme...</option>
+                                {% for scheme in all_schemes %}
+                                <option value="{{ scheme.id }}">
+                                    {{ scheme.name }} - ₹{{ scheme.min_funding|floatformat:0 }}L to ₹{{ scheme.max_funding|floatformat:0 }}L
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Choose the government scheme for this application</small>
+                        </div>
+
+                        <!-- Applied Amount -->
+                        <div class="mb-3">
+                            <label for="applied_amount" class="form-label">
+                                <i class="bi bi-currency-rupee"></i> Applied Amount (in Lakhs) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-lg" 
+                                   id="applied_amount" name="applied_amount" 
+                                   value="{{ suggested_amount|floatformat:2 }}" required>
+                            <small class="text-muted">Amount being applied for funding (₹ in Lakhs). Suggested: {{ suggested_amount|floatformat:2 }}L based on booking</small>
+                        </div>
+
+                        <!-- Purpose -->
+                        <div class="mb-4">
+                            <label for="purpose" class="form-label">
+                                <i class="bi bi-chat-left-text"></i> Purpose / Justification <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="purpose" name="purpose" rows="5" 
+                                      placeholder="Explain the purpose of funding, how it will be utilized, expected outcomes, business goals, etc." required></textarea>
+                            <small class="text-muted">Provide detailed justification for the funding request</small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> Application will be created with status <strong>DRAFT</strong>. 
+                            You can submit it for government review after uploading all required documents.
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Create Application (DRAFT)
+                            </button>
+                            <a href="{% url 'clients:client_detail' client.id %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="col-md-12 mb-3">
-          <label class="form-label">Purpose / Notes</label>
-          <textarea name="purpose" class="form-control" rows="4" placeholder="Brief purpose for funding"></textarea>
+
+        <!-- Right: Booking & Payment Summary -->
+        <div class="col-lg-4">
+            <!-- Booking Details -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-receipt"></i> Booking Details</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
+                    <p><strong>Client:</strong> {{ client.full_name }}</p>
+                    <p><strong>Service:</strong> {{ booking.service.name }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge bg-success">{{ booking.status }}</span>
+                    </p>
+                    <hr>
+                    <p><strong>Service Amount:</strong> ₹{{ booking.amount|floatformat:2 }}</p>
+                    {% if booking.discount_percent %}
+                    <p><strong>Discount:</strong> {{ booking.discount_percent }}%</p>
+                    {% endif %}
+                    <p><strong>Final Amount:</strong> 
+                        <span class="text-success fs-5">₹{{ booking.final_amount|floatformat:2 }}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Payment Details -->
+            {% if payment %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-cash-coin"></i> Payment Details</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Amount Paid:</strong> ₹{{ payment.amount|floatformat:2 }}</p>
+                    <p><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+                    <p><strong>Reference:</strong> <code>{{ payment.reference_id }}</code></p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge bg-success">{{ payment.status }}</span>
+                    </p>
+                    <p><strong>Approved By:</strong> 
+                        {% if payment.approved_by %}
+                            {{ payment.approved_by.get_full_name }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+                    <p><strong>Approval Date:</strong> 
+                        {% if payment.approval_date %}
+                            {{ payment.approval_date|date:"d M Y" }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Guide -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Application Process</h6>
+                </div>
+                <div class="card-body">
+                    <ol class="small mb-0">
+                        <li>Create application (DRAFT status)</li>
+                        <li>Upload required documents</li>
+                        <li>Submit for government review</li>
+                        <li>Track status updates</li>
+                        <li>Receive approval/rejection notification</li>
+                    </ol>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-    <div class="card-footer text-end">
-  <a href="{% url 'accounts:sales_dashboard' %}" class="btn btn-secondary">Cancel</a>
-      <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Create Application</button>
-    </div>
-  </div>
-</form>
+</div>
 {% endblock %}

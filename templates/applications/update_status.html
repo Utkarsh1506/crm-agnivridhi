@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Application Status{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'applications:application_detail' application.pk %}">Application {{ application.application_id }}</a></li>
+            <li class="breadcrumb-item active">Update Status</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-arrow-repeat"></i> Update Application Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Current Status -->
+                    <div class="alert alert-info">
+                        <strong>Current Status:</strong> 
+                        <span class="badge bg-primary">{{ application.get_status_display }}</span>
+                    </div>
+
+                    <!-- Application Summary -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Application Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Application ID:</strong> {{ application.application_id }}</p>
+                            <p><strong>Client:</strong> {{ application.client.full_name }}</p>
+                            <p><strong>Scheme:</strong> {{ application.scheme.name }}</p>
+                            <p><strong>Applied Amount:</strong> ₹{{ application.applied_amount|floatformat:2 }} Lakhs</p>
+                            <p><strong>Created:</strong> {{ application.application_date|date:"d M Y" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Status Update Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="status" class="form-label">
+                                <i class="bi bi-flag"></i> New Status <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select form-select-lg" id="status" name="status" required>
+                                <option value="">Select new status...</option>
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if value == application.status %}selected disabled{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">
+                                <i class="bi bi-chat-left-text"></i> Status Update Notes
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                      placeholder="Add notes explaining the status change, any actions taken, next steps, etc."></textarea>
+                            <small class="text-muted">Optional but recommended for tracking progress</small>
+                        </div>
+
+                        <!-- Status Guide -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Status Definitions</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="small mb-0">
+                                    <li><strong>DRAFT:</strong> Application being prepared, documents pending</li>
+                                    <li><strong>SUBMITTED:</strong> Submitted to government agency for review</li>
+                                    <li><strong>UNDER_REVIEW:</strong> Government is reviewing the application</li>
+                                    <li><strong>APPROVED:</strong> Application approved by government</li>
+                                    <li><strong>REJECTED:</strong> Application rejected by government</li>
+                                    <li><strong>ON_HOLD:</strong> Application processing temporarily paused</li>
+                                    <li><strong>WITHDRAWN:</strong> Application withdrawn by client</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Update Status
+                            </button>
+                            <a href="{% url 'applications:application_detail' application.pk %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Timeline Preview -->
+            {% if application.timeline %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-clock-history"></i> Recent Timeline</h6>
+                </div>
+                <div class="card-body">
+                    {% for entry in application.timeline|slice:":3" %}
+                    <div class="mb-2">
+                        <span class="badge bg-secondary">{{ entry.status }}</span>
+                        <small class="text-muted">{{ entry.date|slice:":10" }}</small> - 
+                        {{ entry.user }} - {{ entry.notes }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

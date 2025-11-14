@@ -29,4 +29,5 @@ urlpatterns = [
     # Manager actions
     path('<int:pk>/approve/', views.approve_application, name='approve_application'),
     path('<int:pk>/reject/', views.reject_application, name='reject_application'),
+    path('<int:pk>/update-status/', views.update_application_status, name='update_application_status'),
 ]
