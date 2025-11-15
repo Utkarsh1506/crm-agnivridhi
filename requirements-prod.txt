@@ -1,0 +1,26 @@
+# Minimal production requirements for PythonAnywhere (reduced size)
+
+# Core Django
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.0
+django-filter==23.5
+
+# Imaging & uploads
+Pillow==10.1.0
+python-magic==0.4.27
+
+# Integrations
+requests==2.31.0
+python-decouple==3.8
+python-dotenv==1.0.0
+razorpay==1.4.1
+django-ses==3.5.2
+
+# Note:
+# - Omitted heavy packages to fit free-tier disk: numpy, pandas, WeasyPrint, reportlab,
+#   celery, redis, drf-yasg, django-debug-toolbar, DB drivers not required for SQLite.
+# - If your production DB is MySQL on PythonAnywhere, add:
+#   mysqlclient==2.2.0
+# - If using PostgreSQL, add (but beware size):
+#   psycopg2-binary==2.9.9
