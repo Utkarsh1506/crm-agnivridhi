@@ -43,9 +43,16 @@ class SalesDocumentUploadForm(forms.ModelForm):
         if user:
             # Limit client choices to those assigned to or created by this sales user
             from django.db.models import Q
-            self.fields['client'].queryset = Client.objects.filter(
-                Q(assigned_sales=user) | Q(created_by=user)
-            ).order_by('company_name')
+            role = getattr(user, 'role', '')
+            if role == 'SALES':
+                qs = Client.objects.filter(Q(assigned_sales=user) | Q(created_by=user))
+            elif role == 'MANAGER':
+                qs = Client.objects.filter(Q(assigned_manager=user) | Q(assigned_sales__manager=user))
+            elif role in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False):
+                qs = Client.objects.all()
+            else:
+                qs = Client.objects.none()
+            self.fields['client'].queryset = qs.order_by('company_name')
     
     def clean_file(self):
         f = self.cleaned_data.get('file')
