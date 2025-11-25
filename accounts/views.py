@@ -5,9 +5,11 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.urls import reverse
+from django.conf import settings
 from functools import wraps
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
+from accounts.email_utils_client_credentials import send_client_credentials_email
 from .forms import ProfileForm
 
 
@@ -989,13 +991,23 @@ def owner_dashboard(request):
 def mark_credential_as_sent(request, credential_id):
     """Mark client credential as sent by owner/admin."""
     from clients.models import ClientCredential
-    from django.utils import timezone
     
     credential = get_object_or_404(ClientCredential, id=credential_id)
     
     if request.method == 'POST':
-        credential.mark_as_sent(request.user)
-        messages.success(request, f'Credentials for {credential.client.company_name} marked as sent.')
+        login_url = getattr(settings, 'CLIENT_LOGIN_URL', None) or request.build_absolute_uri(reverse('accounts:login'))
+        email_sent = send_client_credentials_email(credential, login_url=login_url)
+        if email_sent:
+            credential.mark_as_sent(request.user)
+            messages.success(
+                request,
+                f'Login email sent to {credential.email} for {credential.client.company_name}.',
+            )
+        else:
+            messages.error(
+                request,
+                f'Could not send email to {credential.email}. Please verify SMTP settings and try again.',
+            )
         return redirect('accounts:owner_dashboard')
     
     return redirect('accounts:owner_dashboard')

@@ -3,9 +3,17 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from .models import Client
-from .forms import ClientCreationForm, ClientApprovalForm, QuickClientCreationForm, ClientProfileCompletionForm
+from django.conf import settings
 from django.core.paginator import Paginator
+
+from accounts.email_utils_client_credentials import send_client_credentials_email
+from .models import Client
+from .forms import (
+    ClientCreationForm,
+    ClientApprovalForm,
+    QuickClientCreationForm,
+    ClientProfileCompletionForm,
+)
 
 
 @login_required
@@ -111,7 +119,22 @@ def approve_client(request, pk):
             
             if action == 'approve':
                 client.approve(request.user)
-                messages.success(request, f'Client "{client.company_name}" has been approved!')
+                # Send credentials email if credentials exist and not sent
+                credentials = getattr(client, 'credentials', None)
+                if credentials and not credentials.is_sent:
+                    from django.contrib.sites.shortcuts import get_current_site
+
+                    login_url = getattr(settings, 'CLIENT_LOGIN_URL', None)
+                    if not login_url:
+                        site = get_current_site(request)
+                        login_url = f"https://{site.domain}/accounts/login/"
+                    if send_client_credentials_email(credentials, login_url=login_url):
+                        credentials.mark_as_sent(request.user)
+                        messages.success(request, f'Client "{client.company_name}" has been approved and credentials emailed!')
+                    else:
+                        messages.success(request, f'Client "{client.company_name}" has been approved, but email could not be sent.')
+                else:
+                    messages.success(request, f'Client "{client.company_name}" has been approved!')
                 status = 'APPROVED'
                 extra = {}
             else:

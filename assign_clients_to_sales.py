@@ -47,3 +47,4 @@ def assign_clients_to_sales():
 
 if __name__ == '__main__':
     assign_clients_to_sales()
+python manage.py shell
