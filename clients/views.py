@@ -32,31 +32,41 @@ def create_client(request):
         if form.is_valid():
             client = form.save()
             
+            # Send credentials email immediately after client creation (if credentials exist and not sent)
+            credentials = getattr(client, 'credentials', None)
+            email_sent = False
+            if credentials and not credentials.is_sent:
+                from django.contrib.sites.shortcuts import get_current_site
+                login_url = getattr(settings, 'CLIENT_LOGIN_URL', None)
+                if not login_url:
+                    site = get_current_site(request)
+                    login_url = f"https://{site.domain}/accounts/login/"
+                if send_client_credentials_email(credentials, login_url=login_url):
+                    credentials.mark_as_sent(request.user)
+                    email_sent = True
             # Send notification based on role
             if request.user.role == 'SALES':
                 messages.success(
-                    request, 
+                    request,
                     f'Client "{client.company_name}" created successfully! '
                     f'Waiting for your manager approval. '
-                    f'Login credentials will be generated after approval.'
+                    + (" Credentials email sent to client." if email_sent else " Credentials email could not be sent.")
                 )
                 # TODO: Send notification to manager
                 return redirect('clients:sales_clients_list')
             elif request.user.role == 'MANAGER':
                 messages.success(
-                    request, 
+                    request,
                     f'Client "{client.company_name}" created and approved successfully! '
-                    f'Login credentials have been generated. Check Owner Dashboard to share with client.'
+                    + (" Credentials email sent to client." if email_sent else " Credentials email could not be sent.")
                 )
-                # TODO: Send welcome email to client
                 return redirect('accounts:dashboard')  # Manager dashboard
             else:  # ADMIN or OWNER
                 messages.success(
-                    request, 
+                    request,
                     f'Client "{client.company_name}" created and approved successfully! '
-                    f'Check Owner Dashboard for login credentials to share with client.'
+                    + (" Credentials email sent to client." if email_sent else " Credentials email could not be sent.")
                 )
-                # TODO: Send welcome email to client
                 return redirect('accounts:owner_dashboard')
         else:
             messages.error(request, 'Please correct the errors below.')

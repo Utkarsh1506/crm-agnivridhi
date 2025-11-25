@@ -21,22 +21,33 @@ def create_client_credentials(sender, instance, created, **kwargs):
     # 4. Credentials don't already exist
     
     if instance.user and instance.is_approved:
-        # Check if credentials already exist
-        if not ClientCredential.objects.filter(client=instance).exists():
-            # Generate a secure random password
+        email = instance.contact_email or instance.user.email
+        username = instance.user.username
+
+        credential = ClientCredential.objects.filter(client=instance).first()
+
+        if not credential:
             password_length = 12
             characters = string.ascii_letters + string.digits + "@#$%"
             plain_password = ''.join(secrets.choice(characters) for _ in range(password_length))
-            
-            # Set the password for the user
+
             instance.user.set_password(plain_password)
             instance.user.save()
-            
-            # Store credentials for admin/owner to view
+
             ClientCredential.objects.create(
                 client=instance,
-                username=instance.user.username,
-                email=instance.user.email,
+                username=username,
+                email=email,
                 plain_password=plain_password,
                 created_by=instance.created_by
             )
+        else:
+            updated_fields = []
+            if email and credential.email != email:
+                credential.email = email
+                updated_fields.append('email')
+            if username and credential.username != username:
+                credential.username = username
+                updated_fields.append('username')
+            if updated_fields:
+                credential.save(update_fields=updated_fields)
