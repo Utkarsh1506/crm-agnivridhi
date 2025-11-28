@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'notifications',
     'activity_logs',
     'tracking',
+    'invoices',
 ]
 
 MIDDLEWARE = [

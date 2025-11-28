@@ -36,11 +36,12 @@ urlpatterns = [
     path('edit-requests/', include(('edit_requests.urls', 'edit_requests'))),
     path('notifications/', include(('notifications.urls', 'notifications'))),
     path('tracking/', include(('tracking.urls', 'tracking'))),
+    path('invoices/', include(('invoices.urls', 'invoices'), namespace='invoices')),
     
     # API endpoints with namespace
     path('api/', include(('api.urls', 'api'))),
     
-    # Swagger/OpenAPI documentation
+    # Swagger/OpenA PI documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),

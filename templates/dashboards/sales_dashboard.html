@@ -20,7 +20,7 @@
                 <a class="nav-link" href="{% url 'clients:pending_approval_clients' %}">
                     <i class="bi bi-clock-history"></i> Pending Approvals
                     {% if pending_clients_count > 0 %}
-                        <span class="badge bg-warning text-dark ms-2">{{ pending_clients_count }}</span>
+                    <span class="badge bg-warning text-dark ms-2">{{ pending_clients_count }}</span>
                     {% endif %}
                 </a>
             </li>
@@ -47,6 +47,11 @@
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'documents:sales_client_uploads_list' %}">
                     <i class="bi bi-upload"></i> Client Uploads
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'invoices:sales_invoice_list' %}">
+                    <i class="bi bi-receipt"></i> Invoices & Proformas
                 </a>
             </li>
         </ul>
@@ -95,34 +100,34 @@
     </div>
     <div class="card-body">
         {% if assigned_clients %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Client ID</th>
-                            <th>Company</th>
-                            <th>Sector</th>
-                            <th>Turnover</th>
-                            <th>Funding Required</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for client in assigned_clients %}
-                        <tr>
-                            <td>{{ client.client_id }}</td>
-                            <td>{{ client.company_name }}</td>
-                            <td>{{ client.get_sector_display }}</td>
-                            <td>₹{{ client.annual_turnover }} L</td>
-                            <td>₹{{ client.funding_required }} L</td>
-                            <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Client ID</th>
+                        <th>Company</th>
+                        <th>Sector</th>
+                        <th>Turnover</th>
+                        <th>Funding Required</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in assigned_clients %}
+                    <tr>
+                        <td>{{ client.client_id }}</td>
+                        <td>{{ client.company_name }}</td>
+                        <td>{{ client.get_sector_display }}</td>
+                        <td>₹{{ client.annual_turnover }} L</td>
+                        <td>₹{{ client.funding_required }} L</td>
+                        <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
-            <p class="text-muted text-center">No clients assigned yet</p>
+        <p class="text-muted text-center">No clients assigned yet</p>
         {% endif %}
     </div>
 </div>
@@ -134,44 +139,45 @@
     </div>
     <div class="card-body">
         {% if my_bookings %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Booking ID</th>
-                            <th>Client</th>
-                            <th>Service</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for booking in my_bookings %}
-                        <tr>
-                            <td><a href="{% url 'bookings:booking_detail' booking.id %}">{{ booking.booking_id }}</a></td>
-                            <td>{{ booking.client.company_name }}</td>
-                            <td>{{ booking.service.name }}</td>
-                            <td>₹{{ booking.final_amount|default:booking.amount }}</td>
-                                                        <td><span class="badge bg-secondary">{{ booking.get_status_display }}</span></td>
-                                                        <td>
-                                                                {% if booking.payment and booking.payment.status == 'CAPTURED' %}
-                                                                    <a href="{% url 'applications:create_application_from_booking' booking.id %}" class="btn btn-sm btn-primary">
-                                                                        <i class="bi bi-file-earmark-plus"></i> Create Application
-                                                                    </a>
-                                                                {% else %}
-                                                                    <a href="{% url 'accounts:record_payment' booking.id %}" class="btn btn-sm btn-success">
-                                                                        <i class="bi bi-cash-coin"></i> Record Payment
-                                                                    </a>
-                                                                {% endif %}
-                                                        </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Client</th>
+                        <th>Service</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in my_bookings %}
+                    <tr>
+                        <td><a href="{% url 'bookings:booking_detail' booking.id %}">{{ booking.booking_id }}</a></td>
+                        <td>{{ booking.client.company_name }}</td>
+                        <td>{{ booking.service.name }}</td>
+                        <td>₹{{ booking.final_amount|default:booking.amount }}</td>
+                        <td><span class="badge bg-secondary">{{ booking.get_status_display }}</span></td>
+                        <td>
+                            {% if booking.payment and booking.payment.status == 'CAPTURED' %}
+                            <a href="{% url 'applications:create_application_from_booking' booking.id %}"
+                                class="btn btn-sm btn-primary">
+                                <i class="bi bi-file-earmark-plus"></i> Create Application
+                            </a>
+                            {% else %}
+                            <a href="{% url 'accounts:record_payment' booking.id %}" class="btn btn-sm btn-success">
+                                <i class="bi bi-cash-coin"></i> Record Payment
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
-            <p class="text-muted text-center">No bookings yet</p>
+        <p class="text-muted text-center">No bookings yet</p>
         {% endif %}
     </div>
 </div>
@@ -186,50 +192,51 @@
     </div>
     <div class="card-body">
         {% if my_applications %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Application ID</th>
-                            <th>Client</th>
-                            <th>Scheme</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for application in my_applications %}
-                        <tr>
-                            <td><strong>{{ application.application_id }}</strong></td>
-                            <td>{{ application.client.company_name }}</td>
-                            <td>{{ application.scheme.name }}</td>
-                            <td>₹{{ application.applied_amount }} L</td>
-                            <td>
-                                {% if application.status == 'SUBMITTED' %}
-                                    <span class="badge bg-info">Submitted</span>
-                                {% elif application.status == 'UNDER_REVIEW' %}
-                                    <span class="badge bg-warning">Under Review</span>
-                                {% elif application.status == 'APPROVED' %}
-                                    <span class="badge bg-success">Approved</span>
-                                {% elif application.status == 'REJECTED' %}
-                                    <span class="badge bg-danger">Rejected</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">{{ application.get_status_display }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'applications:sales_application_detail' application.pk %}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Application ID</th>
+                        <th>Client</th>
+                        <th>Scheme</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for application in my_applications %}
+                    <tr>
+                        <td><strong>{{ application.application_id }}</strong></td>
+                        <td>{{ application.client.company_name }}</td>
+                        <td>{{ application.scheme.name }}</td>
+                        <td>₹{{ application.applied_amount }} L</td>
+                        <td>
+                            {% if application.status == 'SUBMITTED' %}
+                            <span class="badge bg-info">Submitted</span>
+                            {% elif application.status == 'UNDER_REVIEW' %}
+                            <span class="badge bg-warning">Under Review</span>
+                            {% elif application.status == 'APPROVED' %}
+                            <span class="badge bg-success">Approved</span>
+                            {% elif application.status == 'REJECTED' %}
+                            <span class="badge bg-danger">Rejected</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ application.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'applications:sales_application_detail' application.pk %}"
+                                class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
-            <p class="text-muted text-center">No applications yet</p>
+        <p class="text-muted text-center">No applications yet</p>
         {% endif %}
     </div>
 </div>
