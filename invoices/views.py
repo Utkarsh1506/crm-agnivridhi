@@ -3,26 +3,27 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
-
-from weasyprint import HTML
+from django.contrib.auth.decorators import login_required
 
 from .models import Invoice
 from .forms import InvoiceForm
-from .utils import generate_invoice_number
-from users.decorators import sales_required  # adjust path if different
+from .utils import generate_invoice_number, amount_to_words
 
-# TODO: replace with proper num-to-words lib later
-def number_to_words_dummy(amount):
-    return str(amount)
 
-@sales_required
+@login_required
 def sales_invoice_list(request):
-    invoices = Invoice.objects.filter(created_by=request.user).select_related('client')
+    """
+    Sales user ke liye: uske banaye huye saare invoices/proformas.
+    """
+    invoices = Invoice.objects.filter(created_by=request.user).select_related("client")
     return render(request, "invoices/sales_invoice_list.html", {"invoices": invoices})
 
 
-@sales_required
+@login_required
 def sales_invoice_create(request):
+    """
+    Manual invoice/proforma create form.
+    """
     if request.method == "POST":
         form = InvoiceForm(request.POST, user=request.user)
         if form.is_valid():
@@ -31,12 +32,11 @@ def sales_invoice_create(request):
             inv.created_by = request.user
             inv.invoice_number = generate_invoice_number(inv.invoice_type)
 
-            # Amount & tax calculations
             qty = form.cleaned_data['quantity']
             rate = form.cleaned_data['rate']
             gst_rate = form.cleaned_data['gst_rate']
 
-            amount = qty * rate   # taxable
+            amount = qty * rate
             igst_amount = amount * gst_rate / Decimal('100')
 
             inv.amount = amount
@@ -49,6 +49,7 @@ def sales_invoice_create(request):
             inv.status = 'final'
             inv.save()
 
+            # PDF ki jagah abhi HTML invoice page show karenge
             return redirect("invoices:sales_invoice_pdf", pk=inv.pk)
     else:
         form = InvoiceForm(user=request.user)
@@ -56,22 +57,40 @@ def sales_invoice_create(request):
     return render(request, "invoices/sales_invoice_form.html", {"form": form})
 
 
-@sales_required
+@login_required
 def sales_invoice_pdf(request, pk):
+    """
+    Abhi yeh sirf HTML invoice page return karega (Proforma format me).
+    Baad me PDF lib add karke same template ko PDF me convert kar sakte ho.
+    """
     invoice = get_object_or_404(Invoice, pk=pk, created_by=request.user)
+
+    amount_words = amount_to_words(invoice.total_amount)
+    tax_words = amount_to_words(invoice.igst_amount)
 
     context = {
         "invoice": invoice,
-        "place_of_supply": invoice.place_of_supply or "Maharashtra",
+
+        # Client details
+        "client_gstin": invoice.client.gst_number or "",
+        "client_pan": invoice.client.pan_number or "",
+        "client_address_line1": invoice.client.address_line1 or "",
+        "client_address_line2": invoice.client.address_line2 or "",
+        "client_city": invoice.client.city or "",
+        "client_state": invoice.client.state or "",
+        "client_pincode": invoice.client.pincode or "",
+        "client_email": invoice.client.contact_email,
+        "client_phone": invoice.client.contact_phone,
+
+        # Supply info
+        "place_of_supply": invoice.place_of_supply or invoice.client.state or "Maharashtra",
         "place_of_supply_code": invoice.place_of_supply_code or "27",
+
         "igst_rate": invoice.gst_rate,
-        "amount_in_words": number_to_words_dummy(invoice.total_amount),
-        "tax_amount_in_words": number_to_words_dummy(invoice.igst_amount),
+        "amount_in_words": amount_words,
+        "tax_amount_in_words": tax_words,
     }
 
+    # Sirf HTML render kar rahe hain
     html_string = render_to_string("invoices/proforma_invoice_pdf.html", context)
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f'inline; filename=\"{invoice.invoice_number}.pdf\""
-
-    HTML(string=html_string).write_pdf(response)
-    return response
+    return HttpResponse(html_string)

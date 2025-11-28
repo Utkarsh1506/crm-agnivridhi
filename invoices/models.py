@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
-from clients.models import Client  # adjust if your app name different
+from decimal import Decimal
+from clients.models import Client
+
 
 class Invoice(models.Model):
     INVOICE_TYPE_CHOICES = [
@@ -20,22 +22,25 @@ class Invoice(models.Model):
         default='proforma'
     )
 
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='invoices')
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='invoices'
+    )
 
     issue_date = models.DateField()
     due_date = models.DateField(null=True, blank=True)
 
-    # Item fields (single line item for now)
+    # Single line item for now (jaise tumhara sample hai)
     item_description = models.CharField(max_length=255)
     hsn_sac = models.CharField(max_length=20, blank=True, null=True)
-    gst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=18)  # in %
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    gst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('18.00'))  # %
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('1.00'))
     rate = models.DecimalField(max_digits=10, decimal_places=2)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)  # quantity * rate
+    amount = models.DecimalField(max_digits=10, decimal_places=2)  # taxable value
 
-    # Tax fields (IGST for now)
-    igst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    igst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
 
     place_of_supply = models.CharField(max_length=100, blank=True, null=True)
     place_of_supply_code = models.CharField(max_length=5, blank=True, null=True)
@@ -55,6 +60,9 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.invoice_number} - {self.client.company_name}"

@@ -23,15 +23,15 @@ class InvoiceForm(forms.ModelForm):
         widgets = {
             'issue_date': forms.DateInput(attrs={'type': 'date'}),
             'due_date': forms.DateInput(attrs={'type': 'date'}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        # Agar sales user ke clients filter karne hai:
-        if user and hasattr(user, 'role') and user.role == 'sales':
-            # is line ko apne Client model ke hisaab se adjust karo:
+        # sirf apne assigned clients dikhao (Client model me: assigned_sales)
+        if user is not None:
             self.fields['client'].queryset = Client.objects.filter(assigned_sales=user)
 
         if not self.initial.get('issue_date'):

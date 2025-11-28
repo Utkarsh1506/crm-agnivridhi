@@ -3,8 +3,31 @@
 {% block title %}My Invoices - Agnivridhi CRM{% endblock %}
 
 {% block sidebar %}
-{# reuse same sidebar as sales dashboard, or include it from a partial #}
-{% include "accounts/partials/sales_sidebar.html" %}
+{# agar tum same sidebar reuse karna chahte ho, yaha sales dashboard wala code rakh sakte ho
+   ya ek partial bana sakte ho. For now, simplest: copy same nav from sales dashboard #}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:sales_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <!-- My Clients, Pending, Bookings, etc. -->
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'clients:sales_clients_list' %}">
+                    <i class="bi bi-people"></i> My Clients
+                </a>
+            </li>
+            <!-- ... baaki items ... -->
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'invoices:sales_invoice_list' %}">
+                    <i class="bi bi-receipt"></i> Invoices & Proformas
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
 {% endblock %}
 
 {% block content %}
