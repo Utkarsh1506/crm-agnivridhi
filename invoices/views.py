@@ -79,14 +79,19 @@ def sales_invoice_list(request):
     
     client_id = request.GET.get('client')
     if client_id:
-        invoices = invoices.filter(client_id=client_id)
+        try:
+            invoices = invoices.filter(client_id=int(client_id))
+        except (ValueError, TypeError):
+            pass
     
     invoices = invoices.select_related('client').order_by('-created_at')
+    
+    selected_client = int(client_id) if client_id and client_id.isdigit() else None
     
     return render(request, 'invoices/sales_list.html', {
         'invoices': invoices,
         'clients': clients,
-        'selected_client_id': int(client_id) if client_id else None,
+        'selected_client_id': selected_client,
     })
 
 
@@ -161,14 +166,19 @@ def manager_invoice_list(request):
     
     client_id = request.GET.get('client')
     if client_id:
-        invoices = invoices.filter(client_id=client_id)
+        try:
+            invoices = invoices.filter(client_id=int(client_id))
+        except (ValueError, TypeError):
+            pass
     
     invoices = invoices.select_related('client', 'created_by').order_by('-created_at')
+    
+    selected_client = int(client_id) if client_id and client_id.isdigit() else None
     
     return render(request, 'invoices/manager_list.html', {
         'invoices': invoices,
         'clients': clients,
-        'selected_client_id': int(client_id) if client_id else None,
+        'selected_client_id': selected_client,
     })
 
 
@@ -232,14 +242,19 @@ def admin_invoice_list(request):
     
     client_id = request.GET.get('client')
     if client_id:
-        invoices = invoices.filter(client_id=client_id)
+        try:
+            invoices = invoices.filter(client_id=int(client_id))
+        except (ValueError, TypeError):
+            pass
     
     invoices = invoices.select_related('client', 'created_by').order_by('-created_at')
+    
+    selected_client = int(client_id) if client_id and client_id.isdigit() else None
     
     return render(request, 'invoices/admin_list.html', {
         'invoices': invoices,
         'clients': clients,
-        'selected_client_id': int(client_id) if client_id else None,
+        'selected_client_id': selected_client,
     })
 
 
