@@ -85,7 +85,13 @@
                             <span class="badge bg-success">Tax Invoice</span>
                             {% endif %}
                         </td>
-                            <td>{{ inv.client.company_name|default:inv.client_name }}</td>
+                        <td>
+                            {% if inv.client %}
+                                {{ inv.client.company_name }}
+                            {% else %}
+                                {{ inv.client_name|default:"N/A" }}
+                            {% endif %}
+                        </td>
                         <td>{{ inv.issue_date|date:"d M Y" }}</td>
                         <td class="text-end"><strong>₹{{ inv.total_amount|floatformat:2 }}</strong></td>
                         <td class="text-center">
