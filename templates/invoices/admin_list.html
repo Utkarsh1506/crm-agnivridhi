@@ -58,10 +58,16 @@
 
 <div class="card">
     <div class="card-header bg-primary text-white">
-        <i class="bi bi-list-ul"></i> My Invoices
+        <i class="bi bi-list-ul"></i> All Invoices
     </div>
     <div class="card-body">
-        {% if invoices %}
+        {% if migration_pending %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Database Migration Pending</strong><br>
+            Invoice feature requires a database update. Please run: <code>python manage.py migrate invoices</code>
+        </div>
+        {% elif invoices %}
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">

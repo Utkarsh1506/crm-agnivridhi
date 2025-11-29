@@ -72,6 +72,25 @@ def sales_invoice_list(request):
     """Sales invoice list with client filter and logging"""
     try:
         from django.db import models as django_models
+        from django.db import connection
+        
+        # Check if tax columns exist before querying
+        with connection.cursor() as cursor:
+            if connection.vendor == 'mysql':
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
+                has_tax_cols = cursor.fetchone() is not None
+            else:
+                has_tax_cols = True  # Assume SQLite has columns
+        
+        if not has_tax_cols:
+            # Graceful message if migration not run yet
+            return render(request, 'invoices/sales_list.html', {
+                'invoices': [],
+                'clients': [],
+                'selected_client_id': None,
+                'migration_pending': True,
+            })
+        
         clients = Client.objects.filter(
             django_models.Q(assigned_sales=request.user) | django_models.Q(created_by=request.user),
             is_approved=True
@@ -149,6 +168,24 @@ def manager_invoice_list(request):
     """Manager invoice list with logging"""
     try:
         from django.db import models as django_models
+        from django.db import connection
+        
+        # Check if tax columns exist before querying
+        with connection.cursor() as cursor:
+            if connection.vendor == 'mysql':
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
+                has_tax_cols = cursor.fetchone() is not None
+            else:
+                has_tax_cols = True
+        
+        if not has_tax_cols:
+            return render(request, 'invoices/manager_list.html', {
+                'invoices': [],
+                'clients': [],
+                'selected_client_id': None,
+                'migration_pending': True,
+            })
+        
         clients = Client.objects.filter(
             django_models.Q(assigned_sales__manager=request.user) |
             django_models.Q(assigned_manager=request.user) |
@@ -234,6 +271,24 @@ def manager_invoice_pdf(request, pk):
 def admin_invoice_list(request):
     """Admin/Owner invoice list with logging"""
     try:
+        from django.db import connection
+        
+        # Check if tax columns exist before querying
+        with connection.cursor() as cursor:
+            if connection.vendor == 'mysql':
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
+                has_tax_cols = cursor.fetchone() is not None
+            else:
+                has_tax_cols = True
+        
+        if not has_tax_cols:
+            return render(request, 'invoices/admin_list.html', {
+                'invoices': [],
+                'clients': [],
+                'selected_client_id': None,
+                'migration_pending': True,
+            })
+        
         clients = Client.objects.filter(is_approved=True).order_by('company_name')
         invoices = Invoice.objects.all()
         client_id = request.GET.get('client')
