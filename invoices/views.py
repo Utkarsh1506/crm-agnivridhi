@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseServerError
+import logging
 from django.contrib import messages
 from django.utils import timezone
 from decimal import Decimal
@@ -7,6 +9,8 @@ from datetime import timedelta
 from accounts.views import sales_required, manager_required, admin_required
 from .models import Invoice
 from .forms import InvoiceForm
+
+logger = logging.getLogger(__name__)
 from clients.models import Client
 
 
@@ -65,34 +69,30 @@ def calculate_invoice_amounts(form_data):
 
 @sales_required
 def sales_invoice_list(request):
-    """Sales invoice list with client filter"""
-    from django.db import models as django_models
-    
-    # Get sales' clients
-    clients = Client.objects.filter(
-        django_models.Q(assigned_sales=request.user) | django_models.Q(created_by=request.user),
-        is_approved=True
-    ).order_by('company_name')
-    
-    # Filter invoices
-    invoices = Invoice.objects.filter(created_by=request.user)
-    
-    client_id = request.GET.get('client')
-    if client_id:
-        try:
-            invoices = invoices.filter(client_id=int(client_id))
-        except (ValueError, TypeError):
-            pass
-    
-    invoices = invoices.select_related('client').order_by('-created_at')
-    
-    selected_client = int(client_id) if client_id and client_id.isdigit() else None
-    
-    return render(request, 'invoices/sales_list.html', {
-        'invoices': invoices,
-        'clients': clients,
-        'selected_client_id': selected_client,
-    })
+    """Sales invoice list with client filter and logging"""
+    try:
+        from django.db import models as django_models
+        clients = Client.objects.filter(
+            django_models.Q(assigned_sales=request.user) | django_models.Q(created_by=request.user),
+            is_approved=True
+        ).order_by('company_name')
+        invoices = Invoice.objects.filter(created_by=request.user)
+        client_id = request.GET.get('client')
+        if client_id:
+            try:
+                invoices = invoices.filter(client_id=int(client_id))
+            except (ValueError, TypeError):
+                logger.warning("Sales invalid client_id '%s' user=%s", client_id, request.user.pk)
+        invoices = invoices.select_related('client').order_by('-created_at')
+        selected_client = int(client_id) if client_id and client_id.isdigit() else None
+        return render(request, 'invoices/sales_list.html', {
+            'invoices': invoices,
+            'clients': clients,
+            'selected_client_id': selected_client,
+        })
+    except Exception:
+        logger.exception("Sales invoice list error user=%s", getattr(request.user, 'pk', 'anon'))
+        return HttpResponseServerError("Temporary error loading invoices. Please retry.")
 
 
 @sales_required
@@ -146,40 +146,37 @@ def sales_invoice_pdf(request, pk):
 
 @manager_required
 def manager_invoice_list(request):
-    """Manager invoice list - team invoices"""
-    from django.db import models as django_models
-    
-    # Get manager's team clients
-    clients = Client.objects.filter(
-        django_models.Q(assigned_sales__manager=request.user) |
-        django_models.Q(assigned_manager=request.user) |
-        django_models.Q(created_by=request.user),
-        is_approved=True
-    ).distinct().order_by('company_name')
-    
-    # Team invoices
-    team_sales = request.user.managed_sales.all()
-    invoices = Invoice.objects.filter(
-        django_models.Q(created_by=request.user) |
-        django_models.Q(created_by__in=team_sales)
-    )
-    
-    client_id = request.GET.get('client')
-    if client_id:
-        try:
-            invoices = invoices.filter(client_id=int(client_id))
-        except (ValueError, TypeError):
-            pass
-    
-    invoices = invoices.select_related('client', 'created_by').order_by('-created_at')
-    
-    selected_client = int(client_id) if client_id and client_id.isdigit() else None
-    
-    return render(request, 'invoices/manager_list.html', {
-        'invoices': invoices,
-        'clients': clients,
-        'selected_client_id': selected_client,
-    })
+    """Manager invoice list with logging"""
+    try:
+        from django.db import models as django_models
+        clients = Client.objects.filter(
+            django_models.Q(assigned_sales__manager=request.user) |
+            django_models.Q(assigned_manager=request.user) |
+            django_models.Q(created_by=request.user),
+            is_approved=True
+        ).distinct().order_by('company_name')
+        team_sales_rel = getattr(request.user, 'managed_sales', None)
+        team_sales = team_sales_rel.all() if team_sales_rel else []
+        invoices = Invoice.objects.filter(
+            django_models.Q(created_by=request.user) |
+            django_models.Q(created_by__in=team_sales)
+        )
+        client_id = request.GET.get('client')
+        if client_id:
+            try:
+                invoices = invoices.filter(client_id=int(client_id))
+            except (ValueError, TypeError):
+                logger.warning("Manager invalid client_id '%s' user=%s", client_id, request.user.pk)
+        invoices = invoices.select_related('client', 'created_by').order_by('-created_at')
+        selected_client = int(client_id) if client_id and client_id.isdigit() else None
+        return render(request, 'invoices/manager_list.html', {
+            'invoices': invoices,
+            'clients': clients,
+            'selected_client_id': selected_client,
+        })
+    except Exception:
+        logger.exception("Manager invoice list error user=%s", getattr(request.user, 'pk', 'anon'))
+        return HttpResponseServerError("Temporary error loading invoices. Please retry.")
 
 
 @manager_required
@@ -235,27 +232,26 @@ def manager_invoice_pdf(request, pk):
 
 @admin_required
 def admin_invoice_list(request):
-    """Admin/Owner invoice list - all invoices"""
-    clients = Client.objects.filter(is_approved=True).order_by('company_name')
-    
-    invoices = Invoice.objects.all()
-    
-    client_id = request.GET.get('client')
-    if client_id:
-        try:
-            invoices = invoices.filter(client_id=int(client_id))
-        except (ValueError, TypeError):
-            pass
-    
-    invoices = invoices.select_related('client', 'created_by').order_by('-created_at')
-    
-    selected_client = int(client_id) if client_id and client_id.isdigit() else None
-    
-    return render(request, 'invoices/admin_list.html', {
-        'invoices': invoices,
-        'clients': clients,
-        'selected_client_id': selected_client,
-    })
+    """Admin/Owner invoice list with logging"""
+    try:
+        clients = Client.objects.filter(is_approved=True).order_by('company_name')
+        invoices = Invoice.objects.all()
+        client_id = request.GET.get('client')
+        if client_id:
+            try:
+                invoices = invoices.filter(client_id=int(client_id))
+            except (ValueError, TypeError):
+                logger.warning("Admin invalid client_id '%s' user=%s", client_id, request.user.pk)
+        invoices = invoices.select_related('client', 'created_by').order_by('-created_at')
+        selected_client = int(client_id) if client_id and client_id.isdigit() else None
+        return render(request, 'invoices/admin_list.html', {
+            'invoices': invoices,
+            'clients': clients,
+            'selected_client_id': selected_client,
+        })
+    except Exception:
+        logger.exception("Admin invoice list error user=%s", getattr(request.user, 'pk', 'anon'))
+        return HttpResponseServerError("Temporary error loading invoices. Please retry.")
 
 
 @admin_required
