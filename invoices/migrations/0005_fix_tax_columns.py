@@ -13,6 +13,7 @@ def ensure_tax_columns(apps, schema_editor):
         ('sgst_amount', 'DECIMAL(10,2)', True, "DEFAULT 0.00"),
         ('igst_amount', 'DECIMAL(10,2)', True, "DEFAULT 0.00"),
         ('total_amount', 'DECIMAL(12,2)', False, None),
+        ('updated_at', 'DATETIME(6)', False, "DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"),
     ]
 
     with connection.cursor() as cursor:
