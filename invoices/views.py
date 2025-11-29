@@ -1,96 +1,286 @@
-from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
-from django.template.loader import render_to_string
+from django.contrib import messages
 from django.utils import timezone
-from django.contrib.auth.decorators import login_required
+from decimal import Decimal
+from datetime import timedelta
 
+from accounts.views import sales_required, manager_required, admin_required
 from .models import Invoice
 from .forms import InvoiceForm
-from .utils import generate_invoice_number, amount_to_words
+from clients.models import Client
 
 
-@login_required
-def sales_invoice_list(request):
-    """
-    Sales user ke liye: uske banaye huye saare invoices/proformas.
-    """
-    invoices = Invoice.objects.filter(created_by=request.user).select_related("client")
-    return render(request, "invoices/sales_invoice_list.html", {"invoices": invoices})
-
-
-@login_required
-def sales_invoice_create(request):
-    """
-    Manual invoice/proforma create form.
-    """
-    if request.method == "POST":
-        form = InvoiceForm(request.POST, user=request.user)
-        if form.is_valid():
-            inv: Invoice = form.save(commit=False)
-
-            inv.created_by = request.user
-            inv.invoice_number = generate_invoice_number(inv.invoice_type)
-
-            qty = form.cleaned_data['quantity']
-            rate = form.cleaned_data['rate']
-            gst_rate = form.cleaned_data['gst_rate']
-
-            amount = qty * rate
-            igst_amount = amount * gst_rate / Decimal('100')
-
-            inv.amount = amount
-            inv.igst_amount = igst_amount
-            inv.total_amount = amount + igst_amount
-
-            if not inv.due_date:
-                inv.due_date = inv.issue_date + timezone.timedelta(days=7)
-
-            inv.status = 'final'
-            inv.save()
-
-            # PDF ki jagah abhi HTML invoice page show karenge
-            return redirect("invoices:sales_invoice_pdf", pk=inv.pk)
+def generate_invoice_number(invoice_type):
+    """Generate unique invoice number"""
+    prefix = 'PI' if invoice_type == 'proforma' else 'INV'
+    today = timezone.now().strftime('%Y%m%d')
+    
+    last = Invoice.objects.filter(invoice_number__startswith=f"{prefix}-{today}").order_by('-invoice_number').first()
+    if last:
+        try:
+            last_seq = int(last.invoice_number.split('-')[-1])
+            seq = last_seq + 1
+        except:
+            seq = 1
     else:
-        form = InvoiceForm(user=request.user)
+        seq = 1
+    
+    return f"{prefix}-{today}-{seq:03d}"
 
-    return render(request, "invoices/sales_invoice_form.html", {"form": form})
 
-
-@login_required
-def sales_invoice_pdf(request, pk):
-    """
-    Abhi yeh sirf HTML invoice page return karega (Proforma format me).
-    Baad me PDF lib add karke same template ko PDF me convert kar sakte ho.
-    """
-    invoice = get_object_or_404(Invoice, pk=pk, created_by=request.user)
-
-    amount_words = amount_to_words(invoice.total_amount)
-    tax_words = amount_to_words(invoice.igst_amount)
-
-    context = {
-        "invoice": invoice,
-
-        # Client details
-        "client_gstin": invoice.client.gst_number or "",
-        "client_pan": invoice.client.pan_number or "",
-        "client_address_line1": invoice.client.address_line1 or "",
-        "client_address_line2": invoice.client.address_line2 or "",
-        "client_city": invoice.client.city or "",
-        "client_state": invoice.client.state or "",
-        "client_pincode": invoice.client.pincode or "",
-        "client_email": invoice.client.contact_email,
-        "client_phone": invoice.client.contact_phone,
-
-        # Supply info
-        "place_of_supply": invoice.place_of_supply or invoice.client.state or "Maharashtra",
-        "place_of_supply_code": invoice.place_of_supply_code or "27",
-
-        "igst_rate": invoice.gst_rate,
-        "amount_in_words": amount_words,
-        "tax_amount_in_words": tax_words,
+def calculate_invoice_amounts(form_data):
+    """Calculate taxable, GST, and total amounts"""
+    qty = form_data['quantity']
+    rate = form_data['rate']
+    gst_rate = form_data['gst_rate']
+    place = form_data['place_of_supply'].strip().lower()
+    
+    taxable = qty * rate
+    company_state = 'maharashtra'  # Your company state
+    
+    if place == company_state:
+        # Intra-state: CGST + SGST
+        half_gst = gst_rate / Decimal('2')
+        cgst = taxable * half_gst / Decimal('100')
+        sgst = taxable * half_gst / Decimal('100')
+        igst = Decimal('0.00')
+    else:
+        # Inter-state: IGST
+        igst = taxable * gst_rate / Decimal('100')
+        cgst = Decimal('0.00')
+        sgst = Decimal('0.00')
+    
+    total = taxable + cgst + sgst + igst
+    
+    return {
+        'taxable_amount': taxable,
+        'cgst_amount': cgst,
+        'sgst_amount': sgst,
+        'igst_amount': igst,
+        'total_amount': total,
     }
 
-    # Sirf HTML render kar rahe hain
-    html_string = render_to_string("invoices/proforma_invoice_pdf.html", context)
-    return HttpResponse(html_string)
+
+# ============= SALES VIEWS =============
+
+@sales_required
+def sales_invoice_list(request):
+    """Sales invoice list with client filter"""
+    from django.db import models as django_models
+    
+    # Get sales' clients
+    clients = Client.objects.filter(
+        django_models.Q(assigned_sales=request.user) | django_models.Q(created_by=request.user),
+        is_approved=True
+    ).order_by('company_name')
+    
+    # Filter invoices
+    invoices = Invoice.objects.filter(created_by=request.user)
+    
+    client_id = request.GET.get('client')
+    if client_id:
+        invoices = invoices.filter(client_id=client_id)
+    
+    invoices = invoices.select_related('client').order_by('-created_at')
+    
+    return render(request, 'invoices/sales_list.html', {
+        'invoices': invoices,
+        'clients': clients,
+        'selected_client_id': int(client_id) if client_id else None,
+    })
+
+
+@sales_required
+def sales_invoice_create(request):
+    """Create invoice"""
+    if request.method == 'POST':
+        form = InvoiceForm(request.POST, user=request.user)
+        if form.is_valid():
+            invoice = form.save(commit=False)
+            invoice.created_by = request.user
+            invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
+            
+            # Calculate amounts
+            amounts = calculate_invoice_amounts(form.cleaned_data)
+            for key, value in amounts.items():
+                setattr(invoice, key, value)
+            
+            # Set due date if not provided
+            if not invoice.due_date:
+                invoice.due_date = invoice.issue_date + timedelta(days=15)
+            
+            invoice.save()
+            messages.success(request, f'Invoice {invoice.invoice_number} created successfully!')
+            return redirect('invoices:sales_invoice_pdf', pk=invoice.pk)
+    else:
+        form = InvoiceForm(user=request.user)
+    
+    return render(request, 'invoices/sales_form.html', {'form': form})
+
+
+@sales_required
+def sales_invoice_pdf(request, pk):
+    """View/Download invoice PDF"""
+    invoice = get_object_or_404(Invoice, pk=pk, created_by=request.user)
+    
+    # Check if download requested
+    if request.GET.get('download') == '1':
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        
+        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice})
+        
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.html"'
+        return response
+    
+    return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
+
+
+# ============= MANAGER VIEWS =============
+
+@manager_required
+def manager_invoice_list(request):
+    """Manager invoice list - team invoices"""
+    from django.db import models as django_models
+    
+    # Get manager's team clients
+    clients = Client.objects.filter(
+        django_models.Q(assigned_sales__manager=request.user) |
+        django_models.Q(assigned_manager=request.user) |
+        django_models.Q(created_by=request.user),
+        is_approved=True
+    ).distinct().order_by('company_name')
+    
+    # Team invoices
+    team_sales = request.user.managed_sales.all()
+    invoices = Invoice.objects.filter(
+        django_models.Q(created_by=request.user) |
+        django_models.Q(created_by__in=team_sales)
+    )
+    
+    client_id = request.GET.get('client')
+    if client_id:
+        invoices = invoices.filter(client_id=client_id)
+    
+    invoices = invoices.select_related('client', 'created_by').order_by('-created_at')
+    
+    return render(request, 'invoices/manager_list.html', {
+        'invoices': invoices,
+        'clients': clients,
+        'selected_client_id': int(client_id) if client_id else None,
+    })
+
+
+@manager_required
+def manager_invoice_create(request):
+    """Manager create invoice"""
+    if request.method == 'POST':
+        form = InvoiceForm(request.POST, user=request.user)
+        if form.is_valid():
+            invoice = form.save(commit=False)
+            invoice.created_by = request.user
+            invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
+            
+            amounts = calculate_invoice_amounts(form.cleaned_data)
+            for key, value in amounts.items():
+                setattr(invoice, key, value)
+            
+            if not invoice.due_date:
+                invoice.due_date = invoice.issue_date + timedelta(days=15)
+            
+            invoice.save()
+            messages.success(request, f'Invoice {invoice.invoice_number} created!')
+            return redirect('invoices:manager_invoice_pdf', pk=invoice.pk)
+    else:
+        form = InvoiceForm(user=request.user)
+    
+    return render(request, 'invoices/manager_form.html', {'form': form})
+
+
+@manager_required
+def manager_invoice_pdf(request, pk):
+    """Manager view invoice PDF"""
+    from django.db import models as django_models
+    team_sales = request.user.managed_sales.all()
+    invoice = get_object_or_404(
+        Invoice,
+        django_models.Q(created_by=request.user) | django_models.Q(created_by__in=team_sales),
+        pk=pk
+    )
+    
+    if request.GET.get('download') == '1':
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        
+        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice})
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.html"'
+        return response
+    
+    return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
+
+
+# ============= ADMIN/OWNER VIEWS =============
+
+@admin_required
+def admin_invoice_list(request):
+    """Admin/Owner invoice list - all invoices"""
+    clients = Client.objects.filter(is_approved=True).order_by('company_name')
+    
+    invoices = Invoice.objects.all()
+    
+    client_id = request.GET.get('client')
+    if client_id:
+        invoices = invoices.filter(client_id=client_id)
+    
+    invoices = invoices.select_related('client', 'created_by').order_by('-created_at')
+    
+    return render(request, 'invoices/admin_list.html', {
+        'invoices': invoices,
+        'clients': clients,
+        'selected_client_id': int(client_id) if client_id else None,
+    })
+
+
+@admin_required
+def admin_invoice_create(request):
+    """Admin/Owner create invoice"""
+    if request.method == 'POST':
+        form = InvoiceForm(request.POST, user=request.user)
+        if form.is_valid():
+            invoice = form.save(commit=False)
+            invoice.created_by = request.user
+            invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
+            
+            amounts = calculate_invoice_amounts(form.cleaned_data)
+            for key, value in amounts.items():
+                setattr(invoice, key, value)
+            
+            if not invoice.due_date:
+                invoice.due_date = invoice.issue_date + timedelta(days=15)
+            
+            invoice.save()
+            messages.success(request, f'Invoice {invoice.invoice_number} created!')
+            return redirect('invoices:admin_invoice_pdf', pk=invoice.pk)
+    else:
+        form = InvoiceForm(user=request.user)
+    
+    return render(request, 'invoices/admin_form.html', {'form': form})
+
+
+@admin_required
+def admin_invoice_pdf(request, pk):
+    """Admin/Owner view invoice PDF"""
+    invoice = get_object_or_404(Invoice, pk=pk)
+    
+    if request.GET.get('download') == '1':
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        
+        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice})
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.html"'
+        return response
+    
+    return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})

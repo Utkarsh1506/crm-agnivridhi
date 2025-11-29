@@ -35,38 +35,57 @@ def create_client(request):
             # Send credentials email immediately after client creation (if credentials exist and not sent)
             credentials = getattr(client, 'credentials', None)
             email_sent = False
+            email_error_msg = ""
             if credentials and not credentials.is_sent:
                 from django.contrib.sites.shortcuts import get_current_site
+                import logging
+                logger = logging.getLogger(__name__)
+                
                 login_url = getattr(settings, 'CLIENT_LOGIN_URL', None)
                 if not login_url:
                     site = get_current_site(request)
                     login_url = f"https://{site.domain}/accounts/login/"
-                if send_client_credentials_email(credentials, login_url=login_url):
-                    credentials.mark_as_sent(request.user)
-                    email_sent = True
+                
+                logger.info(f"Attempting to send email to: {credentials.email}")
+                logger.info(f"SMTP Host: {settings.EMAIL_HOST}, Port: {settings.EMAIL_PORT}")
+                
+                try:
+                    if send_client_credentials_email(credentials, login_url=login_url):
+                        credentials.mark_as_sent(request.user)
+                        email_sent = True
+                        logger.info(f"Email sent successfully to {credentials.email}")
+                    else:
+                        email_error_msg = f"Email function returned False for {credentials.email}"
+                        logger.error(email_error_msg)
+                except Exception as e:
+                    email_error_msg = f"Exception: {type(e).__name__}: {str(e)}"
+                    logger.error(f"Failed to send email to {credentials.email}: {email_error_msg}")
+                    logger.exception("Full traceback:")
             # Send notification based on role
+            success_msg = f'Client "{client.company_name}" created successfully! '
+            
             if request.user.role == 'SALES':
-                messages.success(
-                    request,
-                    f'Client "{client.company_name}" created successfully! '
-                    f'Waiting for your manager approval. '
-                    + (" Credentials email sent to client." if email_sent else " Credentials email could not be sent.")
-                )
+                success_msg += 'Waiting for your manager approval. '
+                if email_sent:
+                    success_msg += "✅ Credentials email sent to client."
+                else:
+                    success_msg += f"⚠️ Could not send email. {email_error_msg if email_error_msg else 'Check logs for details.'}"
+                messages.success(request, success_msg)
                 # TODO: Send notification to manager
                 return redirect('clients:sales_clients_list')
             elif request.user.role == 'MANAGER':
-                messages.success(
-                    request,
-                    f'Client "{client.company_name}" created and approved successfully! '
-                    + (" Credentials email sent to client." if email_sent else " Credentials email could not be sent.")
-                )
+                if email_sent:
+                    success_msg += "✅ Credentials email sent to client."
+                else:
+                    success_msg += f"⚠️ Could not send email. {email_error_msg if email_error_msg else 'Check logs for details.'}"
+                messages.success(request, success_msg)
                 return redirect('accounts:dashboard')  # Manager dashboard
             else:  # ADMIN or OWNER
-                messages.success(
-                    request,
-                    f'Client "{client.company_name}" created and approved successfully! '
-                    + (" Credentials email sent to client." if email_sent else " Credentials email could not be sent.")
-                )
+                if email_sent:
+                    success_msg += "✅ Credentials email sent to client."
+                else:
+                    success_msg += f"⚠️ Could not send email. {email_error_msg if email_error_msg else 'Check logs for details.'}"
+                messages.success(request, success_msg)
                 return redirect('accounts:owner_dashboard')
         else:
             messages.error(request, 'Please correct the errors below.')

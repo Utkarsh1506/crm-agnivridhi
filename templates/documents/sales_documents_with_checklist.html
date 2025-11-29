@@ -66,12 +66,15 @@
                 <div>
                     <i class="bi bi-building"></i> <strong>{{ data.client.company_name }}</strong>
                 </div>
-                <div>
+                <div class="d-flex align-items-center gap-2">
                     {% if data.total_required > 0 %}
                     <span class="badge bg-light text-dark">
                         Progress: {{ data.uploaded_required }}/{{ data.total_required }} ({{ data.progress }}%)
                     </span>
                     {% endif %}
+                    <a href="{% url 'documents:sales_create_checklist' data.client.id %}" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-check2-square"></i> Create Checklist
+                    </a>
                 </div>
             </div>
         </div>
@@ -154,10 +157,14 @@
                 </table>
             </div>
             {% else %}
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle"></i> 
-                No checklist created yet for this client. 
-                <a href="#" class="alert-link">Create Checklist</a>
+            <div class="alert alert-warning d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-exclamation-triangle"></i>
+                    No checklist created yet for this client.
+                </div>
+                <a href="{% url 'documents:sales_create_checklist' data.client.id %}" class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-check2-square"></i> Create Checklist
+                </a>
             </div>
             {% endif %}
             

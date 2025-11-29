@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}My Invoices - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+{# agar tum same sidebar reuse karna chahte ho, yaha sales dashboard wala code rakh sakte ho
+   ya ek partial bana sakte ho. For now, simplest: copy same nav from sales dashboard #}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:sales_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <!-- My Clients, Pending, Bookings, etc. -->
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'clients:sales_clients_list' %}">
+                    <i class="bi bi-people"></i> My Clients
+                </a>
+            </li>
+            <!-- ... baaki items ... -->
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'invoices:sales_invoice_list' %}">
+                    <i class="bi bi-receipt"></i> Invoices & Proformas
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="h2 mb-4">
+    <i class="bi bi-receipt"></i> My Invoices & Proformas
+</h1>
+
+<div class="mb-3">
+    <a href="{% url 'invoices:manager_invoice_create' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle"></i> Create New Invoice/Proforma
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if invoices %}
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Invoice No</th>
+                            <th>Type</th>
+                            <th>Client</th>
+                            <th>Issue Date</th>
+                            <th>Amount (₹)</th>
+                            <th>Status</th>
+                            <th>PDF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for inv in invoices %}
+                        <tr>
+                            <td>{{ inv.invoice_number }}</td>
+                            <td>{{ inv.get_invoice_type_display }}</td>
+                            <td>{{ inv.client.company_name }}</td>
+                            <td>{{ inv.issue_date|date:"d M Y" }}</td>
+                            <td>{{ inv.total_amount }}</td>
+                            <td><span class="badge bg-secondary">{{ inv.get_status_display }}</span></td>
+                            <td>
+                                <a href="{% url 'invoices:manager_invoice_pdf' inv.pk %}"
+                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted text-center mb-0">No invoices created yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

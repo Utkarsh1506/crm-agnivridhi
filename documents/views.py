@@ -5,6 +5,8 @@ from django.contrib import messages
 from .models import Document
 from accounts.views import manager_required, client_required, sales_required
 from .forms import DocumentUploadForm, SalesDocumentUploadForm
+from .models import DocumentChecklist
+from clients.models import Client
 
 @login_required
 def document_list(request):
@@ -60,8 +62,7 @@ def client_document_upload(request):
 def sales_documents_list(request):
     # Documents for clients assigned to this sales user or created by them
     from django.db.models import Q
-    from .models import DocumentChecklist
-    from clients.models import Client
+    # using imported DocumentChecklist and Client
     
     # Get clients for this sales user
     clients = Client.objects.filter(
@@ -98,6 +99,125 @@ def sales_documents_list(request):
         'client_data': client_data,
     }
     return render(request, 'documents/sales_documents_with_checklist.html', context)
+
+
+@sales_required
+def sales_create_checklist(request, client_id):
+    """Create default checklist items for a client (Sales/Manager can use Sales route)."""
+    client = get_object_or_404(Client, pk=client_id)
+    # Permission: sales who owns client OR manager assigned to client OR admin/owner
+    user = request.user
+    user_role = getattr(user, 'role', '').upper()
+    if not (
+        client.assigned_sales == user or
+        client.created_by == user or
+        client.assigned_manager == user or
+        user_role in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False)
+    ):
+        messages.error(request, "You don't have permission to create a checklist for this client.")
+        return redirect('documents:sales_documents_list')
+
+    # Preset required document types
+    required_types = [
+        Document.DocumentType.PAN_CARD,
+        Document.DocumentType.GST_CERT,
+        Document.DocumentType.COMPANY_REG,
+        Document.DocumentType.BANK_STATEMENT,
+        Document.DocumentType.ITR,
+        Document.DocumentType.BALANCE_SHEET,
+    ]
+    optional_types = [
+        Document.DocumentType.MSME_CERT,
+        Document.DocumentType.MOA_AOA,
+        Document.DocumentType.BOARD_RESOLUTION,
+    ]
+
+    created_count = 0
+    for dt in required_types:
+        obj, created = DocumentChecklist.objects.get_or_create(
+            client=client,
+            document_type=dt,
+            defaults={
+                'is_required': True,
+                'created_by': user,
+            }
+        )
+        if created:
+            created_count += 1
+    for dt in optional_types:
+        obj, created = DocumentChecklist.objects.get_or_create(
+            client=client,
+            document_type=dt,
+            defaults={
+                'is_required': False,
+                'created_by': user,
+            }
+        )
+        if created:
+            created_count += 1
+
+    if created_count > 0:
+        messages.success(request, f'Document checklist created/updated for {client.company_name}.')
+    else:
+        messages.info(request, f'Checklist already exists for {client.company_name}.')
+
+    return redirect('documents:sales_documents_list')
+
+
+@manager_required
+def manager_create_checklist(request, client_id):
+    """Create default checklist items for a client from Manager dashboard."""
+    client = get_object_or_404(Client, pk=client_id)
+    user = request.user
+
+    # Permission: assigned manager, creator, admin/owner, or superuser
+    user_role = getattr(user, 'role', '').upper()
+    if not (
+        client.assigned_manager == user or
+        client.created_by == user or
+        user_role in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False)
+    ):
+        messages.error(request, "You don't have permission to create a checklist for this client.")
+        return redirect('documents:team_documents_list')
+
+    required_types = [
+        Document.DocumentType.PAN_CARD,
+        Document.DocumentType.GST_CERT,
+        Document.DocumentType.COMPANY_REG,
+        Document.DocumentType.BANK_STATEMENT,
+        Document.DocumentType.ITR,
+        Document.DocumentType.BALANCE_SHEET,
+    ]
+    optional_types = [
+        Document.DocumentType.MSME_CERT,
+        Document.DocumentType.MOA_AOA,
+        Document.DocumentType.BOARD_RESOLUTION,
+    ]
+
+    created_count = 0
+    for dt in required_types:
+        _, created = DocumentChecklist.objects.get_or_create(
+            client=client,
+            document_type=dt,
+            defaults={'is_required': True, 'created_by': user}
+        )
+        if created:
+            created_count += 1
+    for dt in optional_types:
+        _, created = DocumentChecklist.objects.get_or_create(
+            client=client,
+            document_type=dt,
+            defaults={'is_required': False, 'created_by': user}
+        )
+        if created:
+            created_count += 1
+
+    if created_count > 0:
+        messages.success(request, f'Document checklist created/updated for {client.company_name}.')
+    else:
+        messages.info(request, f'Checklist already exists for {client.company_name}.')
+
+    return redirect('documents:team_documents_list')
 
 
 @sales_required

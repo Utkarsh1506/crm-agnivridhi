@@ -58,6 +58,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{% url 'invoices:manager_invoice_list' %}">
+                    <i class="bi bi-receipt"></i>Invoices & Proformas
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="{% url 'payments:team_payments_list' %}">
                     <i class="bi bi-credit-card"></i>Payments
                     {% if pending_payments_count > 0 %}
@@ -66,8 +71,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:global_search' %}">
-                    <i class="bi bi-search"></i>Search
+                <a class="nav-link" href="{% url 'invoices:manager_invoice_list' %}">
+                    <i class="bi bi-receipt"></i>Invoices
                 </a>
             </li>
             <li class="nav-item">
@@ -291,6 +296,7 @@
                             <th>Funding Required</th>
                             <th>Assigned To</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -307,6 +313,11 @@
                                 {% endif %}
                             </td>
                             <td><span class="badge bg-info">{{ client.get_status_display }}</span></td>
+                            <td>
+                                <a href="{% url 'documents:manager_create_checklist' client.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-check2-square"></i> Create Checklist
+                                </a>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

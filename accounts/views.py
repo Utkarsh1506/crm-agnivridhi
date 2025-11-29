@@ -36,6 +36,11 @@ def role_required(*roles):
                     return view_func(request, *args, **kwargs)
             
             # Return 403 using the dedicated template
+            try:
+                # Lightweight debug to help identify role mismatches during dev
+                print(f"[role_required] 403 for user={getattr(request.user,'username',None)} role={getattr(request.user,'role',None)} allowed={roles}")
+            except Exception:
+                pass
             from django.shortcuts import render
             return render(request, 'errors/403.html', status=403)
         return wrapper
@@ -58,8 +63,8 @@ def manager_required(view_func):
 
 
 def sales_required(view_func):
-    """Decorator for sales-only views"""
-    return role_required('SALES')(view_func)
+    """Decorator for sales views - ADMIN, MANAGER, and OWNER can also access"""
+    return role_required('SALES', 'ADMIN', 'MANAGER', 'OWNER')(view_func)
 
 
 def client_required(view_func):

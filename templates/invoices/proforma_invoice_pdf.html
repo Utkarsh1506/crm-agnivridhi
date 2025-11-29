@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Invoice {{ invoice.invoice_number }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="p-4">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2>AGNIVRIDHI INDIA PRIVATE LIMITED</h2>
+      <div>
+        <strong>Invoice #:</strong> {{ invoice.invoice_number }}<br>
+        <strong>Date:</strong> {{ invoice.issue_date }}
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <h6>Bill To</h6>
+        <div><strong>{{ invoice.client.company_name }}</strong></div>
+        <div>{{ client_address_line1 }}</div>
+        <div>{{ client_address_line2 }}</div>
+        <div>{{ client_city }}, {{ client_state }} {{ client_pincode }}</div>
+        <div>GSTIN: {{ client_gstin }}</div>
+        <div>PAN: {{ client_pan }}</div>
+      </div>
+      <div class="col-md-6">
+        <h6>Place of Supply</h6>
+        <div>{{ place_of_supply }} ({{ place_of_supply_code }})</div>
+      </div>
+    </div>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>HSN/SAC</th>
+          <th>Qty</th>
+          <th>Rate (₹)</th>
+          <th>Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ invoice.item_description }}</td>
+          <td>{{ invoice.hsn_sac }}</td>
+          <td>{{ invoice.quantity }}</td>
+          <td>{{ invoice.rate }}</td>
+          <td>{{ invoice.amount }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="row">
+      <div class="col-md-6">
+        <h6>Amount in Words</h6>
+        <p>Rupees {{ amount_in_words }} only</p>
+      </div>
+      <div class="col-md-6">
+        <table class="table">
+          {% if invoice.cgst_amount > 0 %}
+          <tr>
+            <th class="text-end">CGST ({{ igst_rate|floatformat:2 }}% / 2)</th>
+            <td class="text-end">₹{{ invoice.cgst_amount }}</td>
+          </tr>
+          <tr>
+            <th class="text-end">SGST ({{ igst_rate|floatformat:2 }}% / 2)</th>
+            <td class="text-end">₹{{ invoice.sgst_amount }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <th class="text-end">IGST ({{ igst_rate|floatformat:2 }}%)</th>
+            <td class="text-end">₹{{ invoice.igst_amount }}</td>
+          </tr>
+          {% endif %}
+          <tr>
+            <th class="text-end">Total</th>
+            <td class="text-end"><strong>₹{{ invoice.total_amount }}</strong></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    {% if invoice.invoice_type == 'tax' %}
+    <div class="mt-4 text-end">
+      <p><strong>For AGNIVRIDHI INDIA PRIVATE LIMITED</strong></p>
+      <div style="height: 60px;"></div>
+      <p>Authorised Signatory</p>
+      <p class="small text-muted">(Company Stamp & Signature)</p>
+    </div>
+    {% endif %}
+
+    <p class="mt-4 text-muted">This is a system-generated document.</p>
+  </div>
+</body>
+</html>

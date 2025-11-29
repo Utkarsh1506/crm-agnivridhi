@@ -45,6 +45,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{% url 'invoices:admin_invoice_list' %}">
+                    <i class="bi bi-receipt"></i>Invoices & Proformas
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="{% url 'edit_requests:manager_edit_requests' %}">
                     <i class="bi bi-pencil-square"></i>Edit Requests
                     {% if pending_edit_requests > 0 %}

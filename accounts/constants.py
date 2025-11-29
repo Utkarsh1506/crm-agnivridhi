@@ -44,6 +44,7 @@ ROLE_NAMESPACE_MAP = {
         "schemes",       # Scheme catalog
         "edit_requests", # Edit approvals and direct edit
         "notifications", # Activity feed and notifications
+        "invoices",      # Invoice generation
         "api",          # API access
     ],
     ROLE_OWNER: [
@@ -56,6 +57,7 @@ ROLE_NAMESPACE_MAP = {
         "schemes",
         "edit_requests",  # Direct edit access
         "notifications",  # Activity feed and notifications
+        "invoices",       # Invoice generation
         "api",
     ],
     ROLE_ADMIN: [
@@ -68,6 +70,7 @@ ROLE_NAMESPACE_MAP = {
         "schemes",
         "edit_requests",  # Direct edit access
         "notifications",  # Activity feed and notifications
+        "invoices",       # Invoice generation
         "api",
     ],
     ROLE_MANAGER: [
@@ -79,6 +82,7 @@ ROLE_NAMESPACE_MAP = {
         "payments",      # Team payments, approvals
         "schemes",       # Scheme catalog (read-only)
         "edit_requests", # Edit approvals and direct edit
+        "invoices",      # Invoice generation for team
     ],
     ROLE_SALES: [
         "accounts",      # Sales dashboard, profile
@@ -89,6 +93,7 @@ ROLE_NAMESPACE_MAP = {
         "payments",      # Own payments, record payment
         "schemes",       # Scheme catalog (for client recommendations)
         "edit_requests", # Request client edits
+        "invoices",      # Invoice generation for own clients
     ],
     ROLE_CLIENT: [
         "accounts",      # Client portal, profile

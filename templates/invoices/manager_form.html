@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Invoice - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:manager_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'invoices:manager_invoice_list' %}">
+                    <i class="bi bi-receipt"></i> Invoices & Proformas
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0"><i class="bi bi-plus-circle"></i> Create Invoice</h1>
+    <a href="{% url 'invoices:manager_invoice_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="bi bi-file-earmark-text"></i> Invoice Details
+    </div>
+    <div class="card-body">
+        <form method="post" id="invoiceForm">
+            {% csrf_token %}
+            
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Type <span class="text-danger">*</span></label>
+                    {{ form.invoice_type }}
+                    <small class="text-muted d-block">Proforma: enter full client details if not selecting existing client. Tax: existing client required.</small>
+                </div>
+                <div class="col-md-5">
+                    <div id="clientSelectDiv">
+                        <label class="form-label fw-bold">Existing Client <span class="text-danger" id="clientRequired">*</span></label>
+                        {{ form.client }}
+                        <small class="text-muted">Tax Invoice requires existing client</small>
+                    </div>
+                    <div id="clientNameDiv" style="display:none;">
+                        <label class="form-label fw-bold">Client Name</label>
+                        {{ form.client_name }}
+                        <small class="text-muted">For Proforma: enter any client name</small>
+                    </div>
+                </div>
+                    <div class="col-md-4" id="clientDetailsDiv1" style="display:none;">
+                        <label class="form-label fw-bold">Contact Person</label>
+                        {{ form.client_contact_person }}
+                    </div>
+                </div>
+
+                <div class="row mb-3" id="clientDetailsDiv2" style="display:none;">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Address</label>
+                        {{ form.client_address }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">City</label>
+                        {{ form.client_city }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">State</label>
+                        {{ form.client_state }}
+                    </div>
+                </div>
+
+                <div class="row mb-4" id="clientDetailsDiv3" style="display:none;">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Pincode</label>
+                        {{ form.client_pincode }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">GSTIN</label>
+                        {{ form.client_gstin }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Mobile</label>
+                        {{ form.client_mobile }}
+                    </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Issue Date <span class="text-danger">*</span></label>
+                    {{ form.issue_date }}
+                </div>
+            </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Due Date</label>
+                        {{ form.due_date }}
+                    </div>
+                </div>
+
+            <hr>
+            <h6 class="mb-3"><i class="bi bi-box-seam"></i> Item & Pricing</h6>
+
+            <div class="row mb-3">
+                <div class="col-md-7">
+                    <label class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                    {{ form.item_description }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">HSN/SAC</label>
+                    {{ form.hsn_sac }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">GST % <span class="text-danger">*</span></label>
+                    {{ form.gst_rate }}
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Quantity <span class="text-danger">*</span></label>
+                    {{ form.quantity }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Rate (₹) <span class="text-danger">*</span></label>
+                    {{ form.rate }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Place of Supply <span class="text-danger">*</span></label>
+                    {{ form.place_of_supply }}
+                    <small class="text-muted">Maharashtra for intra-state (CGST+SGST), other for IGST</small>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Notes</label>
+                {{ form.notes }}
+            </div>
+
+            <!-- Quick Preview -->
+            <div class="alert alert-info">
+                <h6 class="mb-2"><i class="bi bi-calculator"></i> Quick Preview</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Taxable:</strong> <span id="previewAmount">₹0.00</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>GST:</strong> <span id="previewGST">₹0.00</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Total:</strong> <span id="previewTotal" class="text-primary fs-5">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-file-earmark-pdf"></i> Generate Invoice
+            </button>
+            <a href="{% url 'invoices:manager_invoice_list' %}" class="btn btn-outline-secondary btn-lg ms-2">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeField = document.querySelector('[name="invoice_type"]');
+    const clientSelect = document.getElementById('clientSelectDiv');
+    const clientName = document.getElementById('clientNameDiv');
+        const clientDetails1 = document.getElementById('clientDetailsDiv1');
+        const clientDetails2 = document.getElementById('clientDetailsDiv2');
+        const clientDetails3 = document.getElementById('clientDetailsDiv3');
+    const clientReq = document.getElementById('clientRequired');
+    const qty = document.querySelector('[name="quantity"]');
+    const rate = document.querySelector('[name="rate"]');
+    const gst = document.querySelector('[name="gst_rate"]');
+    
+    // Toggle client field based on invoice type
+    function toggleClientField() {
+        const type = typeField?.value;
+        if (type === 'proforma') {
+            clientSelect.style.display = 'block';
+            clientName.style.display = 'block';
+                clientDetails1.style.display = 'block';
+                clientDetails2.style.display = 'block';
+                clientDetails3.style.display = 'block';
+            clientReq.textContent = '';
+            document.querySelector('[name="client_name"]').required = true;
+            document.querySelector('[name="client_address"]').required = true;
+            document.querySelector('[name="client_city"]').required = true;
+            document.querySelector('[name="client_state"]').required = true;
+            document.querySelector('[name="client_pincode"]').required = true;
+            document.querySelector('[name="client_mobile"]').required = true;
+            document.querySelector('[name="client"]').required = false;
+        } else {
+            clientSelect.style.display = 'block';
+            clientName.style.display = 'none';
+                clientDetails1.style.display = 'none';
+                clientDetails2.style.display = 'none';
+                clientDetails3.style.display = 'none';
+            clientReq.textContent = '*';
+            const manualFields = ['client_name','client_address','client_city','client_state','client_pincode','client_mobile'];
+            manualFields.forEach(n => { const el = document.querySelector(`[name="${n}"]`); if (el) el.required = false; });
+            document.querySelector('[name="client"]').required = true;
+        }
+    }
+    
+    typeField?.addEventListener('change', toggleClientField);
+    toggleClientField();
+    
+    // Calculation preview
+    function calc() {
+        const q = parseFloat(qty?.value || 0);
+        const r = parseFloat(rate?.value || 0);
+        const g = parseFloat(gst?.value || 0);
+        
+        const amt = q * r;
+        const gstAmt = amt * g / 100;
+        const tot = amt + gstAmt;
+        
+        document.getElementById('previewAmount').textContent = '₹' + amt.toFixed(2);
+        document.getElementById('previewGST').textContent = '₹' + gstAmt.toFixed(2);
+        document.getElementById('previewTotal').textContent = '₹' + tot.toFixed(2);
+    }
+    
+    qty?.addEventListener('input', calc);
+    rate?.addEventListener('input', calc);
+    gst?.addEventListener('input', calc);
+    calc();
+});
+</script>
+{% endblock %}
