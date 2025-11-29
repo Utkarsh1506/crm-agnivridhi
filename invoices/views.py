@@ -70,27 +70,31 @@ def calculate_invoice_amounts(form_data):
 @sales_required
 def sales_invoice_list(request):
     """Sales invoice list with client filter and logging"""
+    from django.db import models as django_models
+    from django.db import connection
+    from django.db.utils import OperationalError, ProgrammingError
+    
+    # Check if tax columns exist before querying
     try:
-        from django.db import models as django_models
-        from django.db import connection
-        
-        # Check if tax columns exist before querying
         with connection.cursor() as cursor:
             if connection.vendor == 'mysql':
                 cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
                 has_tax_cols = cursor.fetchone() is not None
             else:
                 has_tax_cols = True  # Assume SQLite has columns
-        
-        if not has_tax_cols:
-            # Graceful message if migration not run yet
-            return render(request, 'invoices/sales_list.html', {
-                'invoices': [],
-                'clients': [],
-                'selected_client_id': None,
-                'migration_pending': True,
-            })
-        
+    except Exception:
+        has_tax_cols = False
+    
+    if not has_tax_cols:
+        # Graceful message if migration not run yet
+        return render(request, 'invoices/sales_list.html', {
+            'invoices': [],
+            'clients': [],
+            'selected_client_id': None,
+            'migration_pending': True,
+        })
+    
+    try:
         clients = Client.objects.filter(
             django_models.Q(assigned_sales=request.user) | django_models.Q(created_by=request.user),
             is_approved=True
@@ -108,6 +112,15 @@ def sales_invoice_list(request):
             'invoices': invoices,
             'clients': clients,
             'selected_client_id': selected_client,
+        })
+    except (OperationalError, ProgrammingError) as e:
+        # Database schema issue - show migration pending
+        logger.error("Sales invoice DB error: %s user=%s", str(e), getattr(request.user, 'pk', 'anon'))
+        return render(request, 'invoices/sales_list.html', {
+            'invoices': [],
+            'clients': [],
+            'selected_client_id': None,
+            'migration_pending': True,
         })
     except Exception:
         logger.exception("Sales invoice list error user=%s", getattr(request.user, 'pk', 'anon'))
@@ -166,26 +179,30 @@ def sales_invoice_pdf(request, pk):
 @manager_required
 def manager_invoice_list(request):
     """Manager invoice list with logging"""
+    from django.db import models as django_models
+    from django.db import connection
+    from django.db.utils import OperationalError, ProgrammingError
+    
+    # Check if tax columns exist before querying
     try:
-        from django.db import models as django_models
-        from django.db import connection
-        
-        # Check if tax columns exist before querying
         with connection.cursor() as cursor:
             if connection.vendor == 'mysql':
                 cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
                 has_tax_cols = cursor.fetchone() is not None
             else:
                 has_tax_cols = True
-        
-        if not has_tax_cols:
-            return render(request, 'invoices/manager_list.html', {
-                'invoices': [],
-                'clients': [],
-                'selected_client_id': None,
-                'migration_pending': True,
-            })
-        
+    except Exception:
+        has_tax_cols = False
+    
+    if not has_tax_cols:
+        return render(request, 'invoices/manager_list.html', {
+            'invoices': [],
+            'clients': [],
+            'selected_client_id': None,
+            'migration_pending': True,
+        })
+    
+    try:
         clients = Client.objects.filter(
             django_models.Q(assigned_sales__manager=request.user) |
             django_models.Q(assigned_manager=request.user) |
@@ -210,6 +227,14 @@ def manager_invoice_list(request):
             'invoices': invoices,
             'clients': clients,
             'selected_client_id': selected_client,
+        })
+    except (OperationalError, ProgrammingError) as e:
+        logger.error("Manager invoice DB error: %s user=%s", str(e), getattr(request.user, 'pk', 'anon'))
+        return render(request, 'invoices/manager_list.html', {
+            'invoices': [],
+            'clients': [],
+            'selected_client_id': None,
+            'migration_pending': True,
         })
     except Exception:
         logger.exception("Manager invoice list error user=%s", getattr(request.user, 'pk', 'anon'))
@@ -270,25 +295,29 @@ def manager_invoice_pdf(request, pk):
 @admin_required
 def admin_invoice_list(request):
     """Admin/Owner invoice list with logging"""
+    from django.db import connection
+    from django.db.utils import OperationalError, ProgrammingError
+    
+    # Check if tax columns exist before querying
     try:
-        from django.db import connection
-        
-        # Check if tax columns exist before querying
         with connection.cursor() as cursor:
             if connection.vendor == 'mysql':
                 cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
                 has_tax_cols = cursor.fetchone() is not None
             else:
                 has_tax_cols = True
-        
-        if not has_tax_cols:
-            return render(request, 'invoices/admin_list.html', {
-                'invoices': [],
-                'clients': [],
-                'selected_client_id': None,
-                'migration_pending': True,
-            })
-        
+    except Exception:
+        has_tax_cols = False
+    
+    if not has_tax_cols:
+        return render(request, 'invoices/admin_list.html', {
+            'invoices': [],
+            'clients': [],
+            'selected_client_id': None,
+            'migration_pending': True,
+        })
+    
+    try:
         clients = Client.objects.filter(is_approved=True).order_by('company_name')
         invoices = Invoice.objects.all()
         client_id = request.GET.get('client')
@@ -303,6 +332,14 @@ def admin_invoice_list(request):
             'invoices': invoices,
             'clients': clients,
             'selected_client_id': selected_client,
+        })
+    except (OperationalError, ProgrammingError) as e:
+        logger.error("Admin invoice DB error: %s user=%s", str(e), getattr(request.user, 'pk', 'anon'))
+        return render(request, 'invoices/admin_list.html', {
+            'invoices': [],
+            'clients': [],
+            'selected_client_id': None,
+            'migration_pending': True,
         })
     except Exception:
         logger.exception("Admin invoice list error user=%s", getattr(request.user, 'pk', 'anon'))
