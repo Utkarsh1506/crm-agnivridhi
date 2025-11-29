@@ -130,25 +130,47 @@ def sales_invoice_list(request):
 @sales_required
 def sales_invoice_create(request):
     """Create invoice"""
+    from django.db import connection
+    from django.db.utils import OperationalError, ProgrammingError
+    
+    # Check if table schema is ready
+    try:
+        with connection.cursor() as cursor:
+            if connection.vendor == 'mysql':
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
+                has_tax_cols = cursor.fetchone() is not None
+            else:
+                has_tax_cols = True
+    except Exception:
+        has_tax_cols = False
+    
+    if not has_tax_cols:
+        messages.warning(request, 'Invoice feature requires database migration. Please contact administrator.')
+        return redirect('invoices:sales_invoice_list')
+    
     if request.method == 'POST':
         form = InvoiceForm(request.POST, user=request.user)
         if form.is_valid():
-            invoice = form.save(commit=False)
-            invoice.created_by = request.user
-            invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
-            
-            # Calculate amounts
-            amounts = calculate_invoice_amounts(form.cleaned_data)
-            for key, value in amounts.items():
-                setattr(invoice, key, value)
-            
-            # Set due date if not provided
-            if not invoice.due_date:
-                invoice.due_date = invoice.issue_date + timedelta(days=15)
-            
-            invoice.save()
-            messages.success(request, f'Invoice {invoice.invoice_number} created successfully!')
-            return redirect('invoices:sales_invoice_pdf', pk=invoice.pk)
+            try:
+                invoice = form.save(commit=False)
+                invoice.created_by = request.user
+                invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
+                
+                # Calculate amounts
+                amounts = calculate_invoice_amounts(form.cleaned_data)
+                for key, value in amounts.items():
+                    setattr(invoice, key, value)
+                
+                # Set due date if not provided
+                if not invoice.due_date:
+                    invoice.due_date = invoice.issue_date + timedelta(days=15)
+                
+                invoice.save()
+                messages.success(request, f'Invoice {invoice.invoice_number} created successfully!')
+                return redirect('invoices:sales_invoice_pdf', pk=invoice.pk)
+            except (OperationalError, ProgrammingError):
+                messages.error(request, 'Database error. Please contact administrator to run migrations.')
+                return redirect('invoices:sales_invoice_list')
     else:
         form = InvoiceForm(user=request.user)
     
@@ -244,23 +266,45 @@ def manager_invoice_list(request):
 @manager_required
 def manager_invoice_create(request):
     """Manager create invoice"""
+    from django.db import connection
+    from django.db.utils import OperationalError, ProgrammingError
+    
+    # Check if table schema is ready
+    try:
+        with connection.cursor() as cursor:
+            if connection.vendor == 'mysql':
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
+                has_tax_cols = cursor.fetchone() is not None
+            else:
+                has_tax_cols = True
+    except Exception:
+        has_tax_cols = False
+    
+    if not has_tax_cols:
+        messages.warning(request, 'Invoice feature requires database migration. Please contact administrator.')
+        return redirect('invoices:manager_invoice_list')
+    
     if request.method == 'POST':
         form = InvoiceForm(request.POST, user=request.user)
         if form.is_valid():
-            invoice = form.save(commit=False)
-            invoice.created_by = request.user
-            invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
-            
-            amounts = calculate_invoice_amounts(form.cleaned_data)
-            for key, value in amounts.items():
-                setattr(invoice, key, value)
-            
-            if not invoice.due_date:
-                invoice.due_date = invoice.issue_date + timedelta(days=15)
-            
-            invoice.save()
-            messages.success(request, f'Invoice {invoice.invoice_number} created!')
-            return redirect('invoices:manager_invoice_pdf', pk=invoice.pk)
+            try:
+                invoice = form.save(commit=False)
+                invoice.created_by = request.user
+                invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
+                
+                amounts = calculate_invoice_amounts(form.cleaned_data)
+                for key, value in amounts.items():
+                    setattr(invoice, key, value)
+                
+                if not invoice.due_date:
+                    invoice.due_date = invoice.issue_date + timedelta(days=15)
+                
+                invoice.save()
+                messages.success(request, f'Invoice {invoice.invoice_number} created!')
+                return redirect('invoices:manager_invoice_pdf', pk=invoice.pk)
+            except (OperationalError, ProgrammingError):
+                messages.error(request, 'Database error. Please contact administrator to run migrations.')
+                return redirect('invoices:manager_invoice_list')
     else:
         form = InvoiceForm(user=request.user)
     
@@ -349,23 +393,45 @@ def admin_invoice_list(request):
 @admin_required
 def admin_invoice_create(request):
     """Admin/Owner create invoice"""
+    from django.db import connection
+    from django.db.utils import OperationalError, ProgrammingError
+    
+    # Check if table schema is ready
+    try:
+        with connection.cursor() as cursor:
+            if connection.vendor == 'mysql':
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'invoices_invoice' AND column_name = 'taxable_amount'")
+                has_tax_cols = cursor.fetchone() is not None
+            else:
+                has_tax_cols = True
+    except Exception:
+        has_tax_cols = False
+    
+    if not has_tax_cols:
+        messages.warning(request, 'Invoice feature requires database migration. Please contact administrator.')
+        return redirect('invoices:admin_invoice_list')
+    
     if request.method == 'POST':
         form = InvoiceForm(request.POST, user=request.user)
         if form.is_valid():
-            invoice = form.save(commit=False)
-            invoice.created_by = request.user
-            invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
-            
-            amounts = calculate_invoice_amounts(form.cleaned_data)
-            for key, value in amounts.items():
-                setattr(invoice, key, value)
-            
-            if not invoice.due_date:
-                invoice.due_date = invoice.issue_date + timedelta(days=15)
-            
-            invoice.save()
-            messages.success(request, f'Invoice {invoice.invoice_number} created!')
-            return redirect('invoices:admin_invoice_pdf', pk=invoice.pk)
+            try:
+                invoice = form.save(commit=False)
+                invoice.created_by = request.user
+                invoice.invoice_number = generate_invoice_number(invoice.invoice_type)
+                
+                amounts = calculate_invoice_amounts(form.cleaned_data)
+                for key, value in amounts.items():
+                    setattr(invoice, key, value)
+                
+                if not invoice.due_date:
+                    invoice.due_date = invoice.issue_date + timedelta(days=15)
+                
+                invoice.save()
+                messages.success(request, f'Invoice {invoice.invoice_number} created!')
+                return redirect('invoices:admin_invoice_pdf', pk=invoice.pk)
+            except (OperationalError, ProgrammingError):
+                messages.error(request, 'Database error. Please contact administrator to run migrations.')
+                return redirect('invoices:admin_invoice_list')
     else:
         form = InvoiceForm(user=request.user)
     
