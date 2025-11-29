@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'documents',
     'notifications',
     'activity_logs',
-    'tracking',
     'invoices',
 ]
 
