@@ -168,9 +168,16 @@ def sales_invoice_create(request):
                 invoice.save()
                 messages.success(request, f'Invoice {invoice.invoice_number} created successfully!')
                 return redirect('invoices:sales_invoice_pdf', pk=invoice.pk)
-            except (OperationalError, ProgrammingError):
+            except (OperationalError, ProgrammingError) as e:
+                logger.error("Sales invoice creation DB error: %s, user=%s", str(e), request.user.pk)
                 messages.error(request, 'Database error. Please contact administrator to run migrations.')
                 return redirect('invoices:sales_invoice_list')
+            except Exception as e:
+                logger.exception("Sales invoice creation failed: user=%s", request.user.pk)
+                messages.error(request, f'Error creating invoice: {str(e)}')
+                return redirect('invoices:sales_invoice_list')
+        else:
+            logger.warning("Sales invoice form invalid: %s, user=%s", form.errors, request.user.pk)
     else:
         form = InvoiceForm(user=request.user)
     
@@ -302,9 +309,16 @@ def manager_invoice_create(request):
                 invoice.save()
                 messages.success(request, f'Invoice {invoice.invoice_number} created!')
                 return redirect('invoices:manager_invoice_pdf', pk=invoice.pk)
-            except (OperationalError, ProgrammingError):
+            except (OperationalError, ProgrammingError) as e:
+                logger.error("Manager invoice creation DB error: %s, user=%s", str(e), request.user.pk)
                 messages.error(request, 'Database error. Please contact administrator to run migrations.')
                 return redirect('invoices:manager_invoice_list')
+            except Exception as e:
+                logger.exception("Manager invoice creation failed: user=%s", request.user.pk)
+                messages.error(request, f'Error creating invoice: {str(e)}')
+                return redirect('invoices:manager_invoice_list')
+        else:
+            logger.warning("Manager invoice form invalid: %s, user=%s", form.errors, request.user.pk)
     else:
         form = InvoiceForm(user=request.user)
     
@@ -429,9 +443,16 @@ def admin_invoice_create(request):
                 invoice.save()
                 messages.success(request, f'Invoice {invoice.invoice_number} created!')
                 return redirect('invoices:admin_invoice_pdf', pk=invoice.pk)
-            except (OperationalError, ProgrammingError):
+            except (OperationalError, ProgrammingError) as e:
+                logger.error("Admin invoice creation DB error: %s, user=%s", str(e), request.user.pk)
                 messages.error(request, 'Database error. Please contact administrator to run migrations.')
                 return redirect('invoices:admin_invoice_list')
+            except Exception as e:
+                logger.exception("Admin invoice creation failed: user=%s", request.user.pk)
+                messages.error(request, f'Error creating invoice: {str(e)}')
+                return redirect('invoices:admin_invoice_list')
+        else:
+            logger.warning("Admin invoice form invalid: %s, user=%s", form.errors, request.user.pk)
     else:
         form = InvoiceForm(user=request.user)
     

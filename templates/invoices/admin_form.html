@@ -34,6 +34,25 @@
         <i class="bi bi-file-earmark-text"></i> Invoice Details
     </div>
     <div class="card-body">
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <h6 class="mb-2"><i class="bi bi-exclamation-triangle"></i> Form Validation Errors:</h6>
+            <ul class="mb-0">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li><strong>{{ field }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if form.non_field_errors %}
+        <div class="alert alert-warning">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+        
         <form method="post" id="invoiceForm">
             {% csrf_token %}
             
