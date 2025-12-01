@@ -106,7 +106,7 @@ if os.environ.get('PYTHONANYWHERE_DOMAIN'):
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'agnivridhicrm$default',
             'USER': 'agnivridhicrm',
-            'PASSWORD': 'Utkarshisconnecting@121',
+            'PASSWORD': 'agnivridhiconnects@121',
             'HOST': 'agnivridhicrm.mysql.pythonanywhere-services.com',
             'PORT': '3306',
             'OPTIONS': {
