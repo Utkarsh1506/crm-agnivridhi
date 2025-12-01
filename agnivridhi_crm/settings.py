@@ -21,7 +21,16 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-w=1cy8to$#w_@okqkg)^x3c%q=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS',
+    'localhost,127.0.0.1,agnivridhicrm.pythonanywhere.com'
+).split(',')
+
+# Trust CSRF from production domain
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://agnivridhicrm.pythonanywhere.com'
+).split(',')
 
 
 # Application definition
