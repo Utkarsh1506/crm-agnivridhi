@@ -96,21 +96,33 @@ WSGI_APPLICATION = 'agnivridhi_crm.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Hardcoded MySQL settings for PythonAnywhere (no .env required)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'agnivridhicrm$crm',
-        'USER': 'agnivridhicrm',
-        'PASSWORD': 'Utkarshisconnecting@121',
-        'HOST': 'agnivridhicrm.mysql.pythonanywhere-services.com',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-        },
+import os
+
+# Database
+# Use SQLite locally; switch to MySQL on PythonAnywhere.
+if os.environ.get('PYTHONANYWHERE_DOMAIN'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'agnivridhicrm$default',
+            'USER': 'agnivridhicrm$default',
+            'PASSWORD': 'Utkarshisconnecting@121',
+            'HOST': 'agnivridhicrm.mysql.pythonanywhere-services.com',
+            'PORT': '3306',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            },
+        }
     }
-}
+else:
+    BASE_DIR = BASE_DIR  # reuse existing BASE_DIR
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
