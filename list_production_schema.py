@@ -52,14 +52,19 @@ if vendor == 'mysql':
     missing_in_db = model_cols - db_cols
     
     if extra_in_db:
-        print("Extra columns in DATABASE (not in model):")
+        print("⚠️  Extra columns in DATABASE (not in model - OBSOLETE):")
         for col in sorted(extra_in_db):
             print(f"  - {col}")
+        print(f"\nThese {len(extra_in_db)} columns should be removed with migration 0007")
     
     if missing_in_db:
-        print("\nMissing columns in DATABASE (defined in model):")
+        print("\n❌ Missing columns in DATABASE (defined in model):")
         for col in sorted(missing_in_db):
             print(f"  - {col}")
+        print(f"\nRun: python manage.py migrate invoices")
     
     if not extra_in_db and not missing_in_db:
-        print("Schema matches perfectly!")
+        print("✅ Schema matches perfectly!")
+    
+    print(f"\nSummary: {len(db_cols)} DB cols, {len(model_cols)} model fields")
+
