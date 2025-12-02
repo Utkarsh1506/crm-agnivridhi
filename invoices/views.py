@@ -199,7 +199,7 @@ def sales_invoice_pdf(request, pk):
         html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
         
         # Generate PDF
-        pdf_file = HTML(string=html_content, base_url=request.build_absolute_uri('/')).write_pdf()
+        pdf_file = HTML(string=html_content).write_pdf()
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
@@ -347,7 +347,7 @@ def manager_invoice_pdf(request, pk):
         from weasyprint import HTML
         
         html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
-        pdf_file = HTML(string=html_content, base_url=request.build_absolute_uri('/')).write_pdf()
+        pdf_file = HTML(string=html_content).write_pdf()
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
@@ -478,7 +478,7 @@ def admin_invoice_pdf(request, pk):
         from weasyprint import HTML
         
         html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
-        pdf_file = HTML(string=html_content, base_url=request.build_absolute_uri('/')).write_pdf()
+        pdf_file = HTML(string=html_content).write_pdf()
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
