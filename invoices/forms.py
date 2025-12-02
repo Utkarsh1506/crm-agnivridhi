@@ -168,9 +168,12 @@ class InvoiceForm(forms.ModelForm):
         client_pincode = cleaned_data.get('client_pincode')
         client_mobile = cleaned_data.get('client_mobile')
         
-        # Tax Invoice must have existing client
+        # Both Tax Invoice and Proforma can use existing client OR manual entry
+        # Tax Invoice: allow manual entry if no client selected
         if invoice_type == 'tax' and not client:
-            self.add_error('client', 'Tax Invoice requires an existing client selection.')
+            # Only client name is required for manual entry
+            if not client_name:
+                self.add_error('client_name', 'Client name is required when no existing client is selected.')
         
         # Proforma: either existing client OR manual client name (other fields optional)
         if invoice_type == 'proforma' and not client:
