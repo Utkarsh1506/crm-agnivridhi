@@ -193,17 +193,21 @@ def sales_invoice_pdf(request, pk):
     if request.GET.get('download') == '1':
         from django.http import HttpResponse
         from django.template.loader import render_to_string
-        from weasyprint import HTML
-        import tempfile
+        from xhtml2pdf import pisa
+        from io import BytesIO
         
         html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
         
         # Generate PDF
-        pdf_file = HTML(string=html_content).write_pdf()
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html_content.encode('UTF-8')), result)
         
-        response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
-        return response
+        if not pdf.err:
+            response = HttpResponse(result.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
+            return response
+        else:
+            return HttpResponse('Error generating PDF', status=500)
     
     return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
 
@@ -344,14 +348,19 @@ def manager_invoice_pdf(request, pk):
     if request.GET.get('download') == '1':
         from django.http import HttpResponse
         from django.template.loader import render_to_string
-        from weasyprint import HTML
+        from xhtml2pdf import pisa
+        from io import BytesIO
         
         html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
-        pdf_file = HTML(string=html_content).write_pdf()
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html_content.encode('UTF-8')), result)
         
-        response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
-        return response
+        if not pdf.err:
+            response = HttpResponse(result.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
+            return response
+        else:
+            return HttpResponse('Error generating PDF', status=500)
     
     return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
 
@@ -475,13 +484,18 @@ def admin_invoice_pdf(request, pk):
     if request.GET.get('download') == '1':
         from django.http import HttpResponse
         from django.template.loader import render_to_string
-        from weasyprint import HTML
+        from xhtml2pdf import pisa
+        from io import BytesIO
         
         html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
-        pdf_file = HTML(string=html_content).write_pdf()
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html_content.encode('UTF-8')), result)
         
-        response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
-        return response
+        if not pdf.err:
+            response = HttpResponse(result.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
+            return response
+        else:
+            return HttpResponse('Error generating PDF', status=500)
     
     return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
