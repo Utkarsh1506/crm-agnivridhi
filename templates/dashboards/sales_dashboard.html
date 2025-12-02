@@ -2,6 +2,60 @@
 
 {% block title %}Sales Dashboard - Agnivridhi CRM{% endblock %}
 
+{% block mobile_sidebar %}
+<!-- Mobile Sidebar Content (same as desktop) -->
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'accounts:sales_dashboard' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'clients:sales_clients_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-people"></i> My Clients
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'clients:pending_approval_clients' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-clock-history"></i> Pending Approvals
+            {% if pending_clients_count > 0 %}
+            <span class="badge bg-warning text-dark ms-2">{{ pending_clients_count }}</span>
+            {% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'bookings:sales_bookings_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-calendar-check"></i> Total Bookings
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'applications:sales_applications_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-file-earmark-text"></i> My Applications
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'payments:sales_payments_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-credit-card"></i> Payments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'documents:sales_documents_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-file-earmark-pdf"></i> Documents
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'documents:sales_client_uploads_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-upload"></i> Client Uploads
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'invoices:sales_invoice_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-receipt"></i> Invoices & Proformas
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
 {% block sidebar %}
 <nav class="col-md-3 col-lg-2 d-md-block sidebar">
     <div class="position-sticky pt-3">
