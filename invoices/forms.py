@@ -172,20 +172,10 @@ class InvoiceForm(forms.ModelForm):
         if invoice_type == 'tax' and not client:
             self.add_error('client', 'Tax Invoice requires an existing client selection.')
         
-        # Proforma: either existing client OR full manual details
+        # Proforma: either existing client OR manual client name (other fields optional)
         if invoice_type == 'proforma' and not client:
-            # Require full manual client details
+            # Only client name is required for manual entry
             if not client_name:
                 self.add_error('client_name', 'Client name is required for Proforma when no existing client is selected.')
-            if not client_address:
-                self.add_error('client_address', 'Address is required for Proforma.')
-            if not client_city:
-                self.add_error('client_city', 'City is required for Proforma.')
-            if not client_state:
-                self.add_error('client_state', 'State is required for Proforma.')
-            if not client_pincode:
-                self.add_error('client_pincode', 'Pincode is required for Proforma.')
-            if not client_mobile:
-                self.add_error('client_mobile', 'Mobile/Phone is required for Proforma.')
         
         return cleaned_data

@@ -119,31 +119,51 @@ def generate_invoice_pdf(invoice):
     
     # Billing information
     if invoice.client:
+        # Use database client information
         address_parts = []
         if invoice.client.address_line1:
             address_parts.append(invoice.client.address_line1)
         if invoice.client.address_line2:
             address_parts.append(invoice.client.address_line2)
-        address_str = ', '.join(address_parts) if address_parts else '-'
         
-        bill_to = f"<b>{invoice.client.company_name.upper()}</b><br/>" \
-                  f"{invoice.client.contact_person}<br/>" \
-                  f"{address_str}<br/>" \
-                  f"{invoice.client.city}, {invoice.client.state} - {invoice.client.pincode}<br/>" \
-                  f"GSTIN: {invoice.client.gst_number or 'Unregistered'}<br/>" \
-                  f"Contact: {invoice.client.contact_phone}"
+        bill_to = f"<b>{invoice.client.company_name.upper()}</b><br/>"
+        if invoice.client.contact_person:
+            bill_to += f"{invoice.client.contact_person}<br/>"
+        if address_parts:
+            bill_to += f"{', '.join(address_parts)}<br/>"
+        if invoice.client.city or invoice.client.state or invoice.client.pincode:
+            location_parts = []
+            if invoice.client.city:
+                location_parts.append(invoice.client.city)
+            if invoice.client.state:
+                location_parts.append(invoice.client.state)
+            location_str = ', '.join(location_parts)
+            if invoice.client.pincode:
+                location_str += f" - {invoice.client.pincode}"
+            bill_to += f"{location_str}<br/>"
+        if invoice.client.gst_number:
+            bill_to += f"GSTIN: {invoice.client.gst_number}<br/>"
+        if invoice.client.contact_phone:
+            bill_to += f"Contact: {invoice.client.contact_phone}"
     else:
+        # Use manual entry fields
         bill_to = f"<b>{invoice.client_name.upper() if invoice.client_name else 'N/A'}</b><br/>"
         if invoice.client_contact_person:
             bill_to += f"{invoice.client_contact_person}<br/>"
         if invoice.client_address:
             bill_to += f"{invoice.client_address}<br/>"
-        if invoice.client_city or invoice.client_state:
-            bill_to += f"{invoice.client_city or ''}, {invoice.client_state or ''}"
+        if invoice.client_city or invoice.client_state or invoice.client_pincode:
+            location_parts = []
+            if invoice.client_city:
+                location_parts.append(invoice.client_city)
+            if invoice.client_state:
+                location_parts.append(invoice.client_state)
+            location_str = ', '.join(location_parts)
             if invoice.client_pincode:
-                bill_to += f" - {invoice.client_pincode}"
-            bill_to += "<br/>"
-        bill_to += f"GSTIN: {invoice.client_gstin or 'Unregistered'}<br/>"
+                location_str += f" - {invoice.client_pincode}"
+            bill_to += f"{location_str}<br/>"
+        if invoice.client_gstin:
+            bill_to += f"GSTIN: {invoice.client_gstin}<br/>"
         if invoice.client_mobile:
             bill_to += f"Contact: {invoice.client_mobile}"
     
@@ -152,8 +172,7 @@ def generate_invoice_pdf(invoice):
                 "Chhaprauli Bengar, Gautam Buddha Nagar<br/>" \
                 "Dadri, Uttar Pradesh - 201304, India<br/>" \
                 "GSTIN: 09ABCCA3869R1ZU<br/>" \
-                "Email: account@agnivridhiindia.com<br/>" \
-                "Phone: +91 92895 55190"
+                "Email: account@agnivridhiindia.com"
     
     billing_data = [[
         Paragraph("<b>BILLED TO</b><br/><br/>" + bill_to, styles['Normal']),
