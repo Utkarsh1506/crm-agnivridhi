@@ -132,8 +132,8 @@ def generate_invoice_pdf(invoice):
                   f"{invoice.client.contact_person}<br/>" \
                   f"{address_str}<br/>" \
                   f"{invoice.client.city}, {invoice.client.state} - {invoice.client.pincode}<br/>" \
-                  f"GSTIN: {invoice.client.gstin or 'Unregistered'}<br/>" \
-                  f"Contact: {invoice.client.mobile}"
+                  f"GSTIN: {invoice.client.gst_number or 'Unregistered'}<br/>" \
+                  f"Contact: {invoice.client.contact_phone}"
     else:
         bill_to = f"<b>{invoice.client_name.upper() if invoice.client_name else 'N/A'}</b><br/>"
         if invoice.client_contact_person:
