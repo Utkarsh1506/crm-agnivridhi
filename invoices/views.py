@@ -196,7 +196,7 @@ def sales_invoice_pdf(request, pk):
         from xhtml2pdf import pisa
         from io import BytesIO
         
-        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
+        html_content = render_to_string('invoices/invoice_pdf_print.html', {'invoice': invoice, 'request': request})
         
         # Generate PDF
         result = BytesIO()
@@ -351,13 +351,13 @@ def manager_invoice_pdf(request, pk):
         from xhtml2pdf import pisa
         from io import BytesIO
         
-        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
+        html_content = render_to_string('invoices/invoice_pdf_print.html', {'invoice': invoice, 'request': request})
         result = BytesIO()
         pdf = pisa.pisaDocument(BytesIO(html_content.encode('UTF-8')), result)
         
         if not pdf.err:
             response = HttpResponse(result.getvalue(), content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
+            response['Content-Disposition'] = f'attachment; filename=\"{invoice.invoice_number}.pdf\"'
             return response
         else:
             return HttpResponse('Error generating PDF', status=500)
@@ -487,13 +487,13 @@ def admin_invoice_pdf(request, pk):
         from xhtml2pdf import pisa
         from io import BytesIO
         
-        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
+        html_content = render_to_string('invoices/invoice_pdf_print.html', {'invoice': invoice, 'request': request})
         result = BytesIO()
         pdf = pisa.pisaDocument(BytesIO(html_content.encode('UTF-8')), result)
         
         if not pdf.err:
             response = HttpResponse(result.getvalue(), content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
+            response['Content-Disposition'] = f'attachment; filename=\"{invoice.invoice_number}.pdf\"'
             return response
         else:
             return HttpResponse('Error generating PDF', status=500)

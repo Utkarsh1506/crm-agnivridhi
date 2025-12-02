@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ invoice.invoice_number }}</title>
+    <style>
+        @page {
+            margin: 1cm;
+            size: A4;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 10px;
+            font-size: 11px;
+            color: #000;
+        }
+        .watermark {
+            position: absolute;
+            top: 40%;
+            left: 20%;
+            font-size: 80px;
+            font-weight: bold;
+            color: rgba(200, 200, 200, 0.3);
+            transform: rotate(-45deg);
+            z-index: -1;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+        }
+        .company-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #000;
+            margin: 5px 0;
+            letter-spacing: 1px;
+        }
+        .company-tagline {
+            font-size: 10px;
+            color: #666;
+            margin: 3px 0;
+        }
+        .company-contact {
+            font-size: 9px;
+            color: #444;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .invoice-type {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            {% if invoice.invoice_type == 'proforma' %}
+            color: #0066cc;
+            {% else %}
+            color: #006600;
+            {% endif %}
+        }
+        .invoice-meta table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .invoice-meta td {
+            padding: 5px;
+            border: 1px solid #333;
+            font-size: 10px;
+        }
+        .invoice-meta td:nth-child(odd) {
+            background: #f0f0f0;
+            font-weight: bold;
+            width: 25%;
+        }
+        .info-section {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .info-box {
+            width: 48%;
+            display: inline-block;
+            vertical-align: top;
+            border: 1px solid #333;
+            padding: 8px;
+            min-height: 80px;
+            margin-right: 1%;
+        }
+        .info-box h4 {
+            margin: 0 0 5px 0;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #000;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 3px;
+        }
+        .info-box p {
+            margin: 2px 0;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        table.items th {
+            background: #000;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: bold;
+            border: 1px solid #000;
+        }
+        table.items td {
+            padding: 8px;
+            border: 1px solid #333;
+            font-size: 10px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .totals-section {
+            float: right;
+            width: 45%;
+            margin-top: 10px;
+        }
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .totals-table td {
+            padding: 5px 8px;
+            border: 1px solid #333;
+            font-size: 10px;
+        }
+        .totals-table td:first-child {
+            font-weight: bold;
+            background: #f5f5f5;
+        }
+        .total-row td {
+            font-weight: bold;
+            font-size: 11px;
+            background: #000 !important;
+            color: white !important;
+        }
+        .notes-section {
+            clear: both;
+            margin-top: 25px;
+            padding: 10px;
+            border: 1px dashed #999;
+            background: #fffef5;
+        }
+        .notes-section h4 {
+            margin: 0 0 5px 0;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .stamp-section {
+            text-align: right;
+            margin-top: 40px;
+        }
+        .stamp-box {
+            display: inline-block;
+            text-align: center;
+        }
+        .stamp-box p {
+            margin: 5px 0;
+            font-size: 10px;
+        }
+        .stamp-box .company {
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .footer {
+            margin-top: 25px;
+            padding-top: 12px;
+            border-top: 2px solid #000;
+            text-align: center;
+            font-size: 9px;
+            color: #666;
+        }
+        .footer p {
+            margin: 2px 0;
+        }
+        .disclaimer {
+            margin-top: 15px;
+            padding: 8px;
+            background: #f9f9f9;
+            border-left: 4px solid #ffc107;
+            font-size: 9px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- Watermark -->
+    <div class="watermark">Agnivridhi India</div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1 class="company-name">AGNIVRIDHI INDIA</h1>
+        <p class="company-tagline">Business Consultancy &amp; Advisory Services</p>
+        <div class="company-contact">
+            A-116, Urbtech Trade Centre, Sector-132, Chhaprauli Bengar<br>
+            Gautam Buddha Nagar, Dadri, Uttar Pradesh - 201304, India<br>
+            Email: account@agnivridhiindia.com | Phone: +91 92895 55190<br>
+            GSTIN: 09ABCCA3869R1ZU | PAN: ABCCA3869R | CIN: U70200UP2025PTC218739
+        </div>
+    </div>
+
+    <!-- Invoice Type -->
+    <div class="invoice-type">
+        {% if invoice.invoice_type == 'proforma' %}
+        PROFORMA INVOICE
+        {% else %}
+        TAX INVOICE
+        {% endif %}
+    </div>
+
+    <!-- Invoice Meta Info -->
+    <div class="invoice-meta">
+        <table>
+            <tr>
+                <td>Invoice No #</td>
+                <td><strong>{{ invoice.invoice_number }}</strong></td>
+                <td>Invoice Date</td>
+                <td><strong>{{ invoice.issue_date|date:"d M Y" }}</strong></td>
+            </tr>
+            <tr>
+                <td>Page</td>
+                <td>1 of 1</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Bill To / Bill From -->
+    <div class="info-section">
+        <div class="info-box">
+            <h4>Billed To</h4>
+            {% if invoice.client %}
+            <p><strong>{{ invoice.client.company_name|upper }}</strong></p>
+            <p>{{ invoice.client.contact_person }}</p>
+            <p>{{ invoice.client.address|default:"-" }}</p>
+            <p>{{ invoice.client.city }}, {{ invoice.client.state }} - {{ invoice.client.pincode }}</p>
+            <p>GSTIN: {{ invoice.client.gstin|default:"Unregistered" }}</p>
+            <p>Contact: {{ invoice.client.mobile }}</p>
+            {% else %}
+                <p><strong>{{ invoice.client_name|upper|default:"N/A" }}</strong></p>
+                {% if invoice.client_contact_person %}<p>{{ invoice.client_contact_person }}</p>{% endif %}
+                {% if invoice.client_address %}<p>{{ invoice.client_address }}</p>{% endif %}
+                {% if invoice.client_city or invoice.client_state or invoice.client_pincode %}
+                <p>{{ invoice.client_city }}{% if invoice.client_city and invoice.client_state %}, {% endif %}{{ invoice.client_state }}{% if invoice.client_pincode %} - {{ invoice.client_pincode }}{% endif %}</p>
+                {% endif %}
+                <p>GSTIN: {{ invoice.client_gstin|default:"Unregistered" }}</p>
+                {% if invoice.client_mobile %}<p>Contact: {{ invoice.client_mobile }}</p>{% endif %}
+            {% endif %}
+        </div><!--
+        --><div class="info-box">
+            <h4>Billed From</h4>
+            <p><strong>AGNIVRIDHI INDIA</strong></p>
+            <p>A-116, Urbtech Trade Centre, Sector-132</p>
+            <p>Chhaprauli Bengar, Gautam Buddha Nagar</p>
+            <p>Dadri, Uttar Pradesh - 201304, India</p>
+            <p>GSTIN: 09ABCCA3869R1ZU</p>
+            <p>Email: account@agnivridhiindia.com</p>
+            <p>Phone: +91 92895 55190</p>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <table class="items">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 40%;">Description</th>
+                <th style="width: 12%;" class="text-center">HSN/SAC</th>
+                <th style="width: 8%;" class="text-right">Qty</th>
+                <th style="width: 15%;" class="text-right">Rate (Rs.)</th>
+                <th style="width: 20%;" class="text-right">Amount (Rs.)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="text-center">1</td>
+                <td>{{ invoice.item_description }}</td>
+                <td class="text-center">{{ invoice.hsn_sac }}</td>
+                <td class="text-right">{{ invoice.quantity|floatformat:0 }}</td>
+                <td class="text-right">{{ invoice.rate|floatformat:2 }}</td>
+                <td class="text-right"><strong>{{ invoice.taxable_amount|floatformat:2 }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Totals Section -->
+    <div class="totals-section">
+        <table class="totals-table">
+            <tr>
+                <td>Taxable Amount:</td>
+                <td class="text-right">Rs. {{ invoice.taxable_amount|floatformat:2 }}</td>
+            </tr>
+            {% if invoice.cgst_amount > 0 %}
+            <tr>
+                <td>CGST @ {{ invoice.gst_rate|floatformat:1 }}%:</td>
+                <td class="text-right">Rs. {{ invoice.cgst_amount|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>SGST @ {{ invoice.gst_rate|floatformat:1 }}%:</td>
+                <td class="text-right">Rs. {{ invoice.sgst_amount|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if invoice.igst_amount > 0 %}
+            <tr>
+                <td>IGST @ {{ invoice.gst_rate|floatformat:0 }}%:</td>
+                <td class="text-right">Rs. {{ invoice.igst_amount|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-row">
+                <td>Total Amount:</td>
+                <td class="text-right">Rs. {{ invoice.total_amount|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Notes -->
+    {% if invoice.notes %}
+    <div class="notes-section">
+        <h4>Additional Notes:</h4>
+        <p>{{ invoice.notes|linebreaks }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Company Stamp (Tax Invoice Only) -->
+    {% if invoice.invoice_type == 'tax' %}
+    <div class="stamp-section">
+        <div class="stamp-box">
+            <p class="company">For AGNIVRIDHI INDIA</p>
+            <p style="margin-top: 30px;">_______________________</p>
+            <p>Authorized Signatory</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Disclaimer for Proforma -->
+    {% if invoice.invoice_type == 'proforma' %}
+    <div class="disclaimer">
+        <strong>Note:</strong> This is a Proforma Invoice issued for estimation and documentation purposes only. 
+        It is not a demand for payment and is subject to change at the time of final Tax Invoice.
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>This is an electronically generated document, no signature is required.</strong></p>
+        <p>Terms &amp; Conditions: Payment due within 15 days. 
+        All disputes subject to jurisdiction of courts in Noida.</p>
+        <p>Thank you for your business!</p>
+    </div>
+</body>
+</html>
