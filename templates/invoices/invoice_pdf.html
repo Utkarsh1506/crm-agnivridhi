@@ -23,21 +23,16 @@
             position: relative;
         }
         body::before {
-            content: "";
+            content: "Agnivridhi India";
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 120px;
+            font-size: 100px;
             font-weight: bold;
-            color: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.06);
             z-index: -1;
             white-space: nowrap;
-            {% if invoice.invoice_type == 'proforma' %}
-            content: "PROFORMA";
-            {% else %}
-            content: "ORIGINAL";
-            {% endif %}
         }
         @media screen and (max-width: 768px) {
             body {
