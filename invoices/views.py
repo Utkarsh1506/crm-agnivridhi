@@ -192,22 +192,14 @@ def sales_invoice_pdf(request, pk):
     # Check if download requested
     if request.GET.get('download') == '1':
         from django.http import HttpResponse
-        from django.template.loader import render_to_string
-        from xhtml2pdf import pisa
-        from io import BytesIO
+        from .pdf_utils import generate_invoice_pdf
         
-        html_content = render_to_string('invoices/invoice_pdf_print.html', {'invoice': invoice, 'request': request})
+        # Generate PDF using ReportLab
+        pdf_buffer = generate_invoice_pdf(invoice)
         
-        # Generate PDF
-        result = BytesIO()
-        pdf = pisa.pisaDocument(BytesIO(html_content.encode('UTF-8')), result)
-        
-        if not pdf.err:
-            response = HttpResponse(result.getvalue(), content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
-            return response
-        else:
-            return HttpResponse('Error generating PDF', status=500)
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
+        return response
     
     return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
 
@@ -347,27 +339,13 @@ def manager_invoice_pdf(request, pk):
     
     if request.GET.get('download') == '1':
         from django.http import HttpResponse
-        from django.template.loader import render_to_string
-        from xhtml2pdf import pisa
-        from io import BytesIO
+        from .pdf_utils import generate_invoice_pdf
         
-        html_content = render_to_string('invoices/invoice_pdf_print.html', {'invoice': invoice, 'request': request})
-        result = BytesIO()
-        pdf = pisa.pisaDocument(BytesIO(html_content.encode('UTF-8')), result)
+        pdf_buffer = generate_invoice_pdf(invoice)
         
-        if not pdf.err:
-            response = HttpResponse(result.getvalue(), content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename=\"{invoice.invoice_number}.pdf\"'
-            return response
-        else:
-            return HttpResponse('Error generating PDF', status=500)
-    
-    return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
-
-
-# ============= ADMIN/OWNER VIEWS =============
-
-@admin_required
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
+        return response
 def admin_invoice_list(request):
     """Admin/Owner invoice list with logging"""
     from django.db import connection
