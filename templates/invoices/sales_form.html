@@ -200,34 +200,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toggle client field based on invoice type
     function toggleClientField() {
         const type = typeField?.value;
-        if (type === 'proforma') {
-            clientSelect.style.display = 'block';
-            clientName.style.display = 'block';
-                clientDetails1.style.display = 'block';
-                clientDetails2.style.display = 'block';
-                clientDetails3.style.display = 'block';
-            clientReq.textContent = '';
-            // Set required attributes for manual fields
-            document.querySelector('[name="client_name"]').required = true;
-            document.querySelector('[name="client_address"]').required = true;
-            document.querySelector('[name="client_city"]').required = true;
-            document.querySelector('[name="client_state"]').required = true;
-            document.querySelector('[name="client_pincode"]').required = true;
-            document.querySelector('[name="client_mobile"]').required = true;
-            // Existing client not required
-            document.querySelector('[name="client"]').required = false;
-        } else {
-            clientSelect.style.display = 'block';
-            clientName.style.display = 'none';
-                clientDetails1.style.display = 'none';
-                clientDetails2.style.display = 'none';
-                clientDetails3.style.display = 'none';
-            clientReq.textContent = '*';
-            // Remove required on manual fields, require existing client
-            const manualFields = ['client_name','client_address','client_city','client_state','client_pincode','client_mobile'];
-            manualFields.forEach(n => { const el = document.querySelector(`[name="${n}"]`); if (el) el.required = false; });
-            document.querySelector('[name="client"]').required = true;
-        }
+        // Show manual client fields for both tax and proforma
+        clientSelect.style.display = 'block';
+        clientName.style.display = 'block';
+        clientDetails1.style.display = 'block';
+        clientDetails2.style.display = 'block';
+        clientDetails3.style.display = 'block';
+        clientReq.textContent = '';
+        // Manual fields are optional, client selection is also optional
+        const manualFields = ['client_name','client_address','client_city','client_state','client_pincode','client_mobile'];
+        manualFields.forEach(n => { const el = document.querySelector(`[name="${n}"]`); if (el) el.required = false; });
+        document.querySelector('[name="client"]').required = false;
     }
     
     typeField?.addEventListener('change', toggleClientField);
