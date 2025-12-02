@@ -20,7 +20,6 @@ class NumberedCanvas(canvas.Canvas):
         canvas.Canvas.__init__(self, *args, **kwargs)
 
     def showPage(self):
-        self.save_state()
         # Add watermark
         self.setFont('Helvetica-Bold', 80)
         self.setFillColorRGB(0.9, 0.9, 0.9, alpha=0.3)
@@ -29,7 +28,6 @@ class NumberedCanvas(canvas.Canvas):
         self.rotate(45)
         self.drawCentredString(0, 0, self.watermark_text)
         self.restoreState()
-        self.restore_state()
         canvas.Canvas.showPage(self)
 
 
