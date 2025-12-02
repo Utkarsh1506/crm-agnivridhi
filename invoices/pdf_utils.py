@@ -84,7 +84,7 @@ def generate_invoice_pdf(invoice):
     elements.append(Paragraph(
         "A-116, Urbtech Trade Centre, Sector-132, Chhaprauli Bengar<br/>"
         "Gautam Buddha Nagar, Dadri, Uttar Pradesh - 201304, India<br/>"
-        "Email: account@agnivridhiindia.com | Phone: +91 92895 55190<br/>"
+        "Email: account@agnivridhiindia.com<br/>"
         "GSTIN: 09ABCCA3869R1ZU | PAN: ABCCA3869R | CIN: U70200UP2025PTC218739",
         company_style
     ))
