@@ -121,9 +121,16 @@ def generate_invoice_pdf(invoice):
     
     # Billing information
     if invoice.client:
+        address_parts = []
+        if invoice.client.address_line1:
+            address_parts.append(invoice.client.address_line1)
+        if invoice.client.address_line2:
+            address_parts.append(invoice.client.address_line2)
+        address_str = ', '.join(address_parts) if address_parts else '-'
+        
         bill_to = f"<b>{invoice.client.company_name.upper()}</b><br/>" \
                   f"{invoice.client.contact_person}<br/>" \
-                  f"{invoice.client.address or '-'}<br/>" \
+                  f"{address_str}<br/>" \
                   f"{invoice.client.city}, {invoice.client.state} - {invoice.client.pincode}<br/>" \
                   f"GSTIN: {invoice.client.gstin or 'Unregistered'}<br/>" \
                   f"Contact: {invoice.client.mobile}"
