@@ -261,7 +261,7 @@
         <div class="company-contact">
             A-116, Urbtech Trade Centre, Sector-132, Chhaprauli Bengar<br>
             Gautam Buddha Nagar, Dadri, Uttar Pradesh - 201304, India<br>
-            Email: account@agnivridhiindia.com | Phone: +91 92895 55190<br>
+            Email: account@agnivridhiindia.com<br>
             GSTIN: 09ABCCA3869R1ZU | PAN: ABCCA3869R | CIN: U70200UP2025PTC218739
         </div>
     </div>
@@ -298,13 +298,17 @@
         <div class="info-col">
             <div class="info-box">
                 <h4>Billed To</h4>
-                {% if invoice.client %}
+                {% if invoice.client and invoice.client.pk %}
                 <p><strong>{{ invoice.client.company_name|upper }}</strong></p>
-                <p>{{ invoice.client.contact_person }}</p>
-                <p>{{ invoice.client.address|default:"-" }}</p>
-                <p>{{ invoice.client.city }}, {{ invoice.client.state }} - {{ invoice.client.pincode }}</p>
-                <p>GSTIN: {{ invoice.client.gstin|default:"Unregistered" }}</p>
-                <p>Contact: {{ invoice.client.mobile }}</p>
+                {% if invoice.client.contact_person %}<p>{{ invoice.client.contact_person }}</p>{% endif %}
+                {% if invoice.client.address_line1 or invoice.client.address_line2 %}
+                <p>{{ invoice.client.address_line1 }}{% if invoice.client.address_line1 and invoice.client.address_line2 %}, {% endif %}{{ invoice.client.address_line2 }}</p>
+                {% endif %}
+                {% if invoice.client.city or invoice.client.state or invoice.client.pincode %}
+                <p>{{ invoice.client.city }}{% if invoice.client.city and invoice.client.state %}, {% endif %}{{ invoice.client.state }}{% if invoice.client.pincode %} - {{ invoice.client.pincode }}{% endif %}</p>
+                {% endif %}
+                {% if invoice.client.gst_number %}<p>GSTIN: {{ invoice.client.gst_number }}</p>{% endif %}
+                {% if invoice.client.contact_phone %}<p>Contact: {{ invoice.client.contact_phone }}</p>{% endif %}
                 {% else %}
                     <p><strong>{{ invoice.client_name|upper|default:"N/A" }}</strong></p>
                     {% if invoice.client_contact_person %}<p>{{ invoice.client_contact_person }}</p>{% endif %}
@@ -312,7 +316,7 @@
                     {% if invoice.client_city or invoice.client_state or invoice.client_pincode %}
                     <p>{{ invoice.client_city }}{% if invoice.client_city and invoice.client_state %}, {% endif %}{{ invoice.client_state }}{% if invoice.client_pincode %} - {{ invoice.client_pincode }}{% endif %}</p>
                     {% endif %}
-                    <p>GSTIN: {{ invoice.client_gstin|default:"Unregistered" }}</p>
+                    {% if invoice.client_gstin %}<p>GSTIN: {{ invoice.client_gstin }}</p>{% endif %}
                     {% if invoice.client_mobile %}<p>Contact: {{ invoice.client_mobile }}</p>{% endif %}
                 {% endif %}
             </div>
@@ -326,7 +330,6 @@
                 <p>Dadri, Uttar Pradesh - 201304, India</p>
                 <p>GSTIN: 09ABCCA3869R1ZU</p>
                 <p>Email: account@agnivridhiindia.com</p>
-                <p>Phone: +91 92895 55190</p>
             </div>
         </div>
     </div>
