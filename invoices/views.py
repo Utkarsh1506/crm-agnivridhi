@@ -193,11 +193,16 @@ def sales_invoice_pdf(request, pk):
     if request.GET.get('download') == '1':
         from django.http import HttpResponse
         from django.template.loader import render_to_string
+        from weasyprint import HTML
+        import tempfile
         
-        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice})
+        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
         
-        response = HttpResponse(html_content, content_type='text/html')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.html"'
+        # Generate PDF
+        pdf_file = HTML(string=html_content, base_url=request.build_absolute_uri('/')).write_pdf()
+        
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
         return response
     
     return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
@@ -339,10 +344,13 @@ def manager_invoice_pdf(request, pk):
     if request.GET.get('download') == '1':
         from django.http import HttpResponse
         from django.template.loader import render_to_string
+        from weasyprint import HTML
         
-        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice})
-        response = HttpResponse(html_content, content_type='text/html')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.html"'
+        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
+        pdf_file = HTML(string=html_content, base_url=request.build_absolute_uri('/')).write_pdf()
+        
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
         return response
     
     return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
@@ -467,10 +475,13 @@ def admin_invoice_pdf(request, pk):
     if request.GET.get('download') == '1':
         from django.http import HttpResponse
         from django.template.loader import render_to_string
+        from weasyprint import HTML
         
-        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice})
-        response = HttpResponse(html_content, content_type='text/html')
-        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.html"'
+        html_content = render_to_string('invoices/invoice_pdf.html', {'invoice': invoice, 'request': request})
+        pdf_file = HTML(string=html_content, base_url=request.build_absolute_uri('/')).write_pdf()
+        
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
         return response
     
     return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
