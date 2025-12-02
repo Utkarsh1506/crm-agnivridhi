@@ -118,7 +118,8 @@ def generate_invoice_pdf(invoice):
     elements.append(Spacer(1, 5*mm))
     
     # Billing information
-    if invoice.client:
+    # Prioritize existing client, but fall back to manual entry if client not selected
+    if invoice.client and invoice.client.pk:
         # Use database client information
         address_parts = []
         if invoice.client.address_line1:
