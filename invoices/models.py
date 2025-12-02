@@ -32,7 +32,7 @@ class Invoice(models.Model):
     due_date = models.DateField(null=True, blank=True)
     
     # Item Details
-    item_description = models.CharField(max_length=500)
+    item_description = models.TextField(help_text="Description of services/products")
     hsn_sac = models.CharField(max_length=20, blank=True, default='998314')
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('1.00'))
     rate = models.DecimalField(max_digits=10, decimal_places=2, help_text="Rate per unit")

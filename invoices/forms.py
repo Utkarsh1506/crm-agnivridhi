@@ -109,9 +109,10 @@ class InvoiceForm(forms.ModelForm):
             'client': forms.Select(attrs={'class': 'form-select'}),
             'issue_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'due_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'item_description': forms.TextInput(attrs={
+            'item_description': forms.Textarea(attrs={
                 'class': 'form-control', 
-                'placeholder': 'Professional Consultancy Services'
+                'rows': 3,
+                'placeholder': 'Enter detailed description of services/products...'
             }),
             'hsn_sac': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '998314'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'value': '1'}),
