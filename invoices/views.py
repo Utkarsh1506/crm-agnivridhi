@@ -239,7 +239,7 @@ def manager_invoice_list(request):
             django_models.Q(created_by=request.user),
             is_approved=True
         ).distinct().order_by('company_name')
-        team_sales_rel = getattr(request.user, 'managed_sales', None)
+        team_sales_rel = getattr(request.user, 'team_members', None)
         team_sales = team_sales_rel.all() if team_sales_rel else []
         invoices = Invoice.objects.filter(
             django_models.Q(created_by=request.user) |
@@ -330,7 +330,7 @@ def manager_invoice_create(request):
 def manager_invoice_pdf(request, pk):
     """Manager view invoice PDF"""
     from django.db import models as django_models
-    team_sales = request.user.managed_sales.all()
+    team_sales = request.user.team_members.all()
     invoice = get_object_or_404(
         Invoice,
         django_models.Q(created_by=request.user) | django_models.Q(created_by__in=team_sales),
