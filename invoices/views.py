@@ -346,6 +346,8 @@ def manager_invoice_pdf(request, pk):
         response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
         return response
+    
+    return render(request, 'invoices/invoice_pdf.html', {'invoice': invoice})
 def admin_invoice_list(request):
     """Admin/Owner invoice list with logging"""
     from django.db import connection
