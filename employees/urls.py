@@ -31,6 +31,11 @@ urlpatterns = [
         name='employee_detail'
     ),
     path(
+        '<int:pk>/edit/',
+        views.employee_edit_view,
+        name='employee_edit'
+    ),
+    path(
         '<int:pk>/status-toggle/',
         views.employee_status_toggle_view,
         name='employee_status_toggle'

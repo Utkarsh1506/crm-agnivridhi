@@ -139,6 +139,42 @@ def employee_detail_view(request, pk):
 
 @login_required(login_url='accounts:login')
 @role_required('SUPERUSER', 'OWNER', 'ADMIN')
+def employee_edit_view(request, pk):
+    """
+    Edit employee details (Name, Designation, Department, DOJ, Photo).
+    Admin/Owner only.
+    """
+    employee = get_object_or_404(Employee, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            employee.full_name = request.POST.get('full_name', '').strip()
+            employee.designation = request.POST.get('designation', '').strip()
+            employee.department = request.POST.get('department', '').strip()
+            employee.date_of_joining = request.POST.get('date_of_joining', employee.date_of_joining)
+            
+            # Update photo if provided
+            if 'employee_photo' in request.FILES:
+                employee.employee_photo = request.FILES['employee_photo']
+            
+            # Validate
+            if not all([employee.full_name, employee.designation, employee.department]):
+                messages.error(request, 'Name, Designation, and Department are required.')
+                return render(request, 'employees/employee_form.html', {'employee': employee, 'editing': True})
+            
+            employee.save()
+            messages.success(request, f'Employee {employee.employee_id} updated successfully!')
+            return redirect('employees:employee_detail', pk=employee.pk)
+        
+        except Exception as e:
+            logger.error(f"Error editing employee {pk}: {str(e)}")
+            messages.error(request, f'Error updating employee: {str(e)}')
+    
+    return render(request, 'employees/employee_form.html', {'employee': employee, 'editing': True})
+
+
+@login_required(login_url='accounts:login')
+@role_required('SUPERUSER', 'OWNER', 'ADMIN')
 @require_http_methods(['POST'])
 def employee_status_toggle_view(request, pk):
     """
