@@ -19,7 +19,7 @@ Pillow==10.1.0
 reportlab==3.6.13  # Compatible with xhtml2pdf 0.2.11 (requires <4)
 num2words==0.5.13
 qrcode==7.4.2  # QR code generation
-python-barcode==1.0.1  # Barcode generation
+python-barcode==0.16.1  # Barcode generation (latest available)
 
 # Payment Gateway
 razorpay==1.4.1
