@@ -28,10 +28,10 @@ class EmployeeBarcodeGenerator:
         """
         try:
             # Create Code128 barcode
+            # Older python-barcode versions on the server don't support add_checksum
             code128 = barcode.Code128(
                 employee_id,
-                writer=ImageWriter(),
-                add_checksum=False
+                writer=ImageWriter()
             )
             
             # Generate image

@@ -36,23 +36,19 @@ def assign_employee_id_and_token(sender, instance, **kwargs):
 def generate_employee_barcode(sender, instance, created, **kwargs):
     """
     Signal handler to generate barcode after employee is saved.
-    
-    Runs AFTER save, so employee_id is guaranteed to exist.
-    Uses post_save hook to ensure database commit before file generation.
+    Also backfills barcode if missing on existing records.
     """
-    if created:  # Only for new employees
+    # Generate if new OR if barcode missing (backfill old rows)
+    if created or not instance.barcode:
         try:
-            # Generate barcode with employee ID
             barcode_filename = f"{instance.employee_id}_barcode.png"
             barcode_content_file = EmployeeBarcodeGenerator.generate_barcode(
                 instance.employee_id
             )
-            
-            # Save barcode to employee record
-            instance.barcode.save(barcode_filename, barcode_content_file, save=True)
+            # Save file without triggering full save recursion
+            instance.barcode.save(barcode_filename, barcode_content_file, save=False)
+            instance.save(update_fields=["barcode"])
             logger.info(f"Generated barcode for employee {instance.employee_id}")
-        
         except Exception as e:
             logger.error(f"Failed to generate barcode for {instance.employee_id}: {str(e)}")
-            # Don't raise - allow employee creation even if barcode generation fails
-            # Barcode can be regenerated later via admin action
+            # Do not block the save
