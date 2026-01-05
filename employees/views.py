@@ -131,7 +131,7 @@ def employee_detail_view(request, pk):
     
     context = {
         'employee': employee,
-        'qr_url': employee.qr_code.url if employee.qr_code else None,
+        'barcode_url': employee.barcode.url if employee.barcode else None,
     }
     
     return render(request, 'employees/employee_detail.html', context)
