@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Employee Verification - Agnivridhi{% endblock %}
+
+{% block content %}
+<div class="employee-verification-container">
+    <!-- Company Header -->
+    <div class="verification-header">
+        <div class="company-branding">
+            <h1>Agnivridhi India</h1>
+            <p class="tagline">Employee Verification System</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="verification-card">
+        <!-- Status Alert -->
+        {% if not is_active %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>⚠️ INACTIVE EMPLOYEE</strong>
+            <p class="mb-0">This employee is no longer associated with Agnivridhi.</p>
+        </div>
+        {% else %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✓ ACTIVE EMPLOYEE</strong>
+            <p class="mb-0">This employee is currently associated with Agnivridhi.</p>
+        </div>
+        {% endif %}
+
+        <!-- Employee Details -->
+        <div class="employee-profile">
+            <!-- Photo -->
+            <div class="profile-photo-container">
+                {% if employee.employee_photo %}
+                    <img src="{{ employee.employee_photo.url }}" 
+                         alt="{{ employee.full_name }}" 
+                         class="profile-photo">
+                {% else %}
+                    <div class="profile-photo-placeholder">
+                        <span class="placeholder-text">Photo</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Information Grid -->
+            <div class="employee-info">
+                <div class="info-row">
+                    <label>Full Name:</label>
+                    <span class="info-value">{{ employee.full_name }}</span>
+                </div>
+
+                <div class="info-row">
+                    <label>Employee ID:</label>
+                    <span class="info-value employee-id">{{ employee.employee_id }}</span>
+                </div>
+
+                <div class="info-row">
+                    <label>Designation:</label>
+                    <span class="info-value">{{ employee.designation }}</span>
+                </div>
+
+                <div class="info-row">
+                    <label>Department:</label>
+                    <span class="info-value">{{ employee.department }}</span>
+                </div>
+
+                <div class="info-row">
+                    <label>Status:</label>
+                    <span class="info-value status-{{ verification_status|lower }}">
+                        {{ verification_status }}
+                    </span>
+                </div>
+
+                <div class="info-row">
+                    <label>Date of Joining:</label>
+                    <span class="info-value">{{ employee.date_of_joining|date:"d M Y" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Signature -->
+        <div class="verification-footer">
+            <p class="verification-text">
+                This employee information has been verified by Agnivridhi.
+            </p>
+            <p class="verification-time">
+                Verification at: <strong>{{ "now"|date:"d M Y, H:i" }}</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- Company Footer -->
+    <div class="verification-company-footer">
+        <p>© 2024-2025 Agnivridhi India. All rights reserved.</p>
+        <p>Employee Verification System</p>
+    </div>
+</div>
+
+<style>
+.employee-verification-container {
+    max-width: 600px;
+    margin: 40px auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.verification-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+}
+
+.verification-header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.verification-header .tagline {
+    margin: 5px 0 0 0;
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+.verification-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alert {
+    margin-bottom: 25px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.employee-profile {
+    display: flex;
+    gap: 30px;
+    margin: 25px 0;
+}
+
+.profile-photo-container {
+    flex-shrink: 0;
+}
+
+.profile-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 8px;
+    border: 3px solid #667eea;
+    object-fit: cover;
+}
+
+.profile-photo-placeholder {
+    width: 150px;
+    height: 150px;
+    background: #f0f0f0;
+    border: 3px dashed #ccc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-weight: bold;
+}
+
+.employee-info {
+    flex-grow: 1;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row label {
+    font-weight: 600;
+    color: #333;
+    min-width: 140px;
+}
+
+.info-value {
+    text-align: right;
+    color: #666;
+}
+
+.info-value.employee-id {
+    font-weight: bold;
+    color: #667eea;
+    font-size: 1.1rem;
+}
+
+.status-active {
+    color: #28a745;
+    font-weight: bold;
+    background: #e8f5e9;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.status-inactive {
+    color: #dc3545;
+    font-weight: bold;
+    background: #ffebee;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.verification-footer {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.verification-text {
+    margin: 0 0 10px 0;
+    font-style: italic;
+}
+
+.verification-time {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.verification-company-footer {
+    text-align: center;
+    margin-top: 30px;
+    color: #999;
+    font-size: 0.85rem;
+}
+
+.verification-company-footer p {
+    margin: 5px 0;
+}
+
+@media (max-width: 600px) {
+    .employee-verification-container {
+        margin: 20px 10px;
+    }
+
+    .verification-card {
+        padding: 20px;
+    }
+
+    .employee-profile {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .profile-photo,
+    .profile-photo-placeholder {
+        width: 120px;
+        height: 120px;
+    }
+
+    .employee-info {
+        width: 100%;
+    }
+
+    .info-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .info-value {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}

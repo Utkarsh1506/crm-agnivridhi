@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if employee %}Edit{% else %}Create{% endif %} Employee - Agnivridhi CRM{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 800px;">
+    <h1 class="mb-4">
+        {% if employee %}
+            Edit Employee: {{ employee.full_name }}
+        {% else %}
+            Create New Employee
+        {% endif %}
+    </h1>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="full_name" class="font-weight-bold">Full Name *</label>
+                    <input type="text" class="form-control form-control-lg" id="full_name" 
+                           name="full_name" required 
+                           value="{% if employee %}{{ employee.full_name }}{% endif %}"
+                           placeholder="John Doe">
+                </div>
+
+                <!-- Designation -->
+                <div class="form-group">
+                    <label for="designation" class="font-weight-bold">Designation *</label>
+                    <input type="text" class="form-control form-control-lg" id="designation" 
+                           name="designation" required
+                           value="{% if employee %}{{ employee.designation }}{% endif %}"
+                           placeholder="Senior Manager">
+                </div>
+
+                <!-- Department -->
+                <div class="form-group">
+                    <label for="department" class="font-weight-bold">Department *</label>
+                    <select class="form-control form-control-lg" id="department" 
+                            name="department" required>
+                        <option value="">-- Select Department --</option>
+                        <option value="Sales" {% if employee.department == 'Sales' %}selected{% endif %}>Sales</option>
+                        <option value="Marketing" {% if employee.department == 'Marketing' %}selected{% endif %}>Marketing</option>
+                        <option value="Engineering" {% if employee.department == 'Engineering' %}selected{% endif %}>Engineering</option>
+                        <option value="HR" {% if employee.department == 'HR' %}selected{% endif %}>Human Resources</option>
+                        <option value="Finance" {% if employee.department == 'Finance' %}selected{% endif %}>Finance</option>
+                        <option value="Operations" {% if employee.department == 'Operations' %}selected{% endif %}>Operations</option>
+                        <option value="Management" {% if employee.department == 'Management' %}selected{% endif %}>Management</option>
+                    </select>
+                </div>
+
+                <!-- Date of Joining -->
+                <div class="form-group">
+                    <label for="date_of_joining" class="font-weight-bold">Date of Joining *</label>
+                    <input type="date" class="form-control form-control-lg" id="date_of_joining" 
+                           name="date_of_joining" required
+                           value="{% if employee %}{{ employee.date_of_joining|date:'Y-m-d' }}{% else %}{{ "now"|date:'Y-m-d' }}{% endif %}">
+                </div>
+
+                <!-- Employee Photo -->
+                <div class="form-group">
+                    <label for="employee_photo" class="font-weight-bold">Employee Photo *</label>
+                    <div class="input-group">
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="employee_photo" 
+                                   name="employee_photo" accept="image/*" required>
+                            <label class="custom-file-label" for="employee_photo">
+                                Choose photo (JPG/PNG)
+                            </label>
+                        </div>
+                    </div>
+                    {% if employee and employee.employee_photo %}
+                    <small class="form-text text-muted">
+                        Current photo: <img src="{{ employee.employee_photo.url }}" 
+                                           style="max-width: 100px; margin-top: 10px; border-radius: 4px;">
+                    </small>
+                    {% endif %}
+                </div>
+
+                <!-- Status -->
+                {% if employee %}
+                <div class="form-group">
+                    <label for="status" class="font-weight-bold">Status</label>
+                    <select class="form-control form-control-lg" id="status" name="status">
+                        <option value="ACTIVE" {% if employee.status == 'ACTIVE' %}selected{% endif %}>Active</option>
+                        <option value="INACTIVE" {% if employee.status == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                {% else %}
+                <input type="hidden" name="status" value="ACTIVE">
+                {% endif %}
+
+                <!-- Buttons -->
+                <div class="form-group mt-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i>
+                        {% if employee %}Save Changes{% else %}Create Employee{% endif %}
+                    </button>
+                    <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update file input label
+document.getElementById('employee_photo').addEventListener('change', function(e) {
+    var fileName = e.target.files[0].name;
+    var label = this.nextElementSibling;
+    label.textContent = fileName;
+});
+</script>
+{% endblock %}

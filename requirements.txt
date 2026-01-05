@@ -18,6 +18,7 @@ Jinja2==3.1.2
 Pillow==10.1.0
 reportlab==4.0.7
 num2words==0.5.13
+qrcode==7.4.2  # QR code generation
 
 # Payment Gateway
 razorpay==1.4.1

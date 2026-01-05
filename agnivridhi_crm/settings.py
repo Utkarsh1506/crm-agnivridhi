@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'notifications',
     'activity_logs',
     'invoices',
+    'employees',  # Employee Identity & Verification System
 ]
 
 MIDDLEWARE = [

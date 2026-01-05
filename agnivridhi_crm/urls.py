@@ -36,6 +36,7 @@ urlpatterns = [
     path('edit-requests/', include(('edit_requests.urls', 'edit_requests'))),
     path('notifications/', include(('notifications.urls', 'notifications'))),
     path('invoices/', include(('invoices.urls', 'invoices'), namespace='invoices')),
+    path('employees/', include(('employees.urls', 'employees'))),  # Employee Identity & Verification System
     
     # API endpoints with namespace
     path('api/', include(('api.urls', 'api'))),
