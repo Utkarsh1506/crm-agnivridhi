@@ -14,20 +14,13 @@ EMPLOYEE_DESIGNATIONS = {
     '0102': {'designation': 'Data Analyst', 'department': 'Finance'},
     '0103': {'designation': 'Branch Manager', 'department': 'Operations'},
     '0104': {'designation': 'Manager', 'department': 'Management'},
-    '0105': {'designation': 'Business Development Executive', 'department': 'Sales'},
-    '0106': {'designation': 'Business Development Executive', 'department': 'Sales'},
-    '0107': {'designation': 'Business Development Executive', 'department': 'Sales'},
-    '0108': {'designation': 'Business Development Executive', 'department': 'Sales'},
     '0109': {'designation': 'Team Leader', 'department': 'Sales'},
-    '0110': {'designation': 'Business Development Executive', 'department': 'Sales'},
-    '0111': {'designation': 'Business Development Executive', 'department': 'Sales'},
     '0112': {'designation': 'Web Developer', 'department': 'Engineering'},
-    '0113': {'designation': 'Business Development Executive', 'department': 'Sales'},
-    '0114': {'designation': 'Business Development Executive', 'department': 'Sales'},
-    '0115': {'designation': 'Business Development Executive', 'department': 'Sales'},
-    '0116': {'designation': 'Business Development Executive', 'department': 'Sales'},
-    '0117': {'designation': 'Business Development Executive', 'department': 'Sales'},
 }
+
+# Business Development Executives (all in Marketing department)
+for emp_id in ['0105', '0106', '0107', '0108', '0110', '0111', '0113', '0114', '0115', '0116', '0117']:
+    EMPLOYEE_DESIGNATIONS[emp_id] = {'designation': 'Business Development Executive', 'department': 'Marketing'}
 
 
 class Command(BaseCommand):

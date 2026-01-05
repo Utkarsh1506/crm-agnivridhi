@@ -100,6 +100,7 @@ class Command(BaseCommand):
                 'Manager': 'Management',
                 'Team Leader': 'Sales',
                 'Web Developer': 'Engineering',
+                'Business Development Executive': 'Marketing',  # All BDEs in Marketing
             }
             department = department_map.get(designation, 'Sales')
             
