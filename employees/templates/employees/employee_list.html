@@ -1,153 +1,241 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Employee List - Agnivridhi CRM{% endblock %}
+{% block title %}Employee Management - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'employees:employee_list' %}">
+                    <i class="bi bi-people-fill"></i> All Employees
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'employees:employee_create' %}">
+                    <i class="bi bi-person-plus"></i> Add Employee
+                </a>
+            </li>
+            {% if user.is_owner %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:owner_dashboard' %}">
+                    <i class="bi bi-trophy"></i> Owner Dashboard
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:admin_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Admin Dashboard
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h1 class="page-title">
-                <i class="fas fa-id-card"></i> Employees
-                <span class="badge badge-info">{{ total_count }}</span>
-            </h1>
-        </div>
-        <div class="col-md-6 text-right">
-            <a href="{% url 'employees:employee_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add New Employee
-            </a>
-        </div>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-people-fill text-primary"></i> Employee Management
+        <span class="badge bg-primary">{{ total_count }} Total</span>
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'employees:employee_create' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add New Employee
+        </a>
     </div>
+</div>
 
-    <!-- Search & Filter -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="form-inline">
-                <div class="form-group mr-2 flex-grow-1">
-                    <input type="text" name="search" class="form-control w-100" 
-                           placeholder="Search by name, ID, designation, or department..." 
-                           value="{{ search_query }}">
-                </div>
-                <select name="status" class="form-control mr-2" style="max-width: 150px;">
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="🔍 Search by name, ID, designation, or department..." 
+                       value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
                     <option value="">All Status</option>
                     <option value="ACTIVE" {% if status_filter == 'ACTIVE' %}selected{% endif %}>Active</option>
                     <option value="INACTIVE" {% if status_filter == 'INACTIVE' %}selected{% endif %}>Inactive</option>
                 </select>
-                <button type="submit" class="btn btn-info mr-2">
-                    <i class="fas fa-search"></i> Filter
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-search"></i> Search
                 </button>
-                <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Clear
+                <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
                 </a>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
-
-    <!-- Employees Table -->
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-primary">
-                    <tr>
-                        <th>Employee ID</th>
-                        <th>Full Name</th>
-                        <th>Designation</th>
-                        <th>Department</th>
-                        <th>Status</th>
-                        <th>Joined</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for employee in employees %}
-                    <tr>
-                        <td>
-                            <strong>{{ employee.employee_id }}</strong>
-                        </td>
-                        <td>{{ employee.full_name }}</td>
-                        <td>{{ employee.designation }}</td>
-                        <td>{{ employee.department }}</td>
-                        <td>
-                            {% if employee.status == 'ACTIVE' %}
-                                <span class="badge badge-success">Active</span>
-                            {% else %}
-                                <span class="badge badge-danger">Inactive</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ employee.date_of_joining|date:"d M Y" }}</td>
-                        <td>
-                            <a href="{% url 'employees:employee_detail' employee.pk %}" 
-                               class="btn btn-sm btn-info" title="View Details">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{% url 'employees:employee_download_id_card' employee.pk %}" 
-                               class="btn btn-sm btn-success" title="Download ID Card">
-                                <i class="fas fa-download"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            <i class="fas fa-inbox"></i> No employees found.
-                            <a href="{% url 'employees:employee_create' %}">Create one now</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Pagination -->
-    {% if page_obj.has_other_pages %}
-    <nav aria-label="Page navigation" class="mt-3">
-        <ul class="pagination">
-            {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1">First</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-                </li>
-            {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% else %}
-                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                {% endif %}
-            {% endfor %}
-
-            {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
 </div>
 
+<!-- Employees Grid -->
+<div class="row">
+    {% for employee in employees %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm employee-card">
+            <div class="card-body">
+                <div class="d-flex align-items-start mb-3">
+                    {% if employee.employee_photo %}
+                    <img src="{{ employee.employee_photo.url }}" alt="{{ employee.full_name }}" 
+                         class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
+                         style="width: 60px; height: 60px; font-size: 24px; font-weight: bold;">
+                        {{ employee.full_name|slice:":1" }}
+                    </div>
+                    {% endif %}
+                    <div class="flex-grow-1">
+                        <h5 class="card-title mb-1">{{ employee.full_name }}</h5>
+                        <p class="text-muted mb-0 small">
+                            <strong>ID:</strong> {{ employee.employee_id }}
+                        </p>
+                        <p class="text-muted mb-0 small">{{ employee.designation }}</p>
+                    </div>
+                    {% if employee.status == 'ACTIVE' %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-danger">Inactive</span>
+                    {% endif %}
+                </div>
+                
+                <hr>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <small class="text-muted d-block">Department</small>
+                        <strong>{{ employee.department }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Joined</small>
+                        <strong>{{ employee.date_of_joining|date:"d M Y" }}</strong>
+                    </div>
+                </div>
+                
+                <!-- Barcode Section -->
+                {% if employee.barcode %}
+                <div class="text-center mb-3 barcode-section">
+                    <small class="text-muted d-block mb-2">Employee Barcode</small>
+                    <img src="{{ employee.barcode.url }}" alt="Barcode" class="img-fluid border p-2 bg-white" style="max-width: 100%;">
+                </div>
+                {% else %}
+                <div class="text-center mb-3">
+                    <small class="text-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Barcode generating...
+                    </small>
+                </div>
+                {% endif %}
+                
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <a href="{% url 'employees:employee_detail' employee.pk %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View Details
+                    </a>
+                    {% if employee.barcode %}
+                    <a href="{{ employee.barcode.url }}" download="barcode_{{ employee.employee_id }}.png"
+                       class="btn btn-sm btn-success">
+                        <i class="bi bi-download"></i> Download Barcode
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 48px; color: #ccc;"></i>
+                <p class="text-muted mt-3">No employees found.</p>
+                <a href="{% url 'employees:employee_create' %}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Add First Employee
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
 <style>
-.page-title {
-    color: #333;
-    font-weight: bold;
-    margin: 0;
+.employee-card {
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.table-primary th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+.employee-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.barcode-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.barcode-section img {
+    max-height: 80px;
+    border-radius: 4px;
+}
+
+.card {
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 .btn-sm {
-    padding: 0.35rem 0.6rem;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .employee-card {
+        margin-bottom: 1rem;
+    }
 }
 </style>
 {% endblock %}

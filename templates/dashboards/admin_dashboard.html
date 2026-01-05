@@ -46,7 +46,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="/admin/employees/employee/" data-bs-dismiss="offcanvas">
+        <a class="nav-link" href="{% url 'employees:employee_list' %}" data-bs-dismiss="offcanvas">
             <i class="bi bi-people-fill"></i> Employees
         </a>
     </li>
@@ -124,7 +124,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/employees/employee/">
+                <a class="nav-link" href="{% url 'employees:employee_list' %}">
                     <i class="bi bi-people-fill"></i>Employees
                 </a>
             </li>
