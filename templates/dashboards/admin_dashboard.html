@@ -2,6 +2,67 @@
 
 {% block title %}Admin Dashboard - Agnivridhi CRM{% endblock %}
 
+{% block mobile_sidebar %}
+<!-- Mobile Sidebar Content -->
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'accounts:admin_dashboard' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'accounts:reports_dashboard' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-graph-up"></i> Reports & Analytics
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'clients:admin_clients_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-building"></i> Clients
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'bookings:team_bookings_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-calendar-check"></i> Bookings
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'applications:team_applications_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-file-earmark-text"></i> Applications
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'schemes:scheme_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-award"></i> Schemes
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'payments:team_payments_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-credit-card"></i> Payments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'invoices:admin_invoice_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-receipt"></i> Invoices
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/admin/employees/employee/" data-bs-dismiss="offcanvas">
+            <i class="bi bi-people-fill"></i> Employees
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'accounts:users_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-people"></i> Users
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'notifications:notification_list' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-bell"></i> Notifications
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
 {% block sidebar %}
 <nav class="col-md-3 col-lg-2 d-md-block sidebar">
     <div class="position-sticky pt-3">
@@ -60,6 +121,11 @@
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'documents:team_documents_list' %}">
                     <i class="bi bi-file-pdf"></i>Documents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/employees/employee/">
+                    <i class="bi bi-people-fill"></i>Employees
                 </a>
             </li>
             <li class="nav-item">

@@ -2,6 +2,37 @@
 
 {% block title %}Owner Dashboard - Agnivridhi CRM{% endblock %}
 
+{% block mobile_sidebar %}
+<!-- Mobile Sidebar Content -->
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'accounts:owner_dashboard' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-trophy"></i> Owner Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'accounts:admin_dashboard' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-speedometer2"></i> Admin Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/admin/employees/employee/" data-bs-dismiss="offcanvas">
+            <i class="bi bi-people-fill"></i> Employees
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'notifications:activity_feed' %}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-activity"></i> Activity Feed
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/admin/" data-bs-dismiss="offcanvas">
+            <i class="bi bi-gear"></i> Django Admin
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
 {% block sidebar %}
 <nav class="col-md-3 col-lg-2 d-md-block sidebar">
     <div class="position-sticky pt-3">
@@ -14,6 +45,11 @@
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'accounts:admin_dashboard' %}">
                     <i class="bi bi-speedometer2"></i> Admin Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/employees/employee/">
+                    <i class="bi bi-people-fill"></i> Employees
                 </a>
             </li>
             <li class="nav-item">
