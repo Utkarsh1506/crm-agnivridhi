@@ -14,14 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 @receiver(pre_save, sender=Employee)
-def assign_employee_id_and_token(sender, instance, created, **kwargs):
+def assign_employee_id_and_token(sender, instance, **kwargs):
     """
     Signal handler to assign unique employee ID and verification token
     when a new employee is created.
     
     This is called before saving, so we can set both fields.
+    Note: pre_save doesn't have 'created' parameter, we check if pk is None.
     """
-    if not instance.employee_id:  # Only for new employees
+    if not instance.employee_id:  # Only for new employees (no ID set yet)
         try:
             instance.employee_id = EmployeeIDGenerator.generate_employee_id()
             instance.verification_token = EmployeeIDGenerator.generate_verification_token()
