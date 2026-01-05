@@ -20,9 +20,11 @@ class EmployeeBarcodeGenerator:
     @staticmethod
     def build_verification_url(employee_id):
         """Build public verification URL encoded in the barcode."""
+        # Try multiple sources for base URL
         base_url = (
             os.getenv('PUBLIC_BASE_URL')
-            or (f"https://{os.getenv('PYTHONANYWHERE_DOMAIN')}" if os.getenv('PYTHONANYWHERE_DOMAIN') else None)
+            or os.getenv('SITE_URL')
+            or (f"https://agnivridhicrm.pythonanywhere.com" if os.getenv('PYTHONANYWHERE_DOMAIN') else None)
             or "https://agnivridhi.com"
         )
         return f"{base_url.rstrip('/')}/employees/verify/{employee_id}/"
