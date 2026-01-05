@@ -20,7 +20,7 @@ EMPLOYEE_DESIGNATIONS = {
 
 # Business Development Executives (all in Marketing department)
 for emp_id in ['0105', '0106', '0107', '0108', '0110', '0111', '0113', '0114', '0115', '0116', '0117']:
-    EMPLOYEE_DESIGNATIONS[emp_id] = {'designation': 'Business Development Executive', 'department': 'Marketing'}
+    EMPLOYEE_DESIGNATIONS[emp_id] = {'designation': 'Business Development Executive', 'department': 'Sales'}
 
 
 class Command(BaseCommand):
