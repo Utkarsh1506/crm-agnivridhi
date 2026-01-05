@@ -82,13 +82,13 @@ class Employee(models.Model):
         help_text=_('Employee exit/termination date (if applicable)')
     )
     
-    # QR Code & Verification
-    qr_code = models.ImageField(
-        upload_to='employees/qrcodes/%Y/%m/',
+    # Barcode & Verification
+    barcode = models.ImageField(
+        upload_to='employees/barcodes/%Y/%m/',
         editable=False,
         null=True,
         blank=True,
-        help_text=_('Auto-generated QR code for verification')
+        help_text=_('Auto-generated barcode for employee identification')
     )
     verification_token = models.CharField(
         max_length=100,
@@ -137,10 +137,10 @@ class Employee(models.Model):
     
     def get_qr_content(self):
         """
-        Return the content to be encoded in the QR code.
-        This should ONLY contain the verification token, not personal data.
+        Return the content to be encoded in the barcode.
+        This contains the employee ID for easy scanning.
         """
-        return self.get_verification_url()
+        return self.employee_id
     
     def is_active_employee(self):
         """Check if employee is currently active."""

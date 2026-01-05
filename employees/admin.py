@@ -30,7 +30,7 @@ class EmployeeAdmin(admin.ModelAdmin):
         'status_badge',
         'date_of_joining',
         'created_at',
-        'qr_code_preview',
+        'barcode_preview',
     ]
     
     # Filters and search
@@ -65,8 +65,8 @@ class EmployeeAdmin(admin.ModelAdmin):
             'fields': ('status', 'date_of_joining', 'date_of_exit'),
         }),
         ('Verification System', {
-            'fields': ('qr_code', 'verification_token'),
-            'description': 'Auto-generated fields for public verification.',
+            'fields': ('barcode', 'verification_token'),
+            'description': 'Auto-generated fields for employee identification.',
         }),
         ('Audit Information', {
             'fields': ('created_by', 'created_at', 'updated_at'),
@@ -78,7 +78,7 @@ class EmployeeAdmin(admin.ModelAdmin):
     readonly_fields = [
         'employee_id',
         'uuid',
-        'qr_code',
+        'barcode',
         'verification_token',
         'created_at',
         'updated_at',
@@ -116,17 +116,17 @@ class EmployeeAdmin(admin.ModelAdmin):
         )
     status_badge.short_description = 'Status'
     
-    def qr_code_preview(self, obj):
-        """Display QR code thumbnail."""
-        if obj.qr_code:
+    def barcode_preview(self, obj):
+        """Display barcode thumbnail."""
+        if obj.barcode:
             return format_html(
-                '<img src="{}" width="50" height="50" style="border: 1px solid #ddd;" />',
-                obj.qr_code.url
+                '<img src="{}" width="80" height="50" style="border: 1px solid #ddd;" />',
+                obj.barcode.url
             )
         return format_html(
             '<span style="color: #999;">Generating...</span>'
         )
-    qr_code_preview.short_description = 'QR Code'
+    barcode_preview.short_description = 'Barcode'
     
     # Admin actions
     def deactivate_employees(self, request, queryset):
