@@ -3,17 +3,29 @@ Barcode generation utility for Employee System.
 Generates Code128 barcodes for employee IDs.
 """
 import io
+import os
+import logging
 from PIL import Image, ImageDraw
 import barcode
 from barcode.writer import ImageWriter
 from django.core.files.base import ContentFile
-import logging
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 
 class EmployeeBarcodeGenerator:
     """Generate barcodes for employee IDs."""
+
+    @staticmethod
+    def build_verification_url(employee_id):
+        """Build public verification URL encoded in the barcode."""
+        base_url = (
+            os.getenv('PUBLIC_BASE_URL')
+            or (f"https://{os.getenv('PYTHONANYWHERE_DOMAIN')}" if os.getenv('PYTHONANYWHERE_DOMAIN') else None)
+            or "https://agnivridhi.com"
+        )
+        return f"{base_url.rstrip('/')}/employees/verify/{employee_id}/"
     
     @staticmethod
     def generate_barcode(employee_id):
@@ -27,10 +39,12 @@ class EmployeeBarcodeGenerator:
             ContentFile: PNG image of the barcode
         """
         try:
-            # Create Code128 barcode
-            # Older python-barcode versions on the server don't support add_checksum
+            # Encode the public verification URL so scan opens details page
+            verify_url = EmployeeBarcodeGenerator.build_verification_url(employee_id)
+
+            # Create Code128 barcode (no add_checksum for compatibility)
             code128 = barcode.Code128(
-                employee_id,
+                verify_url,
                 writer=ImageWriter()
             )
             
@@ -56,7 +70,7 @@ class EmployeeBarcodeGenerator:
             final_img.save(output, format='PNG')
             output.seek(0)
             
-            logger.info(f"Generated barcode for employee {employee_id}")
+            logger.info(f"Generated barcode for employee {employee_id} -> {verify_url}")
             return ContentFile(output.getvalue(), name=f"barcode_{employee_id}.png")
             
         except Exception as e:
