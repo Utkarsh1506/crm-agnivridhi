@@ -18,25 +18,25 @@ from employees.id_generator import EmployeeIDGenerator
 
 User = get_user_model()
 
-# Employee data: ID -> Name
+# Employee data: ID -> (Name, Designation)
 EMPLOYEES = {
-    '0101': 'Rahul Kumar Singh',
-    '0102': 'Urvashi Nandan Srivastava',
-    '0103': 'Akash Tyagi',
-    '0104': 'Harshit Tyagi',
-    '0105': 'Ayush Tomer',
-    '0106': 'Himadri Sharma',
-    '0107': 'Bhoomika Sharma',
-    '0108': 'Sharik Khan',
-    '0109': 'Rajdeep Singh',
-    '0110': 'Aaryav Singh',
-    '0111': 'Mohd Rihan',
-    '0112': 'Utkarsh Choudhary',
-    '0113': 'Rahul Kumar Pant',
-    '0114': 'Vaibhav Garg',
-    '0115': 'Babita Goswami',
-    '0116': 'Sanklp',
-    '0117': 'Vinay Kannaujiya',
+    '0101': ('Rahul Kumar Singh', 'CEO & Founder'),
+    '0102': ('Urvashi Nandan Srivastava', 'Data Analyst'),
+    '0103': ('Akash Tyagi', 'Branch Manager'),
+    '0104': ('Harshit Tyagi', 'Manager'),
+    '0105': ('Ayush Tomer', 'Business Development Executive'),
+    '0106': ('Himadri Sharma', 'Business Development Executive'),
+    '0107': ('Bhoomika Sharma', 'Business Development Executive'),
+    '0108': ('Sharik Khan', 'Business Development Executive'),
+    '0109': ('Rajdeep Singh', 'Team Leader'),
+    '0110': ('Aaryav Singh', 'Business Development Executive'),
+    '0111': ('Mohd Rihan', 'Business Development Executive'),
+    '0112': ('Utkarsh Choudhary', 'Web Developer'),
+    '0113': ('Rahul Kumar Pant', 'Business Development Executive'),
+    '0114': ('Vaibhav Garg', 'Business Development Executive'),
+    '0115': ('Babita Goswami', 'Business Development Executive'),
+    '0116': ('Sanklp', 'Business Development Executive'),
+    '0117': ('Vinay Kannaujiya', 'Business Development Executive'),
 }
 
 DEPARTMENTS = [
@@ -88,19 +88,32 @@ class Command(BaseCommand):
             sequence.save()
         
         created_count = 0
+        updated_count = 0
         skipped_count = 0
         
-        for emp_id, full_name in EMPLOYEES.items():
-            # Select random department
-            department = random.choice(DEPARTMENTS)
-            designation = random.choice(DESIGNATIONS[department])
+        for emp_id, (full_name, designation) in EMPLOYEES.items():
+            # Determine department based on designation
+            department_map = {
+                'CEO & Founder': 'Management',
+                'Data Analyst': 'Finance',
+                'Branch Manager': 'Operations',
+                'Manager': 'Management',
+                'Team Leader': 'Sales',
+                'Web Developer': 'Engineering',
+            }
+            department = department_map.get(designation, 'Sales')
             
             # Check if employee already exists
-            if Employee.objects.filter(employee_id=emp_id).exists():
+            existing = Employee.objects.filter(employee_id=emp_id).first()
+            if existing:
+                # Update existing employee with new designation
+                existing.designation = designation
+                existing.department = department
+                existing.save()
                 self.stdout.write(
-                    self.style.WARNING(f'⊘ Employee {emp_id} already exists, skipping...')
+                    self.style.WARNING(f'↻ Updated {emp_id} - {full_name} ({designation})')
                 )
-                skipped_count += 1
+                updated_count += 1
                 continue
             
             employee_data = {
@@ -149,9 +162,9 @@ class Command(BaseCommand):
                 f'\n✓ Successfully created {created_count} employees!'
             )
         )
-        if skipped_count > 0:
+        if updated_count > 0:
             self.stdout.write(
-                self.style.WARNING(f'⊘ Skipped {skipped_count} existing employees')
+                self.style.SUCCESS(f'↻ Updated {updated_count} existing employees')
             )
     
     @staticmethod
