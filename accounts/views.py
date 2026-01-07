@@ -227,6 +227,15 @@ def admin_dashboard(request):
     
     total_revenue = base_success.aggregate(Sum('amount'))['amount__sum'] or 0
     
+    # Pending revenue (awaiting approval)
+    pending_revenue = Payment.objects.filter(status='PENDING').aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    # Failed/disputed revenue
+    failed_revenue = Payment.objects.filter(status='FAILED').aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    # All recent payments (not just pending) for comprehensive view
+    all_recent_payments = Payment.objects.select_related('client', 'booking', 'received_by').order_by('-created_at')[:20]
+    
     pending_edit_requests = EditRequest.objects.filter(status='PENDING').count()
 
     # Pending payments (awaiting approval)
@@ -306,6 +315,9 @@ def admin_dashboard(request):
         'total_applications': total_applications,
         'pending_applications': pending_applications,
         'total_revenue': total_revenue,
+        'pending_revenue': pending_revenue,
+        'failed_revenue': failed_revenue,
+        'all_recent_payments': all_recent_payments,
         'pending_edit_requests': pending_edit_requests,
         'pending_payments': pending_payments,
         'pending_payments_count': pending_payments_count,
@@ -966,6 +978,11 @@ def owner_dashboard(request):
 
     # Pending payments summary for owner view
     pending_payments_count = Payment.objects.filter(status='PENDING').count()
+    
+    # Revenue breakdown
+    pending_revenue = Payment.objects.filter(status='PENDING').aggregate(Sum('amount'))['amount__sum'] or 0
+    failed_revenue = Payment.objects.filter(status='FAILED').aggregate(Sum('amount'))['amount__sum'] or 0
+    all_recent_payments = Payment.objects.select_related('client', 'booking', 'received_by').order_by('-created_at')[:20]
 
     context = {
         'total_clients': total_clients,
@@ -985,6 +1002,9 @@ def owner_dashboard(request):
         'status_sales_pending': status_sales_pending,
         'status_sales_approved': status_sales_approved,
         'pending_payments_count': pending_payments_count,
+        'pending_revenue': pending_revenue,
+        'failed_revenue': failed_revenue,
+        'all_recent_payments': all_recent_payments,
         'selected_method': method_filter or '',
         'unsent_credentials': unsent_credentials,
     }

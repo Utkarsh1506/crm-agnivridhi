@@ -303,6 +303,25 @@
             </div>
         </div>
     </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-danger border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Pending Revenue
+                        </div>
+                        <div class="h3 mb-0 font-weight-bold">₹{{ pending_revenue|floatformat:0 }}</div>
+                        <small class="text-muted">Awaiting approval</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-hourglass-split fs-2 text-danger opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
@@ -352,6 +371,63 @@
             </div>
         </div>
     </div>
+    
+    <!-- All Recent Payments -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-credit-card"></i> All Recent Payments (Last 20)</span>
+                <a href="{% url 'payments:team_payments_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if all_recent_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>Booking</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Method</th>
+                                    <th>Ref ID</th>
+                                    <th>Recorded By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in all_recent_payments %}
+                                <tr>
+                                    <td>{{ p.created_at|date:"d M Y" }}</td>
+                                    <td>{{ p.client.company_name|default:"-" }}</td>
+                                    <td>{{ p.booking.booking_id|default:"-" }}</td>
+                                    <td><strong>₹{{ p.amount }}</strong></td>
+                                    <td>
+                                        {% if p.status == 'CAPTURED' or p.status == 'AUTHORIZED' %}
+                                            <span class="badge bg-success">Received</span>
+                                        {% elif p.status == 'PENDING' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif p.status == 'FAILED' %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ p.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ p.get_payment_method_display|default:"-" }}</td>
+                                    <td>{{ p.reference_id|default:"-" }}</td>
+                                    <td>{{ p.received_by.get_full_name|default:p.received_by.username|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No recent payments</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
     <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header"><i class="bi bi-graph-up"></i> Revenue (Last 6 Months)</div>
