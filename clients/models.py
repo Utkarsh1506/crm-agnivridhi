@@ -134,6 +134,28 @@ class Client(models.Model):
         default=Decimal('0.00'),
         help_text=_('Existing loan amount in lakhs')
     )
+
+    # Revenue Tracking
+    total_pitched_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Total pitched amount (₹) discussed with client')
+    )
+
+    received_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Total amount (₹) received so far from client')
+    )
+
+    pending_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Pending amount (₹) expected from client')
+    )
     
     # Contact Information
     contact_person = models.CharField(
@@ -302,6 +324,33 @@ class Client(models.Model):
     
     def save(self, *args, **kwargs):
         """Generate unique client ID if not exists"""
+        # Normalize revenue numbers and keep consistency
+        try:
+            total = Decimal(self.total_pitched_amount or 0)
+            received = Decimal(self.received_amount or 0)
+            if received < 0:
+                received = Decimal('0.00')
+            if total < 0:
+                total = Decimal('0.00')
+            # Ensure received does not exceed total
+            if total >= 0 and received > total:
+                total = received
+            self.total_pitched_amount = total
+            self.received_amount = received
+            # Compute pending if not explicitly set or inconsistent
+            computed_pending = total - received
+            if computed_pending < 0:
+                computed_pending = Decimal('0.00')
+            self.pending_amount = Decimal(self.pending_amount or computed_pending)
+            # If provided pending doesn't match, enforce computed value
+            if self.pending_amount != computed_pending:
+                self.pending_amount = computed_pending
+        except Exception:
+            # Fail-safe: ensure fields exist even if parsing fails
+            self.total_pitched_amount = self.total_pitched_amount or Decimal('0.00')
+            self.received_amount = self.received_amount or Decimal('0.00')
+            self.pending_amount = self.pending_amount or Decimal('0.00')
+
         if not self.client_id:
             self.client_id = self.generate_client_id()
         super().save(*args, **kwargs)

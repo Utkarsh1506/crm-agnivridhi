@@ -58,6 +58,32 @@ class QuickClientCreationForm(forms.Form):
         }),
         help_text='Select manager to assign this client (optional for sales)'
     )
+
+    # Revenue fields
+    total_pitched_amount = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+        help_text='Total pitched amount (₹)'
+    )
+    received_amount = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+        help_text='Amount received (₹) so far'
+    )
+    pending_amount = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+        help_text='Pending amount (₹)'
+    )
     
     def __init__(self, *args, **kwargs):
         self.created_by = kwargs.pop('created_by', None)
@@ -114,6 +140,18 @@ class QuickClientCreationForm(forms.Form):
         )
         
         # Create minimal client profile
+        from decimal import Decimal
+        total_pitched = Decimal(self.cleaned_data.get('total_pitched_amount') or 0)
+        received = Decimal(self.cleaned_data.get('received_amount') or 0)
+        pending = self.cleaned_data.get('pending_amount')
+        pending = Decimal(pending) if pending is not None else (total_pitched - received if total_pitched >= received else Decimal('0.00'))
+
+        # Normalize amounts
+        if received > total_pitched:
+            total_pitched = received
+        if pending < 0:
+            pending = Decimal('0.00')
+
         client = Client.objects.create(
             user=user,
             company_name=self.cleaned_data.get('company_name'),
@@ -122,7 +160,10 @@ class QuickClientCreationForm(forms.Form):
             contact_phone=self.cleaned_data.get('contact_phone'),
             created_by=self.created_by,
             status='PENDING_DOCS',  # Client needs to complete profile
-            is_approved=True if self.created_by and self.created_by.role in ['ADMIN', 'MANAGER', 'OWNER'] else False
+            is_approved=True if self.created_by and self.created_by.role in ['ADMIN', 'MANAGER', 'OWNER'] else False,
+            total_pitched_amount=total_pitched,
+            received_amount=received,
+            pending_amount=pending
         )
         
         # Set assigned sales and manager
@@ -151,6 +192,22 @@ class QuickClientCreationForm(forms.Form):
             client.approved_at = timezone.now()
         
         client.save()
+
+        # Create initial revenue log entry
+        try:
+            from payments.models import RevenueEntry
+            RevenueEntry.objects.create(
+                client=client,
+                recorded_by=self.created_by,
+                total_pitched_amount=client.total_pitched_amount,
+                received_amount=client.received_amount,
+                pending_amount=client.pending_amount,
+                source='CLIENT_CREATION',
+                note='Initial revenue captured during client creation'
+            )
+        except Exception:
+            # Avoid breaking flow if revenue logging fails
+            pass
         return client
 
 

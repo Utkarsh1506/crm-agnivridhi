@@ -196,3 +196,79 @@ class Payment(models.Model):
         self.approved_by = rejected_by_user
         self.approval_date = timezone.now()
         self.save()
+
+
+class RevenueEntry(models.Model):
+    """
+    Revenue log entries per client.
+    Captures timestamps, who recorded, and amounts for reporting.
+    """
+    SOURCE_CHOICES = (
+        ('CLIENT_CREATION', _('Client Creation')),
+        ('MANUAL_UPDATE', _('Manual Update')),
+        ('PAYMENT_CAPTURED', _('Payment Captured')),
+        ('OTHER', _('Other')),
+    )
+
+    client = models.ForeignKey(
+        'clients.Client',
+        on_delete=models.CASCADE,
+        related_name='revenue_entries',
+        help_text=_('Client associated with this revenue entry')
+    )
+
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='revenue_entries_recorded',
+        help_text=_('User who recorded this entry')
+    )
+
+    total_pitched_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Total pitched amount at time of recording')
+    )
+
+    received_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Received amount at time of recording')
+    )
+
+    pending_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Pending amount at time of recording')
+    )
+
+    source = models.CharField(
+        max_length=30,
+        choices=SOURCE_CHOICES,
+        default='OTHER',
+        help_text=_('Source/context of the revenue entry')
+    )
+
+    note = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_('Optional note or description')
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _('Revenue Entry')
+        verbose_name_plural = _('Revenue Entries')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['client', '-created_at']),
+            models.Index(fields=['source']),
+        ]
+
+    def __str__(self):
+        return f"RevenueEntry({self.client.company_name}) - ₹{self.received_amount} rec, ₹{self.pending_amount} pend"

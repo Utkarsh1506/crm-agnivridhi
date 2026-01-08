@@ -10,6 +10,7 @@ urlpatterns = [
     path('client/', views.client_payments_list, name='client_payments_list'),
     path('sales/', views.sales_payments_list, name='sales_payments_list'),
     path('team/', views.team_payments_list, name='team_payments_list'),
+    path('revenue/', views.revenue_dashboard, name='revenue_dashboard'),
 
     # Detail
     path('<int:pk>/', views.payment_detail, name='payment_detail'),

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Payment
+from .models import Payment, RevenueEntry
 
 
 @admin.register(Payment)
@@ -44,3 +44,15 @@ class PaymentAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         # Allow manual additions in admin (for offline payments)
         return True
+
+
+@admin.register(RevenueEntry)
+class RevenueEntryAdmin(admin.ModelAdmin):
+    list_display = (
+        'client', 'total_pitched_amount', 'received_amount', 'pending_amount',
+        'source', 'recorded_by', 'created_at'
+    )
+    list_filter = ('source', 'created_at', 'recorded_by')
+    search_fields = ('client__company_name', 'recorded_by__username')
+    ordering = ('-created_at',)
+    date_hierarchy = 'created_at'

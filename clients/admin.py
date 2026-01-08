@@ -7,8 +7,11 @@ class ClientAdmin(admin.ModelAdmin):
     """
     Client Admin interface
     """
-    list_display = ('client_id', 'company_name', 'business_type', 'sector', 'annual_turnover', 
-                    'funding_required', 'assigned_sales', 'status', 'created_at')
+    list_display = (
+        'client_id', 'company_name', 'business_type', 'sector', 'annual_turnover',
+        'funding_required', 'total_pitched_amount', 'received_amount', 'pending_amount',
+        'assigned_sales', 'status', 'created_at'
+    )
     list_filter = ('business_type', 'sector', 'status', 'created_at')
     search_fields = ('client_id', 'company_name', 'contact_person', 'contact_email', 'contact_phone', 
                      'registration_number', 'gst_number', 'pan_number')
@@ -23,6 +26,9 @@ class ClientAdmin(admin.ModelAdmin):
         }),
         ('Financial Information', {
             'fields': ('annual_turnover', 'funding_required', 'existing_loans')
+        }),
+        ('Revenue Tracking', {
+            'fields': ('total_pitched_amount', 'received_amount', 'pending_amount')
         }),
         ('Contact Information', {
             'fields': ('contact_person', 'contact_email', 'contact_phone', 'alternate_phone')

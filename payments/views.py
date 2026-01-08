@@ -3,6 +3,52 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Payment
 from accounts.views import manager_required, client_required, sales_required
+from django.db.models import Q, Sum
+
+@manager_required
+def revenue_dashboard(request):
+    """Revenue dashboard: shows pitched, received, pending per client with logs.
+    Admin/Owner sees all; Manager sees team; Superuser allowed.
+    """
+    from clients.models import Client
+    from .models import RevenueEntry
+
+    user = request.user
+    role = getattr(user, 'role', '').upper()
+
+    if role in ['ADMIN', 'OWNER'] or getattr(user, 'is_superuser', False):
+        clients_qs = Client.objects.select_related('assigned_sales', 'assigned_manager').all()
+        entries_qs = RevenueEntry.objects.select_related('client', 'recorded_by').all().order_by('-created_at')
+    else:
+        # Manager scope: clients directly assigned to manager OR via team sales
+        clients_qs = Client.objects.filter(
+            Q(assigned_manager=user) | Q(assigned_sales__manager=user)
+        ).select_related('assigned_sales', 'assigned_manager').distinct()
+        entries_qs = RevenueEntry.objects.filter(client__in=clients_qs).select_related('client', 'recorded_by').order_by('-created_at')
+
+    # Aggregates
+    totals = clients_qs.aggregate(
+        total_pitched=Sum('total_pitched_amount'),
+        total_received=Sum('received_amount'),
+        total_pending=Sum('pending_amount'),
+    )
+
+    # Map entries by client
+    entries_by_client = {}
+    for entry in entries_qs:
+        cid = entry.client_id if hasattr(entry, 'client_id') else entry.client.id
+        if cid not in entries_by_client:
+            entries_by_client[cid] = []
+        entries_by_client[cid].append(entry)
+
+    context = {
+        'clients': clients_qs,
+        'entries': entries_qs[:200],  # limit recent logs
+        'entries_by_client': entries_by_client,
+        'totals': totals,
+        'page_title': 'Revenue Dashboard',
+    }
+    return render(request, 'payments/revenue_dashboard.html', context)
 
 @login_required
 def payment_list(request):
