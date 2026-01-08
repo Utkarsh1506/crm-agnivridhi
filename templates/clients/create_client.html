@@ -162,6 +162,52 @@
                     </div>
                 </div>
 
+                <!-- Revenue Tracking -->
+                <div class="card mb-4 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Revenue Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="{{ form.total_pitched_amount.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-cash-stack"></i> Total Pitched Amount (₹)
+                                </label>
+                                {{ form.total_pitched_amount }}
+                                <div class="form-text">Kitna total pitch kiya client ko</div>
+                                {% if form.total_pitched_amount.errors %}
+                                <div class="text-danger mt-1">{{ form.total_pitched_amount.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="{{ form.received_amount.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-check-circle"></i> Received Amount (₹)
+                                </label>
+                                {{ form.received_amount }}
+                                <div class="form-text">Abhi tak kitna receive ho gaya</div>
+                                {% if form.received_amount.errors %}
+                                <div class="text-danger mt-1">{{ form.received_amount.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="{{ form.pending_amount.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-clock"></i> Pending Amount (₹)
+                                </label>
+                                {{ form.pending_amount }}
+                                <div class="form-text">Kitna pending hai (auto-calculate)</div>
+                                {% if form.pending_amount.errors %}
+                                <div class="text-danger mt-1">{{ form.pending_amount.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle"></i> <strong>Note:</strong> Pending amount automatically calculate hoga (Total - Received). Payment approval pe received amount automatically update hogi.
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Manager Selection (for Sales and Admin/Owner) -->
                 {% if user.role == 'SALES' or user.role in 'ADMIN,OWNER' %}
                 <div class="row mb-4">
