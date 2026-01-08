@@ -198,36 +198,46 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for booking in team_bookings %}
-                        {% if booking.payment and booking.payment.status == 'PENDING' %}
+                    {% for payment in pending_payments %}
                         <tr>
-                            <td>#{{ booking.payment.id }}</td>
-                            <td>{{ booking.client.company_name }}</td>
-                            <td>{{ booking.booking_id }}</td>
-                            <td><strong>₹{{ booking.payment.amount }}</strong></td>
-                            <td>{{ booking.payment.get_payment_method_display }}</td>
-                            <td><code>{{ booking.payment.reference_id|default:'-' }}</code></td>
+                            <td>#{{ payment.id }}</td>
+                            <td>{{ payment.client.company_name }}</td>
                             <td>
-                                {% if booking.payment.received_by %}
-                                    {{ booking.payment.received_by.get_full_name|default:booking.payment.received_by.username }}
+                                {% if payment.booking %}
+                                    {{ payment.booking.booking_id }}
+                                {% else %}
+                                    <span class="badge bg-info">Direct Payment</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>₹{{ payment.amount }}</strong></td>
+                            <td>{{ payment.get_payment_method_display }}</td>
+                            <td><code>{{ payment.reference_id|default:'-' }}</code></td>
+                            <td>
+                                {% if payment.received_by %}
+                                    {{ payment.received_by.get_full_name|default:payment.received_by.username }}
                                 {% else %}
                                     <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
-                            <td>{{ booking.payment.created_at|date:"M d, Y H:i" }}</td>
+                            <td>{{ payment.created_at|date:"M d, Y H:i" }}</td>
                             <td>
-                                <form method="post" action="{% url 'payments:approve_payment' booking.payment.id %}" style="display: inline;">
+                                <form method="post" action="{% url 'payments:approve_payment' payment.id %}" style="display: inline;">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm btn-success me-1">
                                         <i class="bi bi-check-circle"></i> Approve
                                     </button>
                                 </form>
-                                <a href="{% url 'payments:reject_payment' booking.payment.id %}" class="btn btn-sm btn-danger">
+                                <a href="{% url 'payments:reject_payment' payment.id %}" class="btn btn-sm btn-danger">
                                     <i class="bi bi-x-circle"></i> Reject
                                 </a>
                             </td>
                         </tr>
-                        {% endif %}
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">
+                                <i class="bi bi-check-circle"></i> No pending payment approvals
+                            </td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>

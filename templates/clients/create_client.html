@@ -207,14 +207,31 @@
                                     <i class="bi bi-clock"></i> Pending (₹)
                                 </label>
                                 {{ form.pending_amount }}
-                                <div class="form-text">Auto-calculated with GST</div>
+                                <div class="form-text">Auto-calculated: (Pitched + GST) - Received</div>
                                 {% if form.pending_amount.errors %}
                                 <div class="text-danger mt-1">{{ form.pending_amount.errors }}</div>
                                 {% endif %}
                             </div>
                         </div>
+                        
+                        <!-- GST Breakdown Display -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="alert alert-light border">
+                                    <small class="text-muted">GST Amount (18% of Pitched)</small>
+                                    <h5 class="mb-0">₹<span id="gst-amount-display">0.00</span></h5>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="alert alert-light border">
+                                    <small class="text-muted">Total with GST</small>
+                                    <h5 class="mb-0">₹<span id="total-with-gst-display">0.00</span></h5>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="alert alert-info mb-0">
-                            <i class="bi bi-calculator"></i> <strong>GST Auto-calculation:</strong> Total = Pitched Amount + GST. Pending = Total - Received. Payment approval pe received automatically update hogi.
+                            <i class="bi bi-calculator"></i> <strong>Auto-calculation:</strong> GST = Pitched × GST% ÷ 100. Pending = (Pitched + GST) - Received. Updates live as you type!
                         </div>
                     </div>
                 </div>
@@ -290,4 +307,67 @@
         </div>
     </div>
 </div>
+
+<script>
+// Live GST Calculator
+function calculateGST() {
+    const pitchedInput = document.querySelector('#id_total_pitched_amount');
+    const gstPercentInput = document.querySelector('#id_gst_percentage');
+    const receivedInput = document.querySelector('#id_received_amount');
+    const pendingInput = document.querySelector('#id_pending_amount');
+    
+    if (!pitchedInput || !gstPercentInput || !receivedInput || !pendingInput) {
+        return; // Fields don't exist yet
+    }
+    
+    const pitched = parseFloat(pitchedInput.value) || 0;
+    const gstPercent = parseFloat(gstPercentInput.value) || 18;
+    const received = parseFloat(receivedInput.value) || 0;
+    
+    // Calculate GST amount
+    const gstAmount = (pitched * gstPercent) / 100;
+    
+    // Calculate total with GST
+    const totalWithGST = pitched + gstAmount;
+    
+    // Calculate pending
+    const pending = totalWithGST - received;
+    
+    // Update display fields
+    const gstDisplay = document.querySelector('#gst-amount-display');
+    const totalDisplay = document.querySelector('#total-with-gst-display');
+    
+    if (gstDisplay) {
+        gstDisplay.textContent = gstAmount.toFixed(2);
+    }
+    if (totalDisplay) {
+        totalDisplay.textContent = totalWithGST.toFixed(2);
+    }
+    
+    // Update hidden pending field (for form submission)
+    if (pending >= 0) {
+        pendingInput.value = pending.toFixed(2);
+    }
+}
+
+// Add event listeners when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const pitchedInput = document.querySelector('#id_total_pitched_amount');
+    const gstPercentInput = document.querySelector('#id_gst_percentage');
+    const receivedInput = document.querySelector('#id_received_amount');
+    
+    if (pitchedInput) {
+        pitchedInput.addEventListener('input', calculateGST);
+    }
+    if (gstPercentInput) {
+        gstPercentInput.addEventListener('input', calculateGST);
+    }
+    if (receivedInput) {
+        receivedInput.addEventListener('input', calculateGST);
+    }
+    
+    // Calculate on page load with existing values
+    calculateGST();
+});
+</script>
 {% endblock %}

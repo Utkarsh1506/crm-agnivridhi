@@ -370,7 +370,7 @@ def manager_dashboard(request):
     team_bookings = Booking.objects.filter(
         Q(client__assigned_manager=request.user) |
         Q(assigned_to__manager=request.user)
-    ).select_related('client', 'service', 'payment', 'assigned_to').order_by('-booking_date').distinct()
+    ).select_related('client', 'service', 'assigned_to').order_by('-booking_date').distinct()
     
     # Pending applications count for sidebar badge
     pending_count = Application.objects.filter(
@@ -384,6 +384,25 @@ def manager_dashboard(request):
         Q(received_by__manager=request.user),
         status='PENDING'
     ).distinct().count()
+    
+    # Get actual pending payments for display
+    pending_payments = Payment.objects.filter(
+        Q(client__assigned_manager=request.user) |
+        Q(received_by__manager=request.user),
+        status='PENDING'
+    ).select_related('client', 'booking', 'received_by').order_by('-created_at').distinct()[:10]
+    
+    # Get all payments for team bookings and attach to booking objects
+    all_team_payments = Payment.objects.filter(
+        Q(client__assigned_manager=request.user) |
+        Q(received_by__manager=request.user),
+        booking__isnull=False
+    ).select_related('booking')
+    
+    # Create payment lookup and annotate bookings
+    booking_payments_dict = {payment.booking_id: payment for payment in all_team_payments}
+    for booking in team_bookings:
+        booking.payment = booking_payments_dict.get(booking.id)
     
     # Recent team applications (last 10)
     team_applications = Application.objects.filter(
@@ -402,6 +421,7 @@ def manager_dashboard(request):
         'team_clients': team_clients,
         'team_bookings': team_bookings,
         'team_applications': team_applications,
+        'pending_payments': pending_payments,
         'total_team_members': team_members.count(),
         'total_clients': team_clients.count(),
         'total_bookings': team_bookings.count(),
