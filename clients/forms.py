@@ -66,7 +66,16 @@ class QuickClientCreationForm(forms.Form):
         required=False,
         min_value=0,
         widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
-        help_text='Total pitched amount (₹)'
+        help_text='Total pitched amount (₹) excluding GST'
+    )
+    gst_percentage = forms.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        min_value=0,
+        initial=18.00,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'value': '18.00'}),
+        help_text='GST % (default 18%)'
     )
     received_amount = forms.DecimalField(
         max_digits=12,
@@ -81,8 +90,8 @@ class QuickClientCreationForm(forms.Form):
         decimal_places=2,
         required=False,
         min_value=0,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
-        help_text='Pending amount (₹)'
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00', 'readonly': 'readonly'}),
+        help_text='Pending amount (₹) - auto-calculated'
     )
     
     def __init__(self, *args, **kwargs):
@@ -143,12 +152,18 @@ class QuickClientCreationForm(forms.Form):
         from decimal import Decimal
         total_pitched = Decimal(self.cleaned_data.get('total_pitched_amount') or 0)
         received = Decimal(self.cleaned_data.get('received_amount') or 0)
-        pending = self.cleaned_data.get('pending_amount')
-        pending = Decimal(pending) if pending is not None else (total_pitched - received if total_pitched >= received else Decimal('0.00'))
-
+        gst_pct = Decimal(self.cleaned_data.get('gst_percentage') or 18)
+        
+        # Calculate GST
+        gst_amount = (total_pitched * gst_pct / Decimal('100')).quantize(Decimal('0.01'))
+        total_with_gst = total_pitched + gst_amount
+        
         # Normalize amounts
-        if received > total_pitched:
-            total_pitched = received
+        if received > total_with_gst:
+            total_with_gst = received
+            gst_amount = Decimal('0.00')
+        
+        pending = total_with_gst - received
         if pending < 0:
             pending = Decimal('0.00')
 
@@ -162,6 +177,9 @@ class QuickClientCreationForm(forms.Form):
             status='PENDING_DOCS',  # Client needs to complete profile
             is_approved=True if self.created_by and self.created_by.role in ['ADMIN', 'MANAGER', 'OWNER'] else False,
             total_pitched_amount=total_pitched,
+            gst_percentage=gst_pct,
+            gst_amount=gst_amount,
+            total_with_gst=total_with_gst,
             received_amount=received,
             pending_amount=pending
         )

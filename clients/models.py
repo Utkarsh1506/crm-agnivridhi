@@ -140,7 +140,28 @@ class Client(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal('0.00'),
-        help_text=_('Total pitched amount (₹) discussed with client')
+        help_text=_('Total pitched amount (₹) discussed with client (excluding GST)')
+    )
+
+    gst_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('18.00'),
+        help_text=_('GST percentage to apply')
+    )
+
+    gst_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('GST amount (auto-calculated)')
+    )
+
+    total_with_gst = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Total pitched amount including GST')
     )
 
     received_amount = models.DecimalField(
@@ -328,28 +349,42 @@ class Client(models.Model):
         try:
             total = Decimal(self.total_pitched_amount or 0)
             received = Decimal(self.received_amount or 0)
+            gst_pct = Decimal(self.gst_percentage or 18)
+            
             if received < 0:
                 received = Decimal('0.00')
             if total < 0:
                 total = Decimal('0.00')
-            # Ensure received does not exceed total
-            if total >= 0 and received > total:
+            if gst_pct < 0:
+                gst_pct = Decimal('18.00')
+            
+            # Calculate GST
+            self.gst_amount = (total * gst_pct / Decimal('100')).quantize(Decimal('0.01'))
+            self.total_with_gst = total + self.gst_amount
+            
+            # Ensure received does not exceed total with GST
+            if self.total_with_gst >= 0 and received > self.total_with_gst:
+                self.total_with_gst = received
+                self.gst_amount = Decimal('0.00')
                 total = received
+            
             self.total_pitched_amount = total
             self.received_amount = received
-            # Compute pending if not explicitly set or inconsistent
-            computed_pending = total - received
+            self.gst_percentage = gst_pct
+            
+            # Compute pending based on total with GST
+            computed_pending = self.total_with_gst - received
             if computed_pending < 0:
                 computed_pending = Decimal('0.00')
-            self.pending_amount = Decimal(self.pending_amount or computed_pending)
-            # If provided pending doesn't match, enforce computed value
-            if self.pending_amount != computed_pending:
-                self.pending_amount = computed_pending
+            self.pending_amount = computed_pending
         except Exception:
             # Fail-safe: ensure fields exist even if parsing fails
             self.total_pitched_amount = self.total_pitched_amount or Decimal('0.00')
             self.received_amount = self.received_amount or Decimal('0.00')
             self.pending_amount = self.pending_amount or Decimal('0.00')
+            self.gst_percentage = self.gst_percentage or Decimal('18.00')
+            self.gst_amount = self.gst_amount or Decimal('0.00')
+            self.total_with_gst = self.total_with_gst or Decimal('0.00')
 
         if not self.client_id:
             self.client_id = self.generate_client_id()

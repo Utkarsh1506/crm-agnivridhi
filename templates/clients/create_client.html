@@ -169,23 +169,34 @@
                     </div>
                     <div class="card-body">
                         <div class="row mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="{{ form.total_pitched_amount.id_for_label }}" class="form-label fw-bold">
-                                    <i class="bi bi-cash-stack"></i> Total Pitched Amount (₹)
+                                    <i class="bi bi-cash-stack"></i> Pitched Amount (₹)
                                 </label>
                                 {{ form.total_pitched_amount }}
-                                <div class="form-text">Kitna total pitch kiya client ko</div>
+                                <div class="form-text">Base amount (excluding GST)</div>
                                 {% if form.total_pitched_amount.errors %}
                                 <div class="text-danger mt-1">{{ form.total_pitched_amount.errors }}</div>
                                 {% endif %}
                             </div>
                             
-                            <div class="col-md-4">
+                            <div class="col-md-2">
+                                <label for="{{ form.gst_percentage.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-percent"></i> GST %
+                                </label>
+                                {{ form.gst_percentage }}
+                                <div class="form-text">Default 18%</div>
+                                {% if form.gst_percentage.errors %}
+                                <div class="text-danger mt-1">{{ form.gst_percentage.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3">
                                 <label for="{{ form.received_amount.id_for_label }}" class="form-label fw-bold">
-                                    <i class="bi bi-check-circle"></i> Received Amount (₹)
+                                    <i class="bi bi-check-circle"></i> Received (₹)
                                 </label>
                                 {{ form.received_amount }}
-                                <div class="form-text">Abhi tak kitna receive ho gaya</div>
+                                <div class="form-text">Amount received so far</div>
                                 {% if form.received_amount.errors %}
                                 <div class="text-danger mt-1">{{ form.received_amount.errors }}</div>
                                 {% endif %}
@@ -193,17 +204,17 @@
                             
                             <div class="col-md-4">
                                 <label for="{{ form.pending_amount.id_for_label }}" class="form-label fw-bold">
-                                    <i class="bi bi-clock"></i> Pending Amount (₹)
+                                    <i class="bi bi-clock"></i> Pending (₹)
                                 </label>
                                 {{ form.pending_amount }}
-                                <div class="form-text">Kitna pending hai (auto-calculate)</div>
+                                <div class="form-text">Auto-calculated with GST</div>
                                 {% if form.pending_amount.errors %}
                                 <div class="text-danger mt-1">{{ form.pending_amount.errors }}</div>
                                 {% endif %}
                             </div>
                         </div>
                         <div class="alert alert-info mb-0">
-                            <i class="bi bi-info-circle"></i> <strong>Note:</strong> Pending amount automatically calculate hoga (Total - Received). Payment approval pe received amount automatically update hogi.
+                            <i class="bi bi-calculator"></i> <strong>GST Auto-calculation:</strong> Total = Pitched Amount + GST. Pending = Total - Received. Payment approval pe received automatically update hogi.
                         </div>
                     </div>
                 </div>

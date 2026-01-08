@@ -9,7 +9,8 @@ class ClientAdmin(admin.ModelAdmin):
     """
     list_display = (
         'client_id', 'company_name', 'business_type', 'sector', 'annual_turnover',
-        'funding_required', 'total_pitched_amount', 'received_amount', 'pending_amount',
+        'funding_required', 'total_pitched_amount', 'gst_percentage', 'gst_amount', 
+        'total_with_gst', 'received_amount', 'pending_amount',
         'assigned_sales', 'status', 'created_at'
     )
     list_filter = ('business_type', 'sector', 'status', 'created_at')
@@ -28,7 +29,7 @@ class ClientAdmin(admin.ModelAdmin):
             'fields': ('annual_turnover', 'funding_required', 'existing_loans')
         }),
         ('Revenue Tracking', {
-            'fields': ('total_pitched_amount', 'received_amount', 'pending_amount')
+            'fields': ('total_pitched_amount', 'gst_percentage', 'gst_amount', 'total_with_gst', 'received_amount', 'pending_amount')
         }),
         ('Contact Information', {
             'fields': ('contact_person', 'contact_email', 'contact_phone', 'alternate_phone')

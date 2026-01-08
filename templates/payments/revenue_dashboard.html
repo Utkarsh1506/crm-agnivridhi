@@ -54,6 +54,9 @@
               <th>Sales</th>
               <th>Manager</th>
               <th>Pitched</th>
+              <th>GST %</th>
+              <th>GST Amt</th>
+              <th>Total+GST</th>
               <th>Received</th>
               <th>Pending</th>
             </tr>
@@ -73,8 +76,11 @@
                 {% endif %}
               </td>
               <td>₹{{ client.total_pitched_amount|floatformat:2 }}</td>
-              <td>₹{{ client.received_amount|floatformat:2 }}</td>
-              <td>₹{{ client.pending_amount|floatformat:2 }}</td>
+              <td>{{ client.gst_percentage|floatformat:2 }}%</td>
+              <td>₹{{ client.gst_amount|floatformat:2 }}</td>
+              <td><strong>₹{{ client.total_with_gst|floatformat:2 }}</strong></td>
+              <td class="text-success"><strong>₹{{ client.received_amount|floatformat:2 }}</strong></td>
+              <td class="text-warning"><strong>₹{{ client.pending_amount|floatformat:2 }}</strong></td>
             </tr>
             {% endfor %}
           </tbody>
