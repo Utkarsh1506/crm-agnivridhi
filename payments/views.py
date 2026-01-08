@@ -168,26 +168,21 @@ def payment_detail(request, pk):
 
 
 @login_required
-def record_payment(request, booking_id):
-    """Record payment for a booking"""
-    from bookings.models import Booking
+def record_payment(request, client_id):
+    """Record payment directly for a client"""
+    from clients.models import Client
     from django.utils import timezone
     
-    booking = get_object_or_404(Booking, id=booking_id)
-    
-    # Check if payment already exists
-    if hasattr(booking, 'payment'):
-        messages.warning(request, 'Payment already recorded for this booking.')
-        return redirect('clients:client_detail', pk=booking.client.id)
+    client = get_object_or_404(Client, id=client_id)
     
     # Permission check
     user = request.user
-    if user.role == 'SALES' and booking.client.assigned_sales != user:
+    if user.role == 'SALES' and client.assigned_sales != user:
         messages.error(request, 'You can only record payments for your assigned clients.')
         return redirect('clients:sales_clients_list')
     elif user.role == 'MANAGER':
-        if not (booking.client.assigned_manager == user or 
-                (booking.client.assigned_sales and booking.client.assigned_sales.manager == user)):
+        if not (client.assigned_manager == user or 
+                (client.assigned_sales and client.assigned_sales.manager == user)):
             messages.error(request, 'You can only record payments for your team clients.')
             return redirect('clients:manager_clients_list')
     
@@ -198,18 +193,20 @@ def record_payment(request, booking_id):
             amount = Decimal(request.POST.get('amount'))
             payment_method = request.POST.get('payment_method')
             reference_id = request.POST.get('reference_id', '').strip()
+            description = request.POST.get('description', '').strip()
             notes = request.POST.get('notes', '').strip()
             proof = request.FILES.get('proof')
             
             if not reference_id:
                 messages.error(request, 'Transaction reference is required.')
-                return redirect('payments:record_payment', booking_id=booking_id)
+                return redirect('payments:record_payment', client_id=client_id)
             
             # Create payment record
             payment = Payment.objects.create(
-                booking=booking,
-                client=booking.client,
+                booking=None,  # No booking required
+                client=client,
                 amount=amount,
+                description=description,
                 payment_method=payment_method,
                 reference_id=reference_id,
                 notes=notes,
@@ -222,15 +219,15 @@ def record_payment(request, booking_id):
                 request, 
                 f'Payment recorded successfully! Reference: {reference_id}. Awaiting manager approval.'
             )
-            return redirect('clients:client_detail', pk=booking.client.id)
+            return redirect('clients:client_detail', pk=client.id)
             
         except Exception as e:
             messages.error(request, f'Error recording payment: {str(e)}')
-            return redirect('payments:record_payment', booking_id=booking_id)
+            return redirect('payments:record_payment', client_id=client_id)
     
     context = {
-        'booking': booking,
-        'page_title': f'Record Payment - {booking.booking_id}'
+        'client': client,
+        'page_title': f'Record Payment - {client.company_name}'
     }
     return render(request, 'payments/record_payment.html', context)
 
@@ -249,7 +246,7 @@ def approve_payment(request, payment_id):
     
     messages.success(
         request, 
-        f'Payment approved! Booking #{payment.booking.booking_id} is now PAID. You can now create an application.'
+        f'Payment approved! ₹{payment.amount} received from {payment.client.company_name}. Revenue updated automatically.'
     )
     return redirect('accounts:manager_dashboard')
 

@@ -16,11 +16,13 @@ class Payment(models.Model):
         REFUNDED = 'REFUNDED', _('Refunded')
     
     # Relationships
-    booking = models.OneToOneField(
+    booking = models.ForeignKey(
         'bookings.Booking',
-        on_delete=models.CASCADE,
-        related_name='payment',
-        help_text=_('Associated booking')
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payments',
+        help_text=_('Associated booking (optional)')
     )
     
     client = models.ForeignKey(
@@ -35,6 +37,13 @@ class Payment(models.Model):
         max_digits=10,
         decimal_places=2,
         help_text=_('Payment amount in INR')
+    )
+    
+    description = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text=_('Payment description/purpose')
     )
     
     currency = models.CharField(
@@ -184,7 +193,7 @@ class Payment(models.Model):
             self.payment_date = timezone.now()
         self.save()
         
-        # Update booking status
+        # Update booking status if booking exists
         if self.booking:
             self.booking.status = 'PAID'
             self.booking.payment_date = self.payment_date
@@ -204,7 +213,7 @@ class Payment(models.Model):
                     received_amount=self.client.received_amount,
                     pending_amount=self.client.pending_amount,
                     source='PAYMENT_CAPTURED',
-                    note=f'Payment approved: {self.reference_id or self.id} - ₹{self.amount}'
+                    note=f'Payment approved: {self.reference_id or self.id} - ₹{self.amount}. {self.description or ""}'
                 )
             except Exception:
                 # Don't break approval flow if revenue logging fails
