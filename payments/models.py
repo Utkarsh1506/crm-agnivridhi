@@ -175,6 +175,8 @@ class Payment(models.Model):
     def approve(self, approved_by_user):
         """Approve manual payment"""
         from django.utils import timezone
+        from decimal import Decimal
+        
         self.status = self.Status.CAPTURED
         self.approved_by = approved_by_user
         self.approval_date = timezone.now()
@@ -187,6 +189,26 @@ class Payment(models.Model):
             self.booking.status = 'PAID'
             self.booking.payment_date = self.payment_date
             self.booking.save()
+        
+        # Update client revenue: increment received, recalc pending
+        if self.client and self.amount:
+            try:
+                self.client.received_amount = Decimal(self.client.received_amount or 0) + Decimal(self.amount)
+                self.client.save()  # save() will auto-recalc pending_amount
+                
+                # Log revenue entry
+                RevenueEntry.objects.create(
+                    client=self.client,
+                    recorded_by=approved_by_user,
+                    total_pitched_amount=self.client.total_pitched_amount,
+                    received_amount=self.client.received_amount,
+                    pending_amount=self.client.pending_amount,
+                    source='PAYMENT_CAPTURED',
+                    note=f'Payment approved: {self.reference_id or self.id} - ₹{self.amount}'
+                )
+            except Exception:
+                # Don't break approval flow if revenue logging fails
+                pass
     
     def reject(self, rejected_by_user, reason=''):
         """Reject/dispute manual payment"""
