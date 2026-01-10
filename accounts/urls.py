@@ -53,6 +53,8 @@ urlpatterns = [
     
     # Reports
     path('reports/', views.reports_dashboard, name='reports_dashboard'),
+    path('revenue/report/', views.revenue_report, name='revenue_report'),
+    path('revenue/report/export-excel/', views.revenue_report_excel, name='revenue_report_excel'),
 
     # Route Directory (staff-only)
     path('routes/', views.route_directory, name='route_directory'),

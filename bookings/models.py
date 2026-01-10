@@ -63,6 +63,11 @@ class Service(models.Model):
         default=list,
         help_text=_('List of deliverables for this service')
     )
+
+    faqs = models.JSONField(
+        default=list,
+        help_text=_('FAQ entries for this service')
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

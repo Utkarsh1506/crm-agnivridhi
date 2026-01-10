@@ -817,6 +817,8 @@ def client_portal(request):
     from documents.models import Document
     from bookings.models import Booking
     from schemes.models import Scheme
+    from django.utils import timezone
+    from datetime import timedelta
     
     # Get client profile
     try:
@@ -840,7 +842,123 @@ def client_portal(request):
     # Client data
     applications = Application.objects.filter(client=client).order_by('-application_date')
     documents = Document.objects.filter(client=client).order_by('-created_at')
-    bookings = Booking.objects.filter(client=client).order_by('-booking_date')
+    bookings = Booking.objects.filter(client=client).select_related('service', 'assigned_to').order_by('-booking_date')
+
+    # Active booking (most recent)
+    active_booking = bookings.first() if bookings else None
+    progress_percent = getattr(active_booking, 'progress_percent', 0) if active_booking else 0
+
+    # Estimated completion date: prefer explicit field; otherwise derive from service duration
+    estimated_completion = None
+    if active_booking:
+        if active_booking.expected_completion_date:
+            estimated_completion = active_booking.expected_completion_date
+        elif getattr(active_booking, 'service', None) and getattr(active_booking.service, 'duration_days', None):
+            estimated_completion = (active_booking.booking_date + timedelta(days=int(active_booking.service.duration_days))).date()
+
+    # Build progress stages mapped by service category
+    stage_definitions = {
+        'INCORPORATION': [
+            'Basic Company Information',
+            'Document Collection',
+            'Government Filing',
+            'CIN/LLPIN Allotment',
+            'Final Approval',
+        ],
+        'CERTIFICATION': [
+            'Eligibility Check',
+            'Document Preparation',
+            'Application Submission',
+            'Verification',
+            'Certificate Issued',
+        ],
+        'FUNDING': [
+            'Requirement Gathering',
+            'Proposal Draft',
+            'Application Submission',
+            'Sanction Letter',
+            'Disbursement',
+        ],
+        'CONSULTING': [
+            'Discovery',
+            'Plan',
+            'Execution',
+            'Review',
+            'Closure',
+        ],
+        'GROWTH': [
+            'Assessment',
+            'Strategy',
+            'Implementation',
+            'Monitoring',
+            'Outcomes',
+        ],
+        'CSR': [
+            'Project Identification',
+            'Proposal Draft',
+            'Approval',
+            'Execution',
+            'Reporting',
+        ],
+    }
+    # Default stages if category not present
+    default_stages = [
+        'Basic Company Information',
+        'Company Authorization Document',
+        'Government Application Submission',
+        'Application Reference Number',
+        'Government Approval Status',
+    ]
+    service_category = getattr(getattr(active_booking, 'service', None), 'category', '') or ''
+    stage_names = stage_definitions.get(service_category, default_stages)
+    # Determine current stage index from progress_percent (0-100 mapped to 1-5)
+    current_stage_index = max(1, min(5, (progress_percent // 20) + 1)) if active_booking else 1
+    progress_stages = []
+    for idx, name in enumerate(stage_names, start=1):
+        if idx < current_stage_index:
+            status = 'COMPLETED'
+            badge = 'Completed'
+            badge_class = 'bg-success'
+        elif idx == current_stage_index:
+            status = 'CURRENT'
+            badge = 'Current'
+            badge_class = 'bg-primary'
+        else:
+            status = 'LOCKED'
+            badge = 'Locked'
+            badge_class = 'bg-secondary'
+        progress_stages.append({
+            'index': idx,
+            'name': name,
+            'status': status,
+            'badge': badge,
+            'badge_class': badge_class,
+        })
+
+    # Status updates from latest application timeline (fallback to booking status)
+    status_updates = []
+    latest_application = applications.first() if applications else None
+    if latest_application and latest_application.timeline:
+        # Show up to last 3 updates
+        for entry in list(latest_application.timeline)[-3:][::-1]:
+            status_updates.append({
+                'text': f"Stage status changed to {entry.get('status_display', entry.get('status',''))}",
+                'time_ago': entry.get('timestamp', ''),
+            })
+    elif active_booking:
+        status_updates.append({
+            'text': f"Stage status changed to {active_booking.get_status_display()}",
+            'time_ago': timezone.localtime(active_booking.updated_at).strftime('%b %d, %Y %I:%M %p') if hasattr(active_booking, 'updated_at') else '',
+        })
+
+    # SPOC details: prefer booking.assigned_to, else client's assigned_manager or assigned_sales
+    spoc = None
+    if active_booking and active_booking.assigned_to:
+        spoc = active_booking.assigned_to
+    elif getattr(client, 'assigned_manager', None):
+        spoc = client.assigned_manager
+    elif getattr(client, 'assigned_sales', None):
+        spoc = client.assigned_sales
     
     # Recommended schemes (AI)
     all_schemes = Scheme.objects.filter(status='ACTIVE')
@@ -868,6 +986,14 @@ def client_portal(request):
         'recommended_schemes': recommended_schemes,
         'profile_incomplete': profile_incomplete,
         'completion_percentage': completion_percentage,
+        # New client dashboard context
+        'active_booking': active_booking,
+        'progress_percent': progress_percent,
+        'estimated_completion': estimated_completion,
+        'progress_stages': progress_stages,
+        'status_updates': status_updates,
+        'spoc': spoc,
+        'current_stage_index': current_stage_index,
     }
     
     return render(request, 'dashboards/client_portal.html', context)
@@ -1087,6 +1213,180 @@ def mark_credential_as_sent(request, credential_id):
         return redirect('accounts:owner_dashboard')
     
     return redirect('accounts:owner_dashboard')
+
+
+@admin_required
+def revenue_report(request):
+    """Detailed revenue report showing all clients with sales/manager assignments."""
+    from clients.models import Client
+    from accounts.models import User
+    from django.db.models import Sum, Q
+    from django.core.paginator import Paginator
+
+    def base_queryset():
+        return Client.objects.select_related(
+            'assigned_sales', 'assigned_manager', 'created_by'
+        )
+
+    clients_qs = base_queryset()
+
+    # Filters
+    search_query = request.GET.get('search', '').strip()
+    manager_id = request.GET.get('manager', '').strip()
+    sales_id = request.GET.get('sales', '').strip()
+
+    if search_query:
+        clients_qs = clients_qs.filter(
+            Q(company_name__icontains=search_query) |
+            Q(contact_person__icontains=search_query) |
+            Q(assigned_sales__username__icontains=search_query) |
+            Q(assigned_sales__first_name__icontains=search_query) |
+            Q(assigned_sales__last_name__icontains=search_query) |
+            Q(assigned_manager__username__icontains=search_query) |
+            Q(assigned_manager__first_name__icontains=search_query) |
+            Q(assigned_manager__last_name__icontains=search_query)
+        )
+
+    if manager_id:
+        clients_qs = clients_qs.filter(assigned_manager_id=manager_id)
+    if sales_id:
+        clients_qs = clients_qs.filter(assigned_sales_id=sales_id)
+
+    # Sorting
+    sort = request.GET.get('sort', '').strip() or 'created_at'
+    order = request.GET.get('order', '').strip() or 'desc'
+    sort_map = {
+        'company': 'company_name',
+        'sales': 'assigned_sales__first_name',
+        'manager': 'assigned_manager__first_name',
+        'pitched': 'total_pitched_amount',
+        'gst': 'gst_percentage',
+        'gst_amount': 'gst_amount',
+        'total': 'total_with_gst',
+        'received': 'received_amount',
+        'pending': 'pending_amount',
+        'created_at': 'created_at',
+    }
+    sort_field = sort_map.get(sort, 'created_at')
+    if order == 'asc':
+        clients_qs = clients_qs.order_by(sort_field)
+    else:
+        clients_qs = clients_qs.order_by(f'-{sort_field}')
+
+    # Totals computed on filtered set
+    totals = clients_qs.aggregate(
+        total_pitched=Sum('total_pitched_amount'),
+        total_with_gst=Sum('total_with_gst'),
+        total_received=Sum('received_amount'),
+        total_pending=Sum('pending_amount')
+    )
+
+    # Pagination
+    paginator = Paginator(clients_qs, 50)
+    page_number = request.GET.get('page')
+    clients = paginator.get_page(page_number)
+
+    # Filter dropdowns
+    managers = User.objects.filter(role__in=['ADMIN', 'MANAGER']).order_by('first_name', 'last_name')
+    sales_people = User.objects.filter(role='SALES').order_by('first_name', 'last_name')
+
+    context = {
+        'clients': clients,
+        'totals': totals,
+        'search_query': search_query,
+        'managers': managers,
+        'sales_people': sales_people,
+        'selected_manager': manager_id,
+        'selected_sales': sales_id,
+        'sort': sort,
+        'order': order,
+    }
+
+    return render(request, 'accounts/revenue_report.html', context)
+
+
+@admin_required
+def revenue_report_excel(request):
+    """Export filtered revenue report to Excel."""
+    from clients.models import Client
+    from accounts.models import User
+    from django.db.models import Q
+    from openpyxl import Workbook
+    from django.http import HttpResponse
+
+    # Reuse filtering logic
+    qs = Client.objects.select_related('assigned_sales', 'assigned_manager')
+
+    search_query = request.GET.get('search', '').strip()
+    manager_id = request.GET.get('manager', '').strip()
+    sales_id = request.GET.get('sales', '').strip()
+
+    if search_query:
+        qs = qs.filter(
+            Q(company_name__icontains=search_query) |
+            Q(contact_person__icontains=search_query) |
+            Q(assigned_sales__username__icontains=search_query) |
+            Q(assigned_sales__first_name__icontains=search_query) |
+            Q(assigned_sales__last_name__icontains=search_query) |
+            Q(assigned_manager__username__icontains=search_query) |
+            Q(assigned_manager__first_name__icontains=search_query) |
+            Q(assigned_manager__last_name__icontains=search_query)
+        )
+    if manager_id:
+        qs = qs.filter(assigned_manager_id=manager_id)
+    if sales_id:
+        qs = qs.filter(assigned_sales_id=sales_id)
+
+    # Sorting params
+    sort = request.GET.get('sort', '').strip() or 'created_at'
+    order = request.GET.get('order', '').strip() or 'desc'
+    sort_map = {
+        'company': 'company_name',
+        'sales': 'assigned_sales__first_name',
+        'manager': 'assigned_manager__first_name',
+        'pitched': 'total_pitched_amount',
+        'gst': 'gst_percentage',
+        'gst_amount': 'gst_amount',
+        'total': 'total_with_gst',
+        'received': 'received_amount',
+        'pending': 'pending_amount',
+        'created_at': 'created_at',
+    }
+    sort_field = sort_map.get(sort, 'created_at')
+    if order == 'asc':
+        qs = qs.order_by(sort_field)
+    else:
+        qs = qs.order_by(f'-{sort_field}')
+
+    # Build workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Client Revenue'
+    headers = [
+        'Client/Company', 'Sales Employee', 'Manager', 'Pitched Amount', 'GST %', 'GST Amount',
+        'Total with GST', 'Received', 'Pending', 'Status'
+    ]
+    ws.append(headers)
+
+    for c in qs:
+        status = 'Paid' if c.pending_amount == 0 else ('Partial' if c.received_amount > 0 else 'Unpaid')
+        ws.append([
+            c.company_name,
+            (c.assigned_sales.get_full_name() or c.assigned_sales.username) if c.assigned_sales else '',
+            (c.assigned_manager.get_full_name() or c.assigned_manager.username) if c.assigned_manager else '',
+            float(c.total_pitched_amount or 0),
+            float(c.gst_percentage or 0),
+            float(c.gst_amount or 0),
+            float(c.total_with_gst or 0),
+            float(c.received_amount or 0),
+            float(c.pending_amount or 0),
+            status,
+        ])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=client_revenue_report.xlsx'
+    wb.save(response)
+    return response
 
 
 @admin_required

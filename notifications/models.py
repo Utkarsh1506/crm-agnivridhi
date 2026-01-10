@@ -211,3 +211,70 @@ class Notification(models.Model):
     def can_retry(self):
         """Check if notification can be retried"""
         return self.status == self.Status.FAILED and self.retry_count < 3
+
+
+class SupportRequest(models.Model):
+    """Client callback/support request tracked in-app."""
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', _('Open')
+        IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
+        RESOLVED = 'RESOLVED', _('Resolved')
+
+    client = models.ForeignKey(
+        'clients.Client',
+        on_delete=models.CASCADE,
+        related_name='support_requests',
+        help_text=_('Client who raised the request')
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='support_requests_created',
+        help_text=_('User account of the requester')
+    )
+
+    booking = models.ForeignKey(
+        'bookings.Booking',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='support_requests',
+        help_text=_('Related booking if applicable')
+    )
+
+    subject = models.CharField(max_length=200)
+    message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
+
+    contact_email = models.EmailField(blank=True, null=True)
+    contact_phone = models.CharField(max_length=20, blank=True, null=True)
+
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='support_requests_assigned',
+        help_text=_('Staff assigned to handle the request')
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('Support Request')
+        verbose_name_plural = _('Support Requests')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['client', 'status']),
+            models.Index(fields=['assigned_to', 'status']),
+            models.Index(fields=['-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.subject} ({self.get_status_display()})"
+
+    def mark_resolved(self):
+        self.status = self.Status.RESOLVED
+        self.save()

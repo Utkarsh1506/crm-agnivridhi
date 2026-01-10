@@ -42,24 +42,164 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="h2 mb-4">Welcome, {{ client.company_name }}!</h1>
+<h1 class="h2 mb-3">Welcome, {{ client.company_name }}!</h1>
 
-<!-- Company Info Card -->
-<div class="card mb-4">
-    <div class="card-header">
-        <i class="bi bi-building"></i> Company Information
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <p><strong>Business Type:</strong> {{ client.get_business_type_display }}</p>
-                <p><strong>Sector:</strong> {{ client.get_sector_display }}</p>
-                <p><strong>Company Age:</strong> {{ client.company_age }} years</p>
+<div class="row">
+    <!-- Left: Service Overview & Progress -->
+    <div class="col-lg-8">
+        <!-- Service Overview Card -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1">{% if active_booking %}{{ active_booking.service.name }}{% else %}No Active Service{% endif %}</h5>
+                        {% if active_booking %}
+                        <ul class="list-unstyled small mb-2 text-muted">
+                            <li><span class="me-2">Service ID:</span> {{ active_booking.booking_id }}</li>
+                            <li><span class="me-2">Started:</span> {{ active_booking.booking_date|date:"M d, Y" }}</li>
+                            {% if estimated_completion %}
+                            <li><span class="me-2">Est. Completion:</span> {{ estimated_completion|date:"M d, Y" }}</li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">Service Status</div>
+                        <span class="badge {% if active_booking %}{% if active_booking.status == 'COMPLETED' %}bg-success{% elif active_booking.status == 'PAID' %}bg-info text-dark{% elif active_booking.status == 'PENDING' %}bg-warning text-dark{% elif active_booking.status == 'CANCELLED' %}bg-danger{% else %}bg-secondary{% endif %}{% else %}bg-secondary{% endif %}">
+                            {% if active_booking %}{{ active_booking.get_status_display }}{% else %}No Booking{% endif %}
+                        </span>
+                        <div class="small text-muted mt-1">{{ progress_percent|default:0 }}% Complete</div>
+                    </div>
+                </div>
+                {% if active_booking %}
+                <div class="progress mt-3" style="height: 8px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ progress_percent|default:0 }}%" aria-valuenow="{{ progress_percent|default:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                {% endif %}
             </div>
-            <div class="col-md-6">
-                <p><strong>Annual Turnover:</strong> ₹{{ client.annual_turnover }} lakhs</p>
-                <p><strong>Funding Required:</strong> ₹{{ client.funding_required }} lakhs</p>
-                <p><strong>Status:</strong> <span class="badge bg-success">{{ client.get_status_display }}</span></p>
+        </div>
+
+        <!-- Service Progress Stages -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-flag"></i> Service Progress
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="small text-muted">Stage {{ current_stage_index|default:1 }} of {{ progress_stages|length }}</span>
+                </div>
+                <div class="row text-center g-3">
+                    {% for s in progress_stages %}
+                    <div class="col-6 col-md">
+                        <div class="p-2 border rounded h-100">
+                            <div class="fs-6 fw-semibold">{{ s.index }}</div>
+                            <div class="small">{{ s.name }}</div>
+                            <span class="badge {{ s.badge_class }} mt-2">{{ s.badge }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Info Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-building"></i> Company Information
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Business Type:</strong> {{ client.get_business_type_display }}</p>
+                        <p><strong>Sector:</strong> {{ client.get_sector_display }}</p>
+                        <p><strong>Company Age:</strong> {{ client.company_age }} years</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Annual Turnover:</strong> ₹{{ client.annual_turnover }} lakhs</p>
+                        <p><strong>Funding Required:</strong> ₹{{ client.funding_required }} lakhs</p>
+                        <p><strong>Status:</strong> <span class="badge bg-success">{{ client.get_status_display }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Status Updates, Help, Assistance, SPOC -->
+    <div class="col-lg-4">
+        <!-- Service Status Updates -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-bell"></i> Service Status Updates</div>
+            <div class="card-body">
+                {% if status_updates %}
+                    <ul class="list-unstyled mb-0">
+                        {% for u in status_updates %}
+                        <li class="mb-2"><i class="bi bi-dot"></i> {{ u.text }}<br><small class="text-muted">{{ u.time_ago }}</small></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">No recent updates.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Need Help? -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-question-circle"></i> Need Help?</div>
+            <div class="card-body">
+                {% if active_booking and active_booking.service.faqs and active_booking.service.faqs|length > 0 %}
+                    <ul class="small mb-3">
+                        {% for faq in active_booking.service.faqs %}
+                            <li>{{ faq }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-2">There are no FAQs for this service.</p>
+                {% endif %}
+                <a href="{% url 'notifications:activity_feed' %}" class="btn btn-sm btn-outline-secondary">View activity</a>
+            </div>
+        </div>
+
+        <!-- Need Immediate Assistance? -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-chat-dots"></i> Need Immediate Assistance?</div>
+            <div class="card-body">
+                <p class="text-muted">Get expert help with your service workflow. Our support team is ready to assist you.</p>
+                <div class="d-flex gap-2">
+                    <a href="mailto:{{ spoc.email|default:'support@agnivridhi.in' }}" class="btn btn-sm btn-warning"><i class="bi bi-chat"></i> Open Chat</a>
+                    <a href="{% url 'notifications:notification_list' %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-ticket-detailed"></i> Raise Ticket</a>
+                </div>
+                <small class="text-muted d-block mt-2">Quick response guaranteed within 2 hours</small>
+            </div>
+        </div>
+
+        <!-- SPOC Details -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-person-badge"></i> SPOC Details</div>
+            <div class="card-body">
+                {% if spoc %}
+                <div class="d-flex align-items-start gap-3">
+                    <div>
+                        <div class="small text-muted">Name</div>
+                        <div class="fw-semibold">{{ spoc.get_full_name|default:spoc.username }}</div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="small text-muted">Email</div>
+                    <div>{{ spoc.email }}</div>
+                </div>
+                <div class="mt-2">
+                    <div class="small text-muted">Callback</div>
+                    <form method="POST" action="{% url 'notifications:request_callback' %}" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="subject" value="Request Callback">
+                        {% if active_booking %}<input type="hidden" name="booking_id" value="{{ active_booking.id }}">{% endif %}
+                        <input type="text" name="message" class="form-control form-control-sm" placeholder="Optional message" />
+                        <button class="btn btn-sm btn-outline-primary" type="submit">Request Callback</button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No SPOC assigned yet.</p>
+                {% endif %}
             </div>
         </div>
     </div>

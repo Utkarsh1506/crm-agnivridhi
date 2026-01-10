@@ -5,8 +5,54 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from collections import Counter
 from .models import Notification
+from .models import SupportRequest
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.urls import reverse
 
 
+@login_required
+def request_callback(request):
+	"""Create a support/callback request for the current client."""
+	user = request.user
+	# Ensure requester is a client
+	client = getattr(user, 'client_profile', None)
+	if not client:
+		messages.error(request, 'Only clients can request callbacks.')
+		return render(request, 'errors/403.html', status=403)
+
+	if request.method == 'POST':
+		subject = request.POST.get('subject', 'Request Callback').strip()
+		message = request.POST.get('message', '').strip()
+		booking_id = request.POST.get('booking_id')
+		booking = None
+		if booking_id:
+			from bookings.models import Booking
+			booking = Booking.objects.filter(id=booking_id, client=client).first()
+
+		# Choose default assignee: booking.assigned_to or client's assigned_manager/sales
+		assigned_to = None
+		if booking and booking.assigned_to:
+			assigned_to = booking.assigned_to
+		elif getattr(client, 'assigned_manager', None):
+			assigned_to = client.assigned_manager
+		elif getattr(client, 'assigned_sales', None):
+			assigned_to = client.assigned_sales
+
+		sr = SupportRequest.objects.create(
+			client=client,
+			user=user,
+			booking=booking,
+			subject=subject,
+			message=message or 'Please call me regarding my service.',
+			contact_email=user.email or getattr(client, 'contact_email', None),
+			contact_phone=getattr(client, 'contact_phone', None),
+			assigned_to=assigned_to,
+		)
+		messages.success(request, 'Callback request submitted. Our team will contact you shortly.')
+		return redirect('accounts:client_portal')
+
+	return redirect('accounts:client_portal')
 @login_required
 def notification_list(request):
 	"""List notifications with pagination and filters. Admin/Owner/Superuser sees all; others see own."""

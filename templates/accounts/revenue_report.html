@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+
+{% block title %}Client Revenue Report - Agnivridhi CRM{% endblock %}
+
+{% block sidebar %}
+<nav class="col-md-3 col-lg-2 d-md-block sidebar">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            {% if user.is_owner %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:owner_dashboard' %}">
+                    <i class="bi bi-trophy"></i> Owner Dashboard
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:admin_dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Admin Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'accounts:revenue_report' %}">
+                    <i class="bi bi-cash-stack"></i> Revenue Report
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:reports_dashboard' %}">
+                    <i class="bi bi-graph-up"></i> Reports & Analytics
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/">
+                    <i class="bi bi-gear"></i> Django Admin
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-cash-stack"></i> Client Revenue Report</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-success" onclick="exportTableToCSV('client_revenue_report.csv')">
+                <i class="bi bi-filetype-csv"></i> Export CSV
+            </button>
+            <a class="btn btn-sm btn-success" href="{% url 'accounts:revenue_report_excel' %}?search={{ search_query|urlencode }}&manager={{ selected_manager }}&sales={{ selected_sales }}&sort={{ sort }}&order={{ order }}">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Summary Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1 text-muted">Total Pitched Amount</div>
+                        <div class="h4 mb-0">₹{{ totals.total_pitched|default:0|floatformat:0 }}</div>
+                        <small class="text-muted">Base amount (without GST)</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-currency-rupee fs-2 text-primary opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-info border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1 text-muted">Total with GST</div>
+                        <div class="h4 mb-0">₹{{ totals.total_with_gst|default:0|floatformat:0 }}</div>
+                        <small class="text-muted">Including GST amount</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calculator fs-2 text-info opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1 text-muted">Total Received</div>
+                        <div class="h4 mb-0">₹{{ totals.total_received|default:0|floatformat:0 }}</div>
+                        <small class="text-muted">Payments received</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fs-2 text-success opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card border-start border-warning border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1 text-muted">Total Pending</div>
+                        <div class="h4 mb-0">₹{{ totals.total_pending|default:0|floatformat:0 }}</div>
+                        <small class="text-muted">Outstanding amount</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock-history fs-2 text-warning opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="row mb-3">
+    <div class="col-md-12">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small">Search</label>
+                <input type="text" name="search" class="form-control" placeholder="Search client/company/sales/manager" value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Manager</label>
+                <select name="manager" class="form-select">
+                    <option value="">All</option>
+                    {% for m in managers %}
+                        <option value="{{ m.id }}" {% if selected_manager == m.id|stringformat:'s' %}selected{% endif %}>{{ m.get_full_name|default:m.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Sales</label>
+                <select name="sales" class="form-select">
+                    <option value="">All</option>
+                    {% for s in sales_people %}
+                        <option value="{{ s.id }}" {% if selected_sales == s.id|stringformat:'s' %}selected{% endif %}>{{ s.get_full_name|default:s.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Apply</button>
+                <a href="{% url 'accounts:revenue_report' %}" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i> Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Revenue Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-table"></i> Detailed Client Revenue Breakdown</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0" id="revenueTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th><a class="text-white text-decoration-none" href="?sort=company&order={% if sort == 'company' and order != 'asc' %}asc{% else %}desc{% endif %}">Client / Company</a></th>
+                        <th><a class="text-white text-decoration-none" href="?sort=sales&order={% if sort == 'sales' and order != 'asc' %}asc{% else %}desc{% endif %}">Sales Employee</a></th>
+                        <th><a class="text-white text-decoration-none" href="?sort=manager&order={% if sort == 'manager' and order != 'asc' %}asc{% else %}desc{% endif %}">Manager</a></th>
+                        <th class="text-end"><a class="text-white text-decoration-none" href="?sort=pitched&order={% if sort == 'pitched' and order != 'asc' %}asc{% else %}desc{% endif %}">Pitched Amount</a></th>
+                        <th class="text-center"><a class="text-white text-decoration-none" href="?sort=gst&order={% if sort == 'gst' and order != 'asc' %}asc{% else %}desc{% endif %}">GST %</a></th>
+                        <th class="text-end"><a class="text-white text-decoration-none" href="?sort=gst_amount&order={% if sort == 'gst_amount' and order != 'asc' %}asc{% else %}desc{% endif %}">GST Amount</a></th>
+                        <th class="text-end"><a class="text-white text-decoration-none" href="?sort=total&order={% if sort == 'total' and order != 'asc' %}asc{% else %}desc{% endif %}">Total with GST</a></th>
+                        <th class="text-end"><a class="text-white text-decoration-none" href="?sort=received&order={% if sort == 'received' and order != 'asc' %}asc{% else %}desc{% endif %}">Received</a></th>
+                        <th class="text-end"><a class="text-white text-decoration-none" href="?sort=pending&order={% if sort == 'pending' and order != 'asc' %}asc{% else %}desc{% endif %}">Pending</a></th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <strong>{{ client.company_name }}</strong><br>
+                            <small class="text-muted">{{ client.contact_person }}</small>
+                        </td>
+                        <td>
+                            {% if client.assigned_sales %}
+                                <span class="badge bg-info text-dark">
+                                    <i class="bi bi-person"></i> {{ client.assigned_sales.get_full_name|default:client.assigned_sales.username }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if client.assigned_manager %}
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-person-badge"></i> {{ client.assigned_manager.get_full_name|default:client.assigned_manager.username }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">No Manager</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">₹{{ client.total_pitched_amount|default:0|floatformat:0 }}</td>
+                        <td class="text-center">{{ client.gst_percentage|default:0 }}%</td>
+                        <td class="text-end">₹{{ client.gst_amount|default:0|floatformat:0 }}</td>
+                        <td class="text-end fw-bold">₹{{ client.total_with_gst|default:0|floatformat:0 }}</td>
+                        <td class="text-end text-success fw-bold">₹{{ client.received_amount|default:0|floatformat:0 }}</td>
+                        <td class="text-end text-warning fw-bold">₹{{ client.pending_amount|default:0|floatformat:0 }}</td>
+                        <td class="text-center">
+                            {% if client.pending_amount == 0 %}
+                                <span class="badge bg-success"><i class="bi bi-check-all"></i> Paid</span>
+                            {% elif client.received_amount > 0 %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Partial</span>
+                            {% else %}
+                                <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Unpaid</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                            <p class="text-muted mb-0">
+                                {% if search_query %}
+                                    No clients found matching "{{ search_query }}".
+                                {% else %}
+                                    No clients with revenue data found.
+                                {% endif %}
+                            </p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if clients.has_other_pages %}
+<nav aria-label="Client pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if clients.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ clients.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">Page {{ clients.number }} of {{ clients.paginator.num_pages }}</span>
+        </li>
+
+        {% if clients.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ clients.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ clients.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<script>
+function exportTableToCSV(filename) {
+    const table = document.getElementById('revenueTable');
+    let csv = [];
+    
+    // Get headers
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        headers.push(th.innerText.trim());
+    });
+    csv.push(headers.join(','));
+    
+    // Get data rows
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => {
+            // Clean the text (remove extra spaces and newlines)
+            let text = td.innerText.trim().replace(/\n/g, ' ').replace(/,/g, ';');
+            row.push(text);
+        });
+        if (row.length > 0 && row[0] !== '') {  // Skip empty rows
+            csv.push(row.join(','));
+        }
+    });
+    
+    // Create download link
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
+{% endblock %}

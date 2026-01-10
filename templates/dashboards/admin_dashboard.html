@@ -285,99 +285,69 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card border-start border-warning border-4">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Total Revenue
-                        </div>
-                        <div class="h3 mb-0 font-weight-bold">₹{{ total_revenue|floatformat:0 }}</div>
-                        <small class="text-muted">Successful payments</small>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-currency-rupee fs-2 text-warning opacity-25"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card border-start border-danger border-4">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                            Pending Revenue
-                        </div>
-                        <div class="h3 mb-0 font-weight-bold">₹{{ pending_revenue|floatformat:0 }}</div>
-                        <small class="text-muted">Awaiting approval</small>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-hourglass-split fs-2 text-danger opacity-25"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <div class="row">
     <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card stats-card border-start border-primary border-4">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Total (Pitched + GST)
+        <a href="{% url 'accounts:revenue_report' %}" class="text-decoration-none">
+            <div class="card stats-card border-start border-primary border-4 hover-shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total (Pitched + GST)
+                            </div>
+                            <div class="h3 mb-0 font-weight-bold">₹{{ client_revenue.total_with_gst|floatformat:0 }}</div>
+                            <small class="text-muted">Click for detailed report <i class="bi bi-arrow-right"></i></small>
                         </div>
-                        <div class="h3 mb-0 font-weight-bold">₹{{ client_revenue.total_with_gst|floatformat:0 }}</div>
-                        <small class="text-muted">From client revenue fields</small>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-graph-up fs-2 text-primary opacity-25"></i>
+                        <div class="col-auto">
+                            <i class="bi bi-graph-up fs-2 text-primary opacity-25"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card stats-card border-start border-success border-4">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Received (Client)
+        <a href="{% url 'accounts:revenue_report' %}" class="text-decoration-none">
+            <div class="card stats-card border-start border-success border-4 hover-shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Received (Client)
+                            </div>
+                            <div class="h3 mb-0 font-weight-bold">₹{{ client_revenue.total_received|floatformat:0 }}</div>
+                            <small class="text-muted">Click for detailed report <i class="bi bi-arrow-right"></i></small>
                         </div>
-                        <div class="h3 mb-0 font-weight-bold">₹{{ client_revenue.total_received|floatformat:0 }}</div>
-                        <small class="text-muted">Live received from clients</small>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-piggy-bank fs-2 text-success opacity-25"></i>
+                        <div class="col-auto">
+                            <i class="bi bi-piggy-bank fs-2 text-success opacity-25"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card stats-card border-start border-danger border-4">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                            Pending (Client)
+        <a href="{% url 'accounts:revenue_report' %}" class="text-decoration-none">
+            <div class="card stats-card border-start border-danger border-4 hover-shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Pending (Client)
+                            </div>
+                            <div class="h3 mb-0 font-weight-bold">₹{{ client_revenue.total_pending|floatformat:0 }}</div>
+                            <small class="text-muted">Click for detailed report <i class="bi bi-arrow-right"></i></small>
                         </div>
-                        <div class="h3 mb-0 font-weight-bold">₹{{ client_revenue.total_pending|floatformat:0 }}</div>
-                        <small class="text-muted">Total - Received</small>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-hourglass-split fs-2 text-danger opacity-25"></i>
+                        <div class="col-auto">
+                            <i class="bi bi-hourglass-split fs-2 text-danger opacity-25"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
