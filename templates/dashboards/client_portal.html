@@ -42,7 +42,12 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="h2 mb-3">Welcome, {{ client.company_name }}!</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h2 mb-0">Welcome, {{ client.company_name }}!</h1>
+    <a href="{% url 'schemes:scheme_list' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Book Additional Service
+    </a>
+</div>
 
 <div class="row">
     <!-- Left: Service Overview & Progress -->
@@ -165,8 +170,10 @@
             <div class="card-body">
                 <p class="text-muted">Get expert help with your service workflow. Our support team is ready to assist you.</p>
                 <div class="d-flex gap-2">
-                    <a href="mailto:{{ spoc.email|default:'support@agnivridhi.in' }}" class="btn btn-sm btn-warning"><i class="bi bi-chat"></i> Open Chat</a>
-                    <a href="{% url 'notifications:notification_list' %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-ticket-detailed"></i> Raise Ticket</a>
+                    <a href="mailto:{{ spoc.email|default:'support@agnivridhi.in' }}" class="btn btn-sm btn-warning"><i class="bi bi-envelope"></i> Email Us</a>
+                    {% if spoc and spoc.phone %}
+                    <a href="tel:{{ spoc.phone }}" class="btn btn-sm btn-success"><i class="bi bi-telephone-fill"></i> Call Now</a>
+                    {% endif %}
                 </div>
                 <small class="text-muted d-block mt-2">Quick response guaranteed within 2 hours</small>
             </div>
@@ -185,18 +192,15 @@
                 </div>
                 <div class="mt-2">
                     <div class="small text-muted">Email</div>
-                    <div>{{ spoc.email }}</div>
+                    <div><a href="mailto:{{ spoc.email }}">{{ spoc.email }}</a></div>
                 </div>
+                {% if spoc.phone %}
                 <div class="mt-2">
-                    <div class="small text-muted">Callback</div>
-                    <form method="POST" action="{% url 'notifications:request_callback' %}" class="d-flex gap-2">
-                        {% csrf_token %}
-                        <input type="hidden" name="subject" value="Request Callback">
-                        {% if active_booking %}<input type="hidden" name="booking_id" value="{{ active_booking.id }}">{% endif %}
-                        <input type="text" name="message" class="form-control form-control-sm" placeholder="Optional message" />
-                        <button class="btn btn-sm btn-outline-primary" type="submit">Request Callback</button>
-                    </form>
+                    <div class="small text-muted">Phone</div>
+                    <div class="fw-semibold fs-5"><a href="tel:{{ spoc.phone }}" class="text-decoration-none text-success">{{ spoc.phone }}</a></div>
+                    <a href="tel:{{ spoc.phone }}" class="btn btn-sm btn-success mt-1 w-100"><i class="bi bi-telephone-fill"></i> Call Now</a>
                 </div>
+                {% endif %}
                 {% else %}
                 <p class="text-muted mb-0">No SPOC assigned yet.</p>
                 {% endif %}
