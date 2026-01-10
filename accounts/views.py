@@ -235,6 +235,18 @@ def admin_dashboard(request):
         total_pending=Sum('pending_amount'),
     )
     client_revenue = {k: v or 0 for k, v in client_revenue.items()}
+
+    # Last 10 days client revenue (new clients only)
+    from django.utils import timezone
+    from datetime import timedelta
+    ten_days_ago = timezone.now() - timedelta(days=10)
+    last10_revenue = Client.objects.filter(created_at__gte=ten_days_ago).aggregate(
+        total_pitched=Sum('total_pitched_amount'),
+        total_with_gst=Sum('total_with_gst'),
+        total_received=Sum('received_amount'),
+        total_pending=Sum('pending_amount'),
+    )
+    last10_revenue = {k: v or 0 for k, v in last10_revenue.items()}
     
     # Pending revenue (awaiting approval)
     pending_revenue = Payment.objects.filter(status='PENDING').aggregate(Sum('amount'))['amount__sum'] or 0
@@ -327,6 +339,7 @@ def admin_dashboard(request):
         'pending_revenue': pending_revenue,
         'failed_revenue': failed_revenue,
         'client_revenue': client_revenue,
+        'last10_revenue': last10_revenue,
         'all_recent_payments': all_recent_payments,
         'pending_edit_requests': pending_edit_requests,
         'pending_payments': pending_payments,
@@ -965,6 +978,16 @@ def owner_dashboard(request):
     )
     client_revenue = {k: v or 0 for k, v in client_revenue.items()}
 
+    # Last 10 days client revenue (new clients only)
+    ten_days_ago = timezone.now() - timedelta(days=10)
+    last10_revenue = Client.objects.filter(created_at__gte=ten_days_ago).aggregate(
+        total_pitched=Sum('total_pitched_amount'),
+        total_with_gst=Sum('total_with_gst'),
+        total_received=Sum('received_amount'),
+        total_pending=Sum('pending_amount'),
+    )
+    last10_revenue = {k: v or 0 for k, v in last10_revenue.items()}
+
     top_sectors = Client.objects.values('sector').annotate(c=Count('id')).order_by('-c')[:5]
 
     # Revenue by month (last 6 months)
@@ -1030,6 +1053,7 @@ def owner_dashboard(request):
         'total_applications': total_applications,
         'total_revenue': total_revenue,
         'client_revenue': client_revenue,
+        'last10_revenue': last10_revenue,
         'top_sectors': top_sectors,
         'chart_labels': labels,
         'chart_revenue': revenue_series,

@@ -218,6 +218,29 @@
     </div>
 </div>
 
+<div class="row">
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card stats-card border-start border-secondary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Last 10 Days (New Clients)</div>
+                        <div class="h4 mb-1">₹{{ last10_revenue.total_with_gst|floatformat:0 }}</div>
+                        <small class="text-muted">Total (Pitched + GST)</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-week fs-2 text-secondary opacity-25"></i>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 mt-2 small text-muted">
+                    <span><strong>Received:</strong> ₹{{ last10_revenue.total_received|floatformat:0 }}</span>
+                    <span><strong>Pending:</strong> ₹{{ last10_revenue.total_pending|floatformat:0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- New Client Credentials Section -->
 {% if unsent_credentials %}
 <div class="row mb-4">
