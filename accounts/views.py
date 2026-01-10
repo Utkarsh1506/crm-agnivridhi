@@ -380,13 +380,13 @@ def manager_dashboard(request):
     team_bookings = Booking.objects.filter(
         Q(client__assigned_manager=request.user) |
         Q(assigned_to__manager=request.user)
-            client_revenue = Client.objects.aggregate(
+    ).select_related('client', 'service', 'assigned_to').order_by('-booking_date').distinct()
     
     # Pending applications count for sidebar badge
     pending_count = Application.objects.filter(
         client__assigned_manager=request.user,
         status__in=['SUBMITTED', 'UNDER_REVIEW']
-            client_revenue = {k: v or 0 for k, v in client_revenue.items()}
+    ).count()
     
     # Pending payments count (awaiting manager approval) - check both client assignment and sales team
     pending_payments_count = Payment.objects.filter(
