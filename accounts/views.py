@@ -235,18 +235,6 @@ def admin_dashboard(request):
         total_pending=Sum('pending_amount'),
     )
     client_revenue = {k: v or 0 for k, v in client_revenue.items()}
-
-    # Last 10 days client revenue (new clients only)
-    from django.utils import timezone
-    from datetime import timedelta
-    ten_days_ago = timezone.now() - timedelta(days=10)
-    last10_revenue = Client.objects.filter(created_at__gte=ten_days_ago).aggregate(
-        total_pitched=Sum('total_pitched_amount'),
-        total_with_gst=Sum('total_with_gst'),
-        total_received=Sum('received_amount'),
-        total_pending=Sum('pending_amount'),
-    )
-    last10_revenue = {k: v or 0 for k, v in last10_revenue.items()}
     
     # Pending revenue (awaiting approval)
     pending_revenue = Payment.objects.filter(status='PENDING').aggregate(Sum('amount'))['amount__sum'] or 0
@@ -339,7 +327,6 @@ def admin_dashboard(request):
         'pending_revenue': pending_revenue,
         'failed_revenue': failed_revenue,
         'client_revenue': client_revenue,
-        'last10_revenue': last10_revenue,
         'all_recent_payments': all_recent_payments,
         'pending_edit_requests': pending_edit_requests,
         'pending_payments': pending_payments,
@@ -393,13 +380,13 @@ def manager_dashboard(request):
     team_bookings = Booking.objects.filter(
         Q(client__assigned_manager=request.user) |
         Q(assigned_to__manager=request.user)
-    ).select_related('client', 'service', 'assigned_to').order_by('-booking_date').distinct()
+            client_revenue = Client.objects.aggregate(
     
     # Pending applications count for sidebar badge
     pending_count = Application.objects.filter(
         client__assigned_manager=request.user,
         status__in=['SUBMITTED', 'UNDER_REVIEW']
-    ).count()
+            client_revenue = {k: v or 0 for k, v in client_revenue.items()}
     
     # Pending payments count (awaiting manager approval) - check both client assignment and sales team
     pending_payments_count = Payment.objects.filter(
