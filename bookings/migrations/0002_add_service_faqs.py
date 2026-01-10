@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.add_field(
+        migrations.AddField(
             model_name='service',
             name='faqs',
             field=models.JSONField(default=list, help_text='FAQ entries for this service'),
