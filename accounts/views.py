@@ -225,7 +225,7 @@ def admin_dashboard(request):
         if parsed_to:
             base_success = base_success.filter(payment_date__date__lte=parsed_to)
     
-        total_revenue = base_success.aggregate(Sum('amount'))['amount__sum'] or 0
+    total_revenue = base_success.aggregate(Sum('amount'))['amount__sum'] or 0
 
     # Live client revenue totals (pitched/received/pending with GST)
     client_revenue = Client.objects.aggregate(
