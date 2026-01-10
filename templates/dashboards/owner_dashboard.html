@@ -167,6 +167,57 @@
     </div>
 </div>
 
+<div class="row">
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card stats-card border-start border-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Total (Pitched + GST)</div>
+                        <div class="h3 mb-0">₹{{ client_revenue.total_with_gst|floatformat:0 }}</div>
+                        <small class="text-muted">Client revenue totals</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-up fs-2 text-primary opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card stats-card border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Received (Client)</div>
+                        <div class="h3 mb-0">₹{{ client_revenue.total_received|floatformat:0 }}</div>
+                        <small class="text-muted">Live received from clients</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-piggy-bank fs-2 text-success opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card stats-card border-start border-danger border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1">Pending (Client)</div>
+                        <div class="h3 mb-0">₹{{ client_revenue.total_pending|floatformat:0 }}</div>
+                        <small class="text-muted">Total - Received</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-hourglass-split fs-2 text-danger opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- New Client Credentials Section -->
 {% if unsent_credentials %}
 <div class="row mb-4">

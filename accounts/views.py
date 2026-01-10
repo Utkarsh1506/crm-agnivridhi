@@ -225,7 +225,16 @@ def admin_dashboard(request):
         if parsed_to:
             base_success = base_success.filter(payment_date__date__lte=parsed_to)
     
-    total_revenue = base_success.aggregate(Sum('amount'))['amount__sum'] or 0
+        total_revenue = base_success.aggregate(Sum('amount'))['amount__sum'] or 0
+
+    # Live client revenue totals (pitched/received/pending with GST)
+    client_revenue = Client.objects.aggregate(
+        total_pitched=Sum('total_pitched_amount'),
+        total_with_gst=Sum('total_with_gst'),
+        total_received=Sum('received_amount'),
+        total_pending=Sum('pending_amount'),
+    )
+    client_revenue = {k: v or 0 for k, v in client_revenue.items()}
     
     # Pending revenue (awaiting approval)
     pending_revenue = Payment.objects.filter(status='PENDING').aggregate(Sum('amount'))['amount__sum'] or 0
@@ -317,6 +326,7 @@ def admin_dashboard(request):
         'total_revenue': total_revenue,
         'pending_revenue': pending_revenue,
         'failed_revenue': failed_revenue,
+        'client_revenue': client_revenue,
         'all_recent_payments': all_recent_payments,
         'pending_edit_requests': pending_edit_requests,
         'pending_payments': pending_payments,
@@ -946,6 +956,15 @@ def owner_dashboard(request):
         base_success = base_success.filter(payment_method=method_filter)
     total_revenue = base_success.aggregate(Sum('amount'))['amount__sum'] or 0
 
+    # Live client revenue totals (pitched/received/pending with GST)
+    client_revenue = Client.objects.aggregate(
+        total_pitched=Sum('total_pitched_amount'),
+        total_with_gst=Sum('total_with_gst'),
+        total_received=Sum('received_amount'),
+        total_pending=Sum('pending_amount'),
+    )
+    client_revenue = {k: v or 0 for k, v in client_revenue.items()}
+
     top_sectors = Client.objects.values('sector').annotate(c=Count('id')).order_by('-c')[:5]
 
     # Revenue by month (last 6 months)
@@ -1010,6 +1029,7 @@ def owner_dashboard(request):
         'total_bookings': total_bookings,
         'total_applications': total_applications,
         'total_revenue': total_revenue,
+        'client_revenue': client_revenue,
         'top_sectors': top_sectors,
         'chart_labels': labels,
         'chart_revenue': revenue_series,
