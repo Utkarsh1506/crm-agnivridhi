@@ -36,6 +36,13 @@ class Client(models.Model):
         CHEMICAL = 'CHEMICAL', _('Chemical')
         PHARMA = 'PHARMA', _('Pharma')
         LOGISTICS = 'LOGISTICS', _('Logistics')
+        NGO_SOCIAL = 'NGO_SOCIAL', _('NGO/Social Work')
+        NGO_CHARITY = 'NGO_CHARITY', _('Charity/Welfare')
+        NGO_ENVIRONMENT = 'NGO_ENVIRONMENT', _('Environment/Conservation')
+        NGO_HEALTH = 'NGO_HEALTH', _('Health & Sanitation')
+        NGO_EDUCATION = 'NGO_EDUCATION', _('Education & Literacy')
+        NGO_WOMEN = 'NGO_WOMEN', _('Women Empowerment')
+        NGO_CHILD = 'NGO_CHILD', _('Child Welfare')
         OTHER = 'OTHER', _('Other')
     
     class Status(models.TextChoices):
