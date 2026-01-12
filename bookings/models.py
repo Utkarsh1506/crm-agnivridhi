@@ -276,3 +276,68 @@ class Booking(models.Model):
         if self.expected_completion_date and self.status not in ['COMPLETED', 'CANCELLED', 'REFUNDED']:
             return self.expected_completion_date < timezone.now().date()
         return False
+    
+    def get_service_stages(self):
+        """Get stage definitions based on service category"""
+        stage_definitions = {
+            'INCORPORATION': [
+                {'step': 1, 'name': 'Business Information', 'completed': False, 'current': False},
+                {'step': 2, 'name': 'Documentation', 'completed': False, 'current': False},
+                {'step': 3, 'name': 'Application Submission', 'completed': False, 'current': False},
+                {'step': 4, 'name': 'Government Approval', 'completed': False, 'current': False},
+                {'step': 5, 'name': 'Certificate Received', 'completed': False, 'current': False},
+            ],
+            'CERTIFICATION': [
+                {'step': 1, 'name': 'Eligibility Check', 'completed': False, 'current': False},
+                {'step': 2, 'name': 'Audit & Assessment', 'completed': False, 'current': False},
+                {'step': 3, 'name': 'Corrective Actions', 'completed': False, 'current': False},
+                {'step': 4, 'name': 'Final Certification', 'completed': False, 'current': False},
+                {'step': 5, 'name': 'Certificate Issuance', 'completed': False, 'current': False},
+            ],
+            'FUNDING': [
+                {'step': 1, 'name': 'Scheme Evaluation', 'completed': False, 'current': False},
+                {'step': 2, 'name': 'Documentation Preparation', 'completed': False, 'current': False},
+                {'step': 3, 'name': 'Application Filing', 'completed': False, 'current': False},
+                {'step': 4, 'name': 'Application Tracking', 'completed': False, 'current': False},
+                {'step': 5, 'name': 'Fund Disbursement', 'completed': False, 'current': False},
+            ],
+            'CONSULTING': [
+                {'step': 1, 'name': 'Initial Consultation', 'completed': False, 'current': False},
+                {'step': 2, 'name': 'Analysis & Planning', 'completed': False, 'current': False},
+                {'step': 3, 'name': 'Implementation', 'completed': False, 'current': False},
+                {'step': 4, 'name': 'Monitoring & Review', 'completed': False, 'current': False},
+                {'step': 5, 'name': 'Final Recommendations', 'completed': False, 'current': False},
+            ],
+            'GROWTH': [
+                {'step': 1, 'name': 'Business Assessment', 'completed': False, 'current': False},
+                {'step': 2, 'name': 'Growth Strategy', 'completed': False, 'current': False},
+                {'step': 3, 'name': 'Execution Planning', 'completed': False, 'current': False},
+                {'step': 4, 'name': 'Implementation Support', 'completed': False, 'current': False},
+                {'step': 5, 'name': 'Success Tracking', 'completed': False, 'current': False},
+            ],
+            'CSR': [
+                {'step': 1, 'name': 'CSR Planning', 'completed': False, 'current': False},
+                {'step': 2, 'name': 'Project Design', 'completed': False, 'current': False},
+                {'step': 3, 'name': 'Implementation', 'completed': False, 'current': False},
+                {'step': 4, 'name': 'Impact Assessment', 'completed': False, 'current': False},
+                {'step': 5, 'name': 'Compliance Filing', 'completed': False, 'current': False},
+            ],
+        }
+        
+        # Get stages for this service category
+        stages = stage_definitions.get(self.service.category, stage_definitions['CONSULTING'])
+        
+        # Mark stages as completed/current based on progress
+        progress_per_stage = 100 / len(stages)
+        for i, stage in enumerate(stages):
+            if self.progress_percent >= (i + 1) * progress_per_stage:
+                stage['completed'] = True
+                stage['current'] = False
+            elif self.progress_percent > i * progress_per_stage:
+                stage['completed'] = False
+                stage['current'] = True
+            else:
+                stage['completed'] = False
+                stage['current'] = False
+        
+        return stages

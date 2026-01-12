@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Booking {{ booking.booking_id }} - Agnivridhi CRM{% endblock %}
+{% block title %}{{ booking.service.name }} - Service Progress{% endblock %}
 
 {% block sidebar %}
 <nav class="col-md-3 col-lg-2 d-md-block sidebar">
   <div class="position-sticky pt-3">
     <ul class="nav flex-column">
-      <li class="nav-item"><a class="nav-link" href="{{ dashboard_url }}"><i class="bi bi-house"></i> Dashboard</a></li>
-      <li class="nav-item"><a class="nav-link" href="{% url 'bookings:booking_list' %}"><i class="bi bi-list"></i> Bookings</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'accounts:client_portal' %}"><i class="bi bi-house"></i> Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'bookings:client_bookings_list' %}"><i class="bi bi-list"></i> All Services</a></li>
     </ul>
   </div>
 </nav>
@@ -15,45 +15,164 @@
 
 {% block content %}
 <div class="mb-3">
-  <a href="{% url 'bookings:booking_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Bookings</a>
+  <a href="{% url 'accounts:client_portal' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Services</a>
 </div>
 
-<h1 class="h2 mb-4">Booking {{ booking.booking_id }}</h1>
+<h1 class="h2 mb-2">{{ booking.service.name }}</h1>
+<p class="text-muted">Service ID: {{ booking.booking_id }}</p>
 
+<!-- Service Overview -->
 <div class="card mb-4">
-  <div class="card-header">Summary</div>
   <div class="card-body">
     <div class="row">
       <div class="col-md-6">
-        <p><strong>Client:</strong> {{ booking.client.company_name }}</p>
-        <p><strong>Service:</strong> {{ booking.service.name }}</p>
-        <p><strong>Amount:</strong> ₹{{ booking.final_amount|default:booking.amount }}</p>
+        <div class="mb-3">
+          <div class="small text-muted">Service Status</div>
+          <span class="badge {% if booking.status == 'COMPLETED' %}bg-success{% elif booking.status == 'PAID' %}bg-info text-dark{% elif booking.status == 'PENDING' %}bg-warning text-dark{% else %}bg-secondary{% endif %} fs-6">
+            {{ booking.get_status_display }}
+          </span>
+        </div>
+        <div class="mb-3">
+          <div class="small text-muted">Progress</div>
+          <div class="progress" style="height: 20px;">
+            <div class="progress-bar" role="progressbar" style="width: {{ booking.progress_percent }}%" aria-valuenow="{{ booking.progress_percent }}" aria-valuemin="0" aria-valuemax="100">
+              {{ booking.progress_percent }}%
+            </div>
+          </div>
+        </div>
       </div>
       <div class="col-md-6">
-        <p><strong>Status:</strong> <span class="badge bg-secondary">{{ booking.get_status_display }}</span></p>
-        <p><strong>Assigned To:</strong> {{ booking.assigned_to.get_full_name|default:booking.assigned_to.username }}</p>
-        <p><strong>Date:</strong> {{ booking.booking_date|date:"M d, Y" }}</p>
+        <div class="mb-3">
+          <p class="mb-1"><strong>Service Fee:</strong> <span class="text-primary fs-5">₹{{ booking.final_amount }}</span></p>
+          <p class="mb-1"><strong>Started:</strong> <span class="text-muted">{{ booking.booking_date|date:"M d, Y" }}</span></p>
+          {% if booking.expected_completion_date %}
+          <p class="mb-0"><strong>Expected Completion:</strong> <span class="text-muted">{{ booking.expected_completion_date|date:"M d, Y" }}</span></p>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Service Stages -->
 <div class="card mb-4">
-  <div class="card-header">Payment</div>
+  <div class="card-header">
+    <i class="bi bi-flag"></i> Service Progress Timeline
+  </div>
+  <div class="card-body">
+    <div class="row g-2">
+      {% with stages=booking.get_service_stages %}
+        {% if stages %}
+          {% for stage in stages %}
+          <div class="col-6 col-md-4 col-lg-{% widthratio 12 stages|length 1 %}">
+            <div class="p-3 border rounded text-center h-100" style="{% if stage.completed %}background: #d4edda;{% elif stage.current %}background: #cfe2ff;{% endif %}">
+              <div class="fs-5 fw-bold">{{ stage.step }}</div>
+              <div class="small fw-semibold mb-2">{{ stage.name }}</div>
+              {% if stage.completed %}
+                <span class="badge bg-success">Completed</span>
+                <div class="small text-muted mt-2">✓ Done</div>
+              {% elif stage.current %}
+                <span class="badge bg-primary">Current</span>
+                <div class="small text-muted mt-2">⏱ In Progress</div>
+              {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                <div class="small text-muted mt-2">◯ Locked</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <!-- Default 5-stage process if service doesn't define stages -->
+          <div class="col-6 col-md-4">
+            <div class="p-3 border rounded text-center h-100 {% if booking.progress_percent >= 20 %}bg-success bg-opacity-25{% elif booking.progress_percent > 0 %}bg-primary bg-opacity-25{% endif %}">
+              <div class="fs-5 fw-bold">1</div>
+              <div class="small fw-semibold mb-2">Information Gathering</div>
+              {% if booking.progress_percent >= 20 %}
+                <span class="badge bg-success">Done</span>
+              {% elif booking.progress_percent > 0 %}
+                <span class="badge bg-primary">Current</span>
+              {% else %}
+                <span class="badge bg-secondary">Pending</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="p-3 border rounded text-center h-100 {% if booking.progress_percent >= 40 %}bg-success bg-opacity-25{% elif booking.progress_percent >= 20 %}bg-primary bg-opacity-25{% endif %}">
+              <div class="fs-5 fw-bold">2</div>
+              <div class="small fw-semibold mb-2">Documentation</div>
+              {% if booking.progress_percent >= 40 %}
+                <span class="badge bg-success">Done</span>
+              {% elif booking.progress_percent >= 20 %}
+                <span class="badge bg-primary">Current</span>
+              {% else %}
+                <span class="badge bg-secondary">Pending</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="p-3 border rounded text-center h-100 {% if booking.progress_percent >= 60 %}bg-success bg-opacity-25{% elif booking.progress_percent >= 40 %}bg-primary bg-opacity-25{% endif %}">
+              <div class="fs-5 fw-bold">3</div>
+              <div class="small fw-semibold mb-2">Submission</div>
+              {% if booking.progress_percent >= 60 %}
+                <span class="badge bg-success">Done</span>
+              {% elif booking.progress_percent >= 40 %}
+                <span class="badge bg-primary">Current</span>
+              {% else %}
+                <span class="badge bg-secondary">Pending</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="p-3 border rounded text-center h-100 {% if booking.progress_percent >= 80 %}bg-success bg-opacity-25{% elif booking.progress_percent >= 60 %}bg-primary bg-opacity-25{% endif %}">
+              <div class="fs-5 fw-bold">4</div>
+              <div class="small fw-semibold mb-2">Verification</div>
+              {% if booking.progress_percent >= 80 %}
+                <span class="badge bg-success">Done</span>
+              {% elif booking.progress_percent >= 60 %}
+                <span class="badge bg-primary">Current</span>
+              {% else %}
+                <span class="badge bg-secondary">Pending</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="p-3 border rounded text-center h-100 {% if booking.progress_percent >= 100 %}bg-success bg-opacity-25{% elif booking.progress_percent >= 80 %}bg-primary bg-opacity-25{% endif %}">
+              <div class="fs-5 fw-bold">5</div>
+              <div class="small fw-semibold mb-2">Completion</div>
+              {% if booking.progress_percent >= 100 %}
+                <span class="badge bg-success">Done</span>
+              {% elif booking.progress_percent >= 80 %}
+                <span class="badge bg-primary">Current</span>
+              {% else %}
+                <span class="badge bg-secondary">Pending</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+</div>
+
+<!-- Payment Information -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-credit-card"></i> Payment Details
+  </div>
   <div class="card-body">
     {% if booking.payment %}
-      <p><strong>Status:</strong> <span class="badge bg-{% if booking.payment.status == 'CAPTURED' %}success{% elif booking.payment.status == 'PENDING' %}warning{% elif booking.payment.status == 'FAILED' %}danger{% else %}secondary{% endif %}">{{ booking.payment.get_status_display }}</span></p>
-      <p><strong>Amount:</strong> ₹{{ booking.payment.amount }}</p>
-      <p><strong>Method:</strong> {{ booking.payment.get_payment_method_display }}</p>
-      <p><strong>Reference:</strong> <code>{{ booking.payment.reference_id|default:'-' }}</code></p>
-      {% if booking.payment.status == 'PENDING' %}
-        {% if request.user.is_manager or request.user.is_admin %}
-          <a href="{% url 'accounts:approve_payment' booking.payment.id %}?next={{ request.path|urlencode }}" class="btn btn-success btn-sm me-2"><i class="bi bi-check-circle"></i> Approve</a>
-          <a href="{% url 'accounts:reject_payment' booking.payment.id %}?next={{ request.path|urlencode }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle"></i> Reject</a>
-        {% endif %}
-      {% endif %}
+      <div class="row">
+        <div class="col-md-6">
+          <p><strong>Status:</strong> <span class="badge bg-{% if booking.payment.status == 'CAPTURED' %}success{% elif booking.payment.status == 'PENDING' %}warning{% elif booking.payment.status == 'FAILED' %}danger{% else %}secondary{% endif %}">{{ booking.payment.get_status_display }}</span></p>
+          <p><strong>Amount:</strong> ₹{{ booking.payment.amount }}</p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>Method:</strong> {{ booking.payment.get_payment_method_display }}</p>
+          <p><strong>Reference:</strong> <code>{{ booking.payment.reference_id|default:'-' }}</code></p>
+        </div>
+      </div>
     {% else %}
-      <p class="text-muted">No payment recorded yet.</p>
+      <p class="text-muted mb-2">No payment recorded yet.</p>
       {% if request.user.role == 'SALES' and booking.assigned_to_id == request.user.id %}
         <a href="{% url 'accounts:record_payment' booking.id %}" class="btn btn-success btn-sm"><i class="bi bi-cash-coin"></i> Record Payment</a>
       {% endif %}
@@ -61,9 +180,39 @@
   </div>
 </div>
 
+<!-- SPOC & Support -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-person-badge"></i> Support & Assistance
+  </div>
+  <div class="card-body">
+    {% with spoc=booking.assigned_to %}
+      {% if spoc %}
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Assigned To:</strong> {{ spoc.get_full_name|default:spoc.username }}</p>
+            <p><strong>Email:</strong> <a href="mailto:{{ spoc.email }}">{{ spoc.email }}</a></p>
+          </div>
+          <div class="col-md-6">
+            {% if spoc.phone %}
+            <p><strong>Phone:</strong> <a href="tel:{{ spoc.phone }}" class="text-decoration-none">{{ spoc.phone }}</a></p>
+            <a href="tel:{{ spoc.phone }}" class="btn btn-sm btn-success"><i class="bi bi-telephone-fill"></i> Call Now</a>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <p class="text-muted">No support staff assigned yet.</p>
+      {% endif %}
+    {% endwith %}
+  </div>
+</div>
+
+<!-- Next Steps -->
 {% if booking.payment and booking.payment.status == 'CAPTURED' %}
 <div class="card">
-  <div class="card-header">Next Steps</div>
+  <div class="card-header">
+    <i class="bi bi-arrow-right-square"></i> Next Steps
+  </div>
   <div class="card-body">
     {% if request.user.role == 'SALES' and booking.assigned_to_id == request.user.id %}
       <a href="{% url 'applications:create_application_from_booking' booking.id %}" class="btn btn-primary btn-sm"><i class="bi bi-file-earmark-plus"></i> Create Application</a>

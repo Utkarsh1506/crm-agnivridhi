@@ -811,14 +811,12 @@ def reject_payment(request, payment_id):
 @client_required
 def client_portal(request):
     """
-    Client portal with applications and documents
+    Client service dashboard showing active bookings and their progress
     """
     from applications.models import Application
     from documents.models import Document
     from bookings.models import Booking
     from schemes.models import Scheme
-    from django.utils import timezone
-    from datetime import timedelta
     
     # Get client profile
     try:
@@ -839,133 +837,29 @@ def client_portal(request):
         messages.warning(request, 'Please complete your profile to access all features.')
         return redirect('clients:complete_profile')
     
+    # Get all bookings categorized by status
+    bookings = Booking.objects.filter(client=client).select_related('service', 'assigned_to').order_by('-created_at')
+    
+    # Categorize bookings
+    active_bookings = bookings.filter(status__in=['PENDING', 'PAID']).order_by('-booking_date')
+    completed_bookings = bookings.filter(status='COMPLETED')
+    all_bookings = bookings
+    
+    # Statistics
+    total_services = all_bookings.count()
+    in_progress = active_bookings.count()
+    completed = completed_bookings.count()
+    
     # Client data
     applications = Application.objects.filter(client=client).order_by('-application_date')
     documents = Document.objects.filter(client=client).order_by('-created_at')
-    bookings = Booking.objects.filter(client=client).select_related('service', 'assigned_to').order_by('-booking_date')
-
-    # Active booking (most recent)
-    active_booking = bookings.first() if bookings else None
-    progress_percent = getattr(active_booking, 'progress_percent', 0) if active_booking else 0
-
-    # Estimated completion date: prefer explicit field; otherwise derive from service duration
-    estimated_completion = None
-    if active_booking:
-        if active_booking.expected_completion_date:
-            estimated_completion = active_booking.expected_completion_date
-        elif getattr(active_booking, 'service', None) and getattr(active_booking.service, 'duration_days', None):
-            estimated_completion = (active_booking.booking_date + timedelta(days=int(active_booking.service.duration_days))).date()
-
-    # Build progress stages mapped by service category
-    stage_definitions = {
-        'INCORPORATION': [
-            'Basic Company Information',
-            'Document Collection',
-            'Government Filing',
-            'CIN/LLPIN Allotment',
-            'Final Approval',
-        ],
-        'CERTIFICATION': [
-            'Eligibility Check',
-            'Document Preparation',
-            'Application Submission',
-            'Verification',
-            'Certificate Issued',
-        ],
-        'FUNDING': [
-            'Requirement Gathering',
-            'Proposal Draft',
-            'Application Submission',
-            'Sanction Letter',
-            'Disbursement',
-        ],
-        'CONSULTING': [
-            'Discovery',
-            'Plan',
-            'Execution',
-            'Review',
-            'Closure',
-        ],
-        'GROWTH': [
-            'Assessment',
-            'Strategy',
-            'Implementation',
-            'Monitoring',
-            'Outcomes',
-        ],
-        'CSR': [
-            'Project Identification',
-            'Proposal Draft',
-            'Approval',
-            'Execution',
-            'Reporting',
-        ],
-    }
-    # Default stages if category not present
-    default_stages = [
-        'Basic Company Information',
-        'Company Authorization Document',
-        'Government Application Submission',
-        'Application Reference Number',
-        'Government Approval Status',
-    ]
-    service_category = getattr(getattr(active_booking, 'service', None), 'category', '') or ''
-    stage_names = stage_definitions.get(service_category, default_stages)
-    # Determine current stage index from progress_percent (0-100 mapped to 1-5)
-    current_stage_index = max(1, min(5, (progress_percent // 20) + 1)) if active_booking else 1
-    progress_stages = []
-    for idx, name in enumerate(stage_names, start=1):
-        if idx < current_stage_index:
-            status = 'COMPLETED'
-            badge = 'Completed'
-            badge_class = 'bg-success'
-        elif idx == current_stage_index:
-            status = 'CURRENT'
-            badge = 'Current'
-            badge_class = 'bg-primary'
-        else:
-            status = 'LOCKED'
-            badge = 'Locked'
-            badge_class = 'bg-secondary'
-        progress_stages.append({
-            'index': idx,
-            'name': name,
-            'status': status,
-            'badge': badge,
-            'badge_class': badge_class,
-        })
-
-    # Status updates from latest application timeline (fallback to booking status)
-    status_updates = []
-    latest_application = applications.first() if applications else None
-    if latest_application and latest_application.timeline:
-        # Show up to last 3 updates
-        for entry in list(latest_application.timeline)[-3:][::-1]:
-            status_updates.append({
-                'text': f"Stage status changed to {entry.get('status_display', entry.get('status',''))}",
-                'time_ago': entry.get('timestamp', ''),
-            })
-    elif active_booking:
-        status_updates.append({
-            'text': f"Stage status changed to {active_booking.get_status_display()}",
-            'time_ago': timezone.localtime(active_booking.updated_at).strftime('%b %d, %Y %I:%M %p') if hasattr(active_booking, 'updated_at') else '',
-        })
-
-    # SPOC details: prefer booking.assigned_to, else client's assigned_manager or assigned_sales
-    spoc = None
-    if active_booking and active_booking.assigned_to:
-        spoc = active_booking.assigned_to
-    elif getattr(client, 'assigned_manager', None):
-        spoc = client.assigned_manager
-    elif getattr(client, 'assigned_sales', None):
-        spoc = client.assigned_sales
     
-    # Recommended schemes (AI)
+    # Recommended schemes
     all_schemes = Scheme.objects.filter(status='ACTIVE')
     recommended_schemes = []
     for scheme in all_schemes:
         score = scheme.get_recommended_for_client(client)
-        if score > 50:  # Only show schemes with >50% match
+        if score > 50:
             is_eligible, reasons = scheme.check_client_eligibility(client)
             recommended_schemes.append({
                 'scheme': scheme,
@@ -973,27 +867,22 @@ def client_portal(request):
                 'is_eligible': is_eligible,
                 'reasons': reasons
             })
-    
-    # Sort by score descending
     recommended_schemes.sort(key=lambda x: x['score'], reverse=True)
-    recommended_schemes = recommended_schemes[:3]  # Top 3
+    recommended_schemes = recommended_schemes[:3]
     
     context = {
         'client': client,
+        'active_bookings': active_bookings,
+        'completed_bookings': completed_bookings,
+        'all_bookings': all_bookings,
+        'total_services': total_services,
+        'in_progress': in_progress,
+        'completed': completed,
         'applications': applications,
         'documents': documents,
-        'bookings': bookings,
         'recommended_schemes': recommended_schemes,
         'profile_incomplete': profile_incomplete,
         'completion_percentage': completion_percentage,
-        # New client dashboard context
-        'active_booking': active_booking,
-        'progress_percent': progress_percent,
-        'estimated_completion': estimated_completion,
-        'progress_stages': progress_stages,
-        'status_updates': status_updates,
-        'spoc': spoc,
-        'current_stage_index': current_stage_index,
     }
     
     return render(request, 'dashboards/client_portal.html', context)
