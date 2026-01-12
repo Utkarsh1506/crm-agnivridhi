@@ -50,6 +50,15 @@ class QuickClientCreationForm(forms.Form):
         help_text='Primary contact phone'
     )
     
+    initial_service = forms.ModelChoiceField(
+        queryset=None,  # Will be set in __init__
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        help_text='Select the service client is interested in (optional)'
+    )
+    
     assigned_manager = forms.ModelChoiceField(
         queryset=User.objects.none(),  # Will be set in __init__
         required=False,
@@ -97,6 +106,10 @@ class QuickClientCreationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.created_by = kwargs.pop('created_by', None)
         super().__init__(*args, **kwargs)
+        
+        # Setup service choices - show active services
+        from bookings.models import Service
+        self.fields['initial_service'].queryset = Service.objects.filter(is_active=True).order_by('category', 'name')
         
         # Setup manager choices based on user role
         if self.created_by:
@@ -226,6 +239,38 @@ class QuickClientCreationForm(forms.Form):
         except Exception:
             # Avoid breaking flow if revenue logging fails
             pass
+        
+        # Create initial booking if service was selected
+        initial_service = self.cleaned_data.get('initial_service')
+        if initial_service:
+            from bookings.models import Booking
+            from datetime import timedelta
+            from django.utils import timezone
+            
+            # Calculate expected completion date
+            expected_date = timezone.now().date() + timedelta(days=initial_service.duration_days)
+            
+            # Determine who to assign the booking to
+            assigned_to = None
+            if client.assigned_sales:
+                assigned_to = client.assigned_sales
+            elif client.assigned_manager:
+                assigned_to = client.assigned_manager
+            elif self.created_by:
+                assigned_to = self.created_by
+            
+            Booking.objects.create(
+                client=client,
+                service=initial_service,
+                amount=initial_service.price,
+                final_amount=initial_service.price,
+                status='PENDING',
+                expected_completion_date=expected_date,
+                assigned_to=assigned_to,
+                created_by=self.created_by,
+                priority='MEDIUM'
+            )
+        
         return client
 
 
