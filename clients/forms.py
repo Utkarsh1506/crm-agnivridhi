@@ -237,9 +237,51 @@ class QuickClientCreationForm(forms.Form):
             # Avoid breaking flow if revenue logging fails
             pass
         
-        # Store initial service interest in client notes if provided
+        # Create initial service booking if provided
         initial_service_text = self.cleaned_data.get('initial_service')
         if initial_service_text and initial_service_text.strip():
+            from bookings.models import Booking, Service
+            from datetime import timedelta
+            
+            # Get or create a default "Consultation" service for initial bookings
+            consultation_service, created = Service.objects.get_or_create(
+                name='Initial Consultation',
+                defaults={
+                    'category': 'CONSULTING',
+                    'description': 'Initial consultation and service requirement discussion',
+                    'short_description': 'Initial consultation for understanding client requirements',
+                    'price': 0,
+                    'duration_days': 7,
+                    'is_active': True,
+                    'features': ['Requirement Analysis', 'Service Planning', 'Documentation Guidance'],
+                    'deliverables': ['Service Proposal', 'Timeline Estimate']
+                }
+            )
+            
+            # Determine who to assign the booking to
+            assigned_to = None
+            if client.assigned_sales:
+                assigned_to = client.assigned_sales
+            elif client.assigned_manager:
+                assigned_to = client.assigned_manager
+            elif self.created_by:
+                assigned_to = self.created_by
+            
+            # Create booking with service interest in requirements
+            Booking.objects.create(
+                client=client,
+                service=consultation_service,
+                amount=Decimal('0.00'),
+                final_amount=Decimal('0.00'),
+                status='PENDING',
+                expected_completion_date=timezone.now().date() + timedelta(days=7),
+                assigned_to=assigned_to,
+                created_by=self.created_by,
+                priority='HIGH',
+                requirements=f"Service Interest: {initial_service_text.strip()}\n\nThis is an initial consultation booking. Client has expressed interest in the above service."
+            )
+            
+            # Also store in client notes
             client.notes = f"Initial Service Interest: {initial_service_text.strip()}"
             client.save()
         

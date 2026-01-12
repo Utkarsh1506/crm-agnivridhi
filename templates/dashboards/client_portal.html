@@ -75,8 +75,34 @@
     <div class="row g-3">
         {% for booking in active_bookings %}
         <div class="col-md-6 col-lg-4">
-            <a href="{% url 'bookings:booking_detail' booking.id %}" style="text-decoration: none; color: inherit;">
-                <div class="card h-100 shadow-sm service-card" style="cursor: pointer; transition: transform 0.2s;">
+            <div class="card h-100 shadow-sm service-card" style="transition: transform 0.2s;">
+                {% if booking.status == 'PENDING' and booking.requirements %}
+                <!-- Initial Consultation Card with Start Onboarding Button -->
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="card-title mb-1">{{ booking.requirements|slice:":50"|split:"Service Interest: "|last|split:"\n"|first }}</h5>
+                            <small class="text-muted">Initial Consultation</small>
+                        </div>
+                        <span class="badge bg-warning text-dark">Ready to Start</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p class="text-muted small mb-2">Complete your profile to begin the onboarding process for this service.</p>
+                        <div class="alert alert-light border mb-0">
+                            <small class="text-muted">{{ booking.requirements|slice:":200" }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'clients:complete_profile' %}" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-rocket-takeoff"></i> Start Onboarding
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Regular Service Card -->
+                <a href="{% url 'bookings:booking_detail' booking.id %}" style="text-decoration: none; color: inherit;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
@@ -108,8 +134,9 @@
                             <small class="text-primary"><i class="bi bi-arrow-right-circle"></i> View Details</small>
                         </div>
                     </div>
-                </div>
-            </a>
+                </a>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
     </div>
