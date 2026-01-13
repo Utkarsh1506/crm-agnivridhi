@@ -81,7 +81,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
-                            <h5 class="card-title mb-1">{{ booking.requirements|slice:":50"|split:"Service Interest: "|last|split:"\n"|first }}</h5>
+                            <h5 class="card-title mb-1">{{ booking.service_interest|default:booking.service.name }}</h5>
                             <small class="text-muted">Initial Consultation</small>
                         </div>
                         <span class="badge bg-warning text-dark">Ready to Start</span>

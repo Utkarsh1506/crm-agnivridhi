@@ -843,6 +843,30 @@ def client_portal(request):
     # Categorize bookings
     active_bookings = bookings.filter(status__in=['PENDING', 'PAID']).order_by('-booking_date')
     completed_bookings = bookings.filter(status='COMPLETED')
+
+    # Extract service interest (from requirements) for onboarding cards
+    def _extract_service_interest(text: str) -> str:
+        try:
+            if not text:
+                return ''
+            marker = 'Service Interest:'
+            idx = text.find(marker)
+            if idx == -1:
+                return ''
+            start = idx + len(marker)
+            remainder = text[start:].strip()
+            # stop at first newline if present
+            nl = remainder.find('\n')
+            if nl != -1:
+                remainder = remainder[:nl]
+            return remainder.strip()
+        except Exception:
+            return ''
+
+    # Annotate active bookings
+    for b in active_bookings:
+        raw = getattr(b, 'requirements', '') or ''
+        b.service_interest = _extract_service_interest(raw)
     all_bookings = bookings
     
     # Statistics
