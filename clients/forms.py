@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from .models import Client
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -215,7 +216,6 @@ class QuickClientCreationForm(forms.Form):
         
         # Auto-approve if created by admin/manager/owner
         if self.created_by and self.created_by.role in ['ADMIN', 'MANAGER', 'OWNER']:
-            from django.utils import timezone
             client.approved_by = self.created_by
             client.approved_at = timezone.now()
         
