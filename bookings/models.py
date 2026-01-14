@@ -160,6 +160,49 @@ class Booking(models.Model):
         help_text=_('Final amount after discount')
     )
     
+    # Revenue Tracking (for individual booking)
+    pitched_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Pitched amount for this booking (excluding GST)')
+    )
+    
+    gst_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('18.00'),
+        help_text=_('GST percentage for this booking')
+    )
+    
+    gst_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('GST amount (auto-calculated)')
+    )
+    
+    total_with_gst = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Total amount including GST for this booking')
+    )
+    
+    received_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Amount received for this booking')
+    )
+    
+    pending_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_('Pending amount for this booking')
+    )
+    
     # Dates
     booking_date = models.DateTimeField(
         auto_now_add=True,
@@ -250,6 +293,12 @@ class Booking(models.Model):
         if self.amount:
             discount_amount = (self.amount * self.discount_percent) / 100
             self.final_amount = self.amount - discount_amount
+        
+        # Calculate GST and totals for revenue tracking
+        if self.pitched_amount and self.gst_percentage is not None:
+            self.gst_amount = (self.pitched_amount * self.gst_percentage) / Decimal('100.00')
+            self.total_with_gst = self.pitched_amount + self.gst_amount
+            self.pending_amount = self.total_with_gst - self.received_amount
         
         super().save(*args, **kwargs)
     

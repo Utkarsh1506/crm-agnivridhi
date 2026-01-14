@@ -33,8 +33,8 @@ class BookingAdmin(admin.ModelAdmin):
     """
     Booking Admin interface
     """
-    list_display = ('booking_id', 'client', 'service', 'final_amount', 'status', 
-                    'priority', 'assigned_to', 'booking_date')
+    list_display = ('booking_id', 'client', 'service', 'final_amount', 'total_with_gst',
+                    'status', 'priority', 'assigned_to', 'booking_date')
     list_filter = ('status', 'priority', 'booking_date')
     search_fields = ('booking_id', 'client__company_name', 'service__name')
     ordering = ('-booking_date',)
@@ -47,6 +47,11 @@ class BookingAdmin(admin.ModelAdmin):
         }),
         ('Amount', {
             'fields': ('amount', 'discount_percent', 'final_amount')
+        }),
+        ('Revenue Tracking', {
+            'fields': ('pitched_amount', 'gst_percentage', 'gst_amount', 
+                      'total_with_gst', 'received_amount', 'pending_amount'),
+            'description': 'Revenue tracking for this specific booking. Updates client total revenue automatically.'
         }),
         ('Dates', {
             'fields': ('booking_date', 'payment_date', 'expected_completion_date', 'actual_completion_date')
@@ -64,7 +69,8 @@ class BookingAdmin(admin.ModelAdmin):
         }),
     )
     
-    readonly_fields = ('booking_id', 'booking_date', 'final_amount', 'created_at', 'updated_at')
+    readonly_fields = ('booking_id', 'booking_date', 'final_amount', 'gst_amount', 
+                       'total_with_gst', 'pending_amount', 'created_at', 'updated_at')
     
     autocomplete_fields = ['client', 'assigned_to', 'created_by']
     

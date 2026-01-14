@@ -426,6 +426,39 @@ class Client(models.Model):
             status__in=['AUTHORIZED', 'CAPTURED']
         ).aggregate(models.Sum('amount'))['amount__sum'] or 0
     
+    def calculate_aggregated_revenue(self):
+        """
+        Calculate total revenue across all bookings for this client.
+        Updates the client-level revenue fields based on booking totals.
+        """
+        from django.db.models import Sum
+        aggregated = self.bookings.aggregate(
+            total_pitched=Sum('pitched_amount'),
+            total_gst=Sum('gst_amount'),
+            total_with_gst=Sum('total_with_gst'),
+            total_received=Sum('received_amount'),
+            total_pending=Sum('pending_amount')
+        )
+        
+        # Update client fields with aggregated values
+        self.total_pitched_amount = aggregated['total_pitched'] or Decimal('0.00')
+        self.gst_amount = aggregated['total_gst'] or Decimal('0.00')
+        self.total_with_gst = aggregated['total_with_gst'] or Decimal('0.00')
+        self.received_amount = aggregated['total_received'] or Decimal('0.00')
+        self.pending_amount = aggregated['total_pending'] or Decimal('0.00')
+        
+        # Calculate average GST percentage if needed
+        if self.total_pitched_amount > 0:
+            self.gst_percentage = (self.gst_amount / self.total_pitched_amount * Decimal('100.00')).quantize(Decimal('0.01'))
+        
+        return {
+            'total_pitched': self.total_pitched_amount,
+            'gst_amount': self.gst_amount,
+            'total_with_gst': self.total_with_gst,
+            'received_amount': self.received_amount,
+            'pending_amount': self.pending_amount
+        }
+    
     def approve(self, manager_user):
         """Approve the client"""
         from django.utils import timezone

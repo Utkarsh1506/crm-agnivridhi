@@ -143,7 +143,7 @@
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col">
-                            <div class="text-xs text-uppercase mb-1">Total (Pitched + GST)</div>
+                            <div class="text-xs text-uppercase mb-1">Total Payment</div>
                             <div class="h3 mb-0">₹{{ client_revenue.total_with_gst|floatformat:0 }}</div>
                             <small class="text-muted">Click for detailed report <i class="bi bi-arrow-right"></i></small>
                         </div>
@@ -161,7 +161,7 @@
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col">
-                            <div class="text-xs text-uppercase mb-1">Received (Client)</div>
+                            <div class="text-xs text-uppercase mb-1">Received Amount</div>
                             <div class="h3 mb-0">₹{{ client_revenue.total_received|floatformat:0 }}</div>
                             <small class="text-muted">Click for detailed report <i class="bi bi-arrow-right"></i></small>
                         </div>
@@ -179,7 +179,7 @@
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col">
-                            <div class="text-xs text-uppercase mb-1">Pending (Client)</div>
+                            <div class="text-xs text-uppercase mb-1">Pending Payment</div>
                             <div class="h3 mb-0">₹{{ client_revenue.total_pending|floatformat:0 }}</div>
                             <small class="text-muted">Click for detailed report <i class="bi bi-arrow-right"></i></small>
                         </div>
