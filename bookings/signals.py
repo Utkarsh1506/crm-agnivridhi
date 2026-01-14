@@ -7,9 +7,9 @@ from .models import Booking
 def update_client_revenue_on_booking_save(sender, instance, created, **kwargs):
     """
     Update client's aggregated revenue whenever a booking is created or updated.
-    This ensures the client's total revenue reflects all bookings.
+    Only updates if the booking has revenue data (pitched_amount > 0).
     """
-    if instance.client:
+    if instance.client and instance.pitched_amount > 0:
         # Recalculate and update client revenue from all bookings
         instance.client.calculate_aggregated_revenue()
         # Save without triggering the client's save() method's own calculations

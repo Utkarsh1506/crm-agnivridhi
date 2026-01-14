@@ -428,10 +428,15 @@ class Client(models.Model):
     
     def calculate_aggregated_revenue(self):
         """
-        Calculate total revenue across all bookings for this client.
-        Updates the client-level revenue fields based on booking totals.
+        Calculate total revenue - prioritizes booking data if available, falls back to client fields.
+        This supports both:
+        1. Legacy clients with direct revenue fields (no bookings)
+        2. New multi-booking clients (revenue aggregated from bookings)
+        3. Mixed: existing client + new bookings added later
         """
         from django.db.models import Sum
+        
+        # Try to aggregate from bookings first
         aggregated = self.bookings.aggregate(
             total_pitched=Sum('pitched_amount'),
             total_gst=Sum('gst_amount'),
@@ -440,16 +445,24 @@ class Client(models.Model):
             total_pending=Sum('pending_amount')
         )
         
-        # Update client fields with aggregated values
-        self.total_pitched_amount = aggregated['total_pitched'] or Decimal('0.00')
-        self.gst_amount = aggregated['total_gst'] or Decimal('0.00')
-        self.total_with_gst = aggregated['total_with_gst'] or Decimal('0.00')
-        self.received_amount = aggregated['total_received'] or Decimal('0.00')
-        self.pending_amount = aggregated['total_pending'] or Decimal('0.00')
+        # Check if bookings have revenue data
+        has_booking_data = aggregated['total_pitched'] and aggregated['total_pitched'] > 0
         
-        # Calculate average GST percentage if needed
-        if self.total_pitched_amount > 0:
-            self.gst_percentage = (self.gst_amount / self.total_pitched_amount * Decimal('100.00')).quantize(Decimal('0.01'))
+        if has_booking_data:
+            # Use aggregated booking data
+            self.total_pitched_amount = aggregated['total_pitched'] or Decimal('0.00')
+            self.gst_amount = aggregated['total_gst'] or Decimal('0.00')
+            self.total_with_gst = aggregated['total_with_gst'] or Decimal('0.00')
+            self.received_amount = aggregated['total_received'] or Decimal('0.00')
+            self.pending_amount = aggregated['total_pending'] or Decimal('0.00')
+            
+            # Calculate average GST percentage from bookings
+            if self.total_pitched_amount > 0 and aggregated['total_gst']:
+                self.gst_percentage = (aggregated['total_gst'] / self.total_pitched_amount * Decimal('100.00')).quantize(Decimal('0.01'))
+        else:
+            # Keep existing client-level revenue (for legacy clients without bookings)
+            # This ensures existing data is preserved
+            pass
         
         return {
             'total_pitched': self.total_pitched_amount,
