@@ -428,20 +428,28 @@ class Client(models.Model):
     
     def calculate_aggregated_revenue(self):
         """
-        Calculate total revenue - prioritizes booking data if available, falls back to client fields.
-        This supports both:
-        1. Legacy clients with direct revenue fields (no bookings)
-        2. New multi-booking clients (revenue aggregated from bookings)
-        3. Mixed: existing client + new bookings added later
+        Calculate total revenue - uses Payment records + Client fields.
+        Priority:
+        1. If client has payments approved → use Payment total
+        2. Else if bookings have revenue data → aggregate from bookings  
+        3. Else → keep existing client fields (legacy)
         """
         from django.db.models import Sum
+        from payments.models import Payment
         
-        # Try to aggregate from bookings first
+        # Get approved payments total (CAPTURED = actually received)
+        approved_payments = Payment.objects.filter(
+            client=self,
+            status='CAPTURED'
+        ).aggregate(total=Sum('amount'))
+        
+        payments_received = approved_payments['total'] or Decimal('0.00')
+        
+        # Try to aggregate from bookings
         aggregated = self.bookings.aggregate(
             total_pitched=Sum('pitched_amount'),
             total_gst=Sum('gst_amount'),
             total_with_gst=Sum('total_with_gst'),
-            total_received=Sum('received_amount'),
             total_pending=Sum('pending_amount')
         )
         
@@ -453,16 +461,28 @@ class Client(models.Model):
             self.total_pitched_amount = aggregated['total_pitched'] or Decimal('0.00')
             self.gst_amount = aggregated['total_gst'] or Decimal('0.00')
             self.total_with_gst = aggregated['total_with_gst'] or Decimal('0.00')
-            self.received_amount = aggregated['total_received'] or Decimal('0.00')
-            self.pending_amount = aggregated['total_pending'] or Decimal('0.00')
+            
+            # Use payments if available, else use booking data
+            if payments_received > 0:
+                self.received_amount = payments_received
+                self.pending_amount = self.total_with_gst - payments_received
+            else:
+                self.received_amount = Decimal('0.00')
+                self.pending_amount = aggregated['total_pending'] or Decimal('0.00')
             
             # Calculate average GST percentage from bookings
             if self.total_pitched_amount > 0 and aggregated['total_gst']:
                 self.gst_percentage = (aggregated['total_gst'] / self.total_pitched_amount * Decimal('100.00')).quantize(Decimal('0.01'))
         else:
-            # Keep existing client-level revenue (for legacy clients without bookings)
-            # This ensures existing data is preserved
-            pass
+            # No booking data - use Payment records to update received amount
+            # But preserve existing total_pitched_amount (legacy)
+            if payments_received > 0:
+                self.received_amount = payments_received
+                # Recalc pending based on total_with_gst and received
+                if self.total_with_gst > 0:
+                    self.pending_amount = self.total_with_gst - payments_received
+                    if self.pending_amount < 0:
+                        self.pending_amount = Decimal('0.00')
         
         return {
             'total_pitched': self.total_pitched_amount,
