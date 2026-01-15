@@ -828,7 +828,7 @@ def client_portal(request):
     # Check profile completion
     required_fields = ['business_type', 'sector', 'company_age', 'address_line1',
                       'city', 'state', 'pincode', 'annual_turnover', 'funding_required']
-    completed_fields = sum([1 for field in required_fields if getattr(client, field)])
+    completed_fields = sum([1 for field in required_fields if getattr(client, field) is not None and getattr(client, field) != ''])
     completion_percentage = int((completed_fields / len(required_fields)) * 100)
     profile_incomplete = completion_percentage < 100
     
