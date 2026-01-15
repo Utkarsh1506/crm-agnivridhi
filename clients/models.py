@@ -492,6 +492,23 @@ class Client(models.Model):
             'pending_amount': self.pending_amount
         }
     
+    def get_payment_status(self):
+        """
+        Determine payment status based on revenue data:
+        - NO_REVENUE: total_with_gst = 0
+        - UNPAID: total_with_gst > 0 but received_amount = 0
+        - PARTIAL: received_amount > 0 but < total_with_gst
+        - PAID: received_amount >= total_with_gst
+        """
+        if self.total_with_gst == 0:
+            return 'NO_REVENUE'
+        elif self.received_amount == 0:
+            return 'UNPAID'
+        elif self.received_amount >= self.total_with_gst:
+            return 'PAID'
+        else:
+            return 'PARTIAL'
+    
     def approve(self, manager_user):
         """Approve the client"""
         from django.utils import timezone
