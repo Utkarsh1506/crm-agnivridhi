@@ -17,4 +17,4 @@ urlpatterns = [
 
     # Detail
     path('<int:id>/', views.booking_detail, name='booking_detail'),
-    path('<int:booking_id>/documents/', views.collect_documents, name='collect_documents'),
+    path('<int:booking_id>/documents/', views.collect_documents, name='collect_documents'),]
