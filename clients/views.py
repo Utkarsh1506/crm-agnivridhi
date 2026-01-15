@@ -431,7 +431,8 @@ def complete_client_profile(request):
     # Calculate profile completion percentage
     required_fields = ['business_type', 'sector', 'company_age', 'address_line1',
                       'city', 'state', 'pincode', 'annual_turnover', 'funding_required']
-    completed_fields = sum([1 for field in required_fields if getattr(client, field) is not None and getattr(client, field) != ''])    completion_percentage = int((completed_fields / len(required_fields)) * 100)
+    completed_fields = sum([1 for field in required_fields if getattr(client, field) is not None and getattr(client, field) != ''])
+    completion_percentage = int((completed_fields / len(required_fields)) * 100)
     
     return render(request, 'clients/complete_profile.html', {
         'form': form,
