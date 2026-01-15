@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from clients.models import Client, User
+from clients.models import Client
+from accounts.models import User
 from decimal import Decimal
 
 
