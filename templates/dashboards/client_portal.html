@@ -100,6 +100,50 @@
                         </a>
                     </div>
                 </div>
+                {% elif booking.status == 'PAID' or booking.status == 'DOCUMENT_COLLECTION' %}
+                <!-- Document Collection Card -->
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="card-title mb-1">{{ booking.service.name }}</h5>
+                            <small class="text-muted">ID: {{ booking.booking_id }}</small>
+                        </div>
+                        <span class="badge {% if booking.are_all_documents_complete %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                            {% if booking.are_all_documents_complete %}
+                                Documents Complete ✓
+                            {% else %}
+                                Awaiting Documents
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="small text-muted mb-1">Documents</div>
+                        <div class="progress" style="height: 8px;">
+                            {% widthratio booking.get_submitted_documents.count booking.get_required_documents.count 100 as doc_progress %}
+                            <div class="progress-bar" role="progressbar" style="width: {{ doc_progress }}%" aria-valuenow="{{ doc_progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="small text-muted mt-1">
+                            {{ booking.get_submitted_documents.count }}/{{ booking.get_required_documents.count }} documents submitted
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Service Fee:</strong> <span class="text-primary">₹{{ booking.final_amount }}</span></p>
+                    </div>
+                    
+                    {% if not booking.are_all_documents_complete %}
+                    <div class="alert alert-light border-warning mb-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-info-circle"></i> {{ booking.get_pending_documents.count }} document(s) still needed
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center">
+                        <a href="{% url 'bookings:collect_documents' booking.id %}" class="btn btn-primary w-100 btn-sm">
+                            <i class="bi bi-upload"></i> {% if booking.are_all_documents_complete %}View Documents{% else %}Submit Documents{% endif %}
+                        </a>
+                    </div>
+                </div>
                 {% else %}
                 <!-- Regular Service Card -->
                 <a href="{% url 'bookings:booking_detail' booking.id %}" style="text-decoration: none; color: inherit;">
@@ -109,7 +153,7 @@
                                 <h5 class="card-title mb-1">{{ booking.service.name }}</h5>
                                 <small class="text-muted">ID: {{ booking.booking_id }}</small>
                             </div>
-                            <span class="badge {% if booking.status == 'COMPLETED' %}bg-success{% elif booking.status == 'PAID' %}bg-info text-dark{% elif booking.status == 'PENDING' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            <span class="badge {% if booking.status == 'COMPLETED' %}bg-success{% elif booking.status == 'ACTIVE' %}bg-success{% elif booking.status == 'PAID' %}bg-info text-dark{% elif booking.status == 'PENDING' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
                                 {{ booking.get_status_display }}
                             </span>
                         </div>

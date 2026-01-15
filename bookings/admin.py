@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Service, Booking
+from .models import Service, Booking, ServiceDocumentRequirement
 
 
 @admin.register(Service)
@@ -25,6 +25,25 @@ class ServiceAdmin(admin.ModelAdmin):
         ('Status', {
             'fields': ('is_active',)
         }),
+    )
+
+
+@admin.register(ServiceDocumentRequirement)
+class ServiceDocumentRequirementAdmin(admin.ModelAdmin):
+    """
+    Service Document Requirement Admin interface
+    """
+    list_display = ('service', 'document_type', 'is_mandatory', 'display_order')
+    list_filter = ('service', 'is_mandatory')
+    search_fields = ('service__name', 'document_type')
+    ordering = ('service', 'display_order')
+    
+    fieldsets = (
+        ('Requirement Details', {
+            'fields': ('service', 'document_type', 'is_mandatory')
+        }),
+        ('Display & Description', {
+            'fields': ('display_order', 'description')
     )
 
 

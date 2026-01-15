@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Booking Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h3 mb-2">
+                <i class="bi bi-file-earmark-text"></i> Submit Documents
+            </h1>
+            <p class="text-muted">{{ booking.service.name }} ({{ booking.booking_id }})</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <span class="badge bg-primary">{{ booking.get_status_display }}</span>
+        </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center border-end">
+                            <small class="text-muted d-block">Required Documents</small>
+                            <h3 class="mb-0">{{ required_documents.count }}</h3>
+                        </div>
+                        <div class="col-md-4 text-center border-end">
+                            <small class="text-muted d-block">Submitted</small>
+                            <h3 class="mb-0 text-success">{{ submitted_documents.count }}</h3>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <small class="text-muted d-block">Pending</small>
+                            <h3 class="mb-0 {% if pending_documents %}text-danger{% else %}text-success{% endif %}">
+                                {{ pending_documents|length }}
+                            </h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    {% if required_documents.count > 0 %}
+                    <div class="mt-3">
+                        {% widthratio submitted_documents.count required_documents.count 100 as progress %}
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {% if documents_complete %}bg-success{% else %}bg-info{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ progress }}%;" 
+                                 aria-valuenow="{{ progress }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                {{ progress }}% Complete
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="row mb-3">
+        <div class="col-md-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Document Collection Form -->
+    <div class="row">
+        <div class="col-md-8">
+            <form method="POST" enctype="multipart/form-data" id="documentForm">
+                {% csrf_token %}
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0"><i class="bi bi-upload"></i> Upload Documents</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Error!</strong>
+                            {% for error in form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="accordion" id="documentAccordion">
+                            {% for field_name, field in form.fields.items %}
+                                {% if 'number' in field_name %}
+                                    {% with doc_id=field_name|slice:"4:"|slice:":-7" %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading{{ doc_id }}">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                                    data-bs-target="#collapse{{ doc_id }}" aria-expanded="false" 
+                                                    aria-controls="collapse{{ doc_id }}">
+                                                <i class="bi bi-file-earmark-check text-success"></i> 
+                                                <span class="ms-2">{{ form|dict_lookup:field_name|safe }}</span>
+                                            </button>
+                                        </h2>
+                                        <div id="collapse{{ doc_id }}" class="accordion-collapse collapse" 
+                                             aria-labelledby="heading{{ doc_id }}" data-bs-parent="#documentAccordion">
+                                            <div class="accordion-body">
+                                                <!-- Reference Number -->
+                                                <div class="mb-3">
+                                                    {{ form|dict_lookup:field_name }}
+                                                    {% if form|dict_lookup:field_name|add:".help_text" %}
+                                                    <small class="form-text text-muted d-block mt-1">
+                                                        {{ form|dict_lookup:field_name|add:".help_text"|safe }}
+                                                    </small>
+                                                    {% endif %}
+                                                    {% if form|dict_lookup:field_name|add:".errors" %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form|dict_lookup:field_name|add:".errors" }}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- File Upload -->
+                                                {% with file_field_name='doc_'|add:doc_id|add:'_file' %}
+                                                <div class="mb-3">
+                                                    {{ form|dict_lookup:file_field_name }}
+                                                    {% if form|dict_lookup:file_field_name|add:".help_text" %}
+                                                    <small class="form-text text-muted d-block mt-1">
+                                                        {{ form|dict_lookup:file_field_name|add:".help_text"|safe }}
+                                                    </small>
+                                                    {% endif %}
+                                                    {% if form|dict_lookup:file_field_name|add:".errors" %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form|dict_lookup:file_field_name|add:".errors" }}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% endwith %}
+
+                                                <!-- Notes -->
+                                                {% with notes_field_name='doc_'|add:doc_id|add:'_notes' %}
+                                                <div class="mb-3">
+                                                    {{ form|dict_lookup:notes_field_name }}
+                                                    {% if form|dict_lookup:notes_field_name|add:".errors" %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form|dict_lookup:notes_field_name|add:".errors" }}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% endwith %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submission Buttons -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="bi bi-check-circle"></i> Submit Documents
+                        </button>
+                        <a href="{% url 'bookings:booking_detail' booking.id %}" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-arrow-left"></i> Back to Booking
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar - Document Status & Help -->
+        <div class="col-md-4">
+            <!-- Document Status Card -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Document Status</h5>
+                </div>
+                <div class="card-body">
+                    {% if documents_complete %}
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle-fill"></i> All documents submitted!
+                    </div>
+                    {% else %}
+                    <div class="list-group list-group-flush">
+                        {% for doc in required_documents %}
+                        <div class="list-group-item px-0 py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>{{ doc.get_document_type_display }}</small>
+                                {% if doc in submitted_documents %}
+                                    <span class="badge bg-success"><i class="bi bi-check"></i> Submitted</span>
+                                {% elif doc.is_mandatory %}
+                                    <span class="badge bg-danger"><i class="bi bi-exclamation"></i> Required</span>
+                                {% else %}
+                                    <span class="badge bg-secondary"><i class="bi bi-dash"></i> Optional</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="bi bi-question-circle"></i> Help</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-3">
+                        <strong>Need Help?</strong> 
+                        Please upload all required documents with their reference numbers.
+                    </p>
+                    <p class="small mb-0">
+                        <strong>Status Activation:</strong> Your service will automatically become <span class="badge bg-success">ACTIVE</span> 
+                        once all mandatory documents are submitted.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Booking Summary -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="bi bi-receipt"></i> Booking Details</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5 small">Booking ID</dt>
+                        <dd class="col-sm-7 small">{{ booking.booking_id }}</dd>
+                        
+                        <dt class="col-sm-5 small">Service</dt>
+                        <dd class="col-sm-7 small">{{ booking.service.name }}</dd>
+                        
+                        <dt class="col-sm-5 small">Amount</dt>
+                        <dd class="col-sm-7 small"><strong>₹{{ booking.final_amount }}</strong></dd>
+                        
+                        <dt class="col-sm-5 small">Status</dt>
+                        <dd class="col-sm-7 small">
+                            <span class="badge bg-primary">{{ booking.get_status_display }}</span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Template Filter for dict_lookup -->
+<script>
+    // This is a simple workaround since Django templates don't have built-in dict access
+    // We'll render the form fields directly in the template instead
+</script>
+
+<!-- Fix: Render form fields directly -->
+<style>
+    .accordion-button:not(.collapsed) {
+        background-color: #f8f9fa;
+    }
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: #dc3545;
+    }
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875em;
+    }
+</style>
+
+{% endblock %}

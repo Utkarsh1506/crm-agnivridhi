@@ -409,10 +409,18 @@ def complete_client_profile(request):
         form = ClientProfileCompletionForm(request.POST, instance=client)
         if form.is_valid():
             client = form.save()
+            
+            # Update any PENDING bookings to DOCUMENT_COLLECTION status
+            from bookings.models import Booking
+            pending_bookings = Booking.objects.filter(client=client, status='PENDING')
+            for booking in pending_bookings:
+                booking.status = 'DOCUMENT_COLLECTION'
+                booking.save()
+            
             messages.success(
                 request,
-                'Your profile has been updated successfully! '
-                'Our team will review and get back to you soon.'
+                'Your profile has been updated successfully! ✅ '
+                'Now please submit the required documents for your service to activate it.'
             )
             return redirect('accounts:client_portal')
         else:
@@ -423,13 +431,4 @@ def complete_client_profile(request):
     # Calculate profile completion percentage
     required_fields = ['business_type', 'sector', 'company_age', 'address_line1',
                       'city', 'state', 'pincode', 'annual_turnover', 'funding_required']
-    completed_fields = sum([1 for field in required_fields if getattr(client, field)])
-    completion_percentage = int((completed_fields / len(required_fields)) * 100)
-    
-    return render(request, 'clients/complete_profile.html', {
-        'form': form,
-        'client': client,
-        'completion_percentage': completion_percentage,
-        'page_title': 'Complete Your Profile'
-    })
-
+    completed_fields = sum([1 for field in required_fields if getattr(client, field) is not None and getattr(client, field) != ''])

@@ -84,6 +84,68 @@ class Service(models.Model):
         return f"{self.name} - ₹{self.price}"
 
 
+class ServiceDocumentRequirement(models.Model):
+    """
+    Maps which documents are required for each service
+    """
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name='document_requirements',
+        help_text=_('Service this requirement applies to')
+    )
+    
+    document_type = models.CharField(
+        max_length=25,
+        choices=[
+            # Client required documents
+            ('COMPANY_REG', 'Company Registration Certificate'),
+            ('GST_CERT', 'GST Registration Certificate'),
+            ('PAN_CARD', 'PAN Card'),
+            ('MSME_CERT', 'MSME/Udyam Registration'),
+            ('BANK_STATEMENT', 'Bank Statements (6 months)'),
+            ('ITR', 'Income Tax Returns (Last 2 years)'),
+            ('BALANCE_SHEET', 'Balance Sheet & P&L'),
+            ('INCORPORATION_CERT', 'Certificate of Incorporation'),
+            ('MOA_AOA', 'MOA & AOA'),
+            ('BOARD_RESOLUTION', 'Board Resolution'),
+            ('APPLICATION_FORM', 'Scheme Application Form'),
+            ('OTHER', 'Other Document'),
+        ],
+        help_text=_('Type of document required')
+    )
+    
+    is_mandatory = models.BooleanField(
+        default=True,
+        help_text=_('Whether this document is mandatory for service completion')
+    )
+    
+    description = models.TextField(
+        blank=True,
+        help_text=_('Description of why this document is needed')
+    )
+    
+    display_order = models.IntegerField(
+        default=0,
+        help_text=_('Order to display in the form')
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _('Service Document Requirement')
+        verbose_name_plural = _('Service Document Requirements')
+        ordering = ['service', 'display_order']
+        unique_together = [('service', 'document_type')]
+        indexes = [
+            models.Index(fields=['service', 'is_mandatory']),
+        ]
+    
+    def __str__(self):
+        return f"{self.service.name} - {self.get_document_type_display()}"
+
+
 class Booking(models.Model):
     """
     Service bookings made by clients
@@ -92,6 +154,8 @@ class Booking(models.Model):
     class Status(models.TextChoices):
         PENDING = 'PENDING', _('Pending Payment')
         PAID = 'PAID', _('Paid - In Progress')
+        DOCUMENT_COLLECTION = 'DOCUMENT_COLLECTION', _('Awaiting Documents')
+        ACTIVE = 'ACTIVE', _('Active - In Progress')
         COMPLETED = 'COMPLETED', _('Completed')
         CANCELLED = 'CANCELLED', _('Cancelled')
         REFUNDED = 'REFUNDED', _('Refunded')
@@ -389,4 +453,36 @@ class Booking(models.Model):
                 stage['completed'] = False
                 stage['current'] = False
         
-        return stages
+        return stages    
+    def get_required_documents(self):
+        """Get all documents required for this booking's service"""
+        return self.service.document_requirements.all().order_by('display_order')
+    
+    def get_mandatory_documents(self):
+        """Get only mandatory documents"""
+        return self.get_required_documents().filter(is_mandatory=True)
+    
+    def get_submitted_documents(self):
+        """Get documents already submitted for this booking"""
+        return self.documents.filter(
+            document_type__in=[
+                req.document_type for req in self.get_required_documents()
+            ]
+        ).exclude(file='')
+    
+    def get_pending_documents(self):
+        """Get mandatory documents not yet submitted"""
+        submitted_types = set(
+            self.get_submitted_documents().values_list('document_type', flat=True)
+        )
+        required_docs = self.get_mandatory_documents()
+        return [doc for doc in required_docs if doc.document_type not in submitted_types]
+    
+    def are_all_documents_complete(self):
+        """Check if all mandatory documents have been submitted"""
+        return len(self.get_pending_documents()) == 0
+    
+    def can_activate(self):
+        """Check if booking can be activated (all documents submitted + payment done)"""
+        return (self.status in ['PAID', 'DOCUMENT_COLLECTION'] and 
+                self.are_all_documents_complete())

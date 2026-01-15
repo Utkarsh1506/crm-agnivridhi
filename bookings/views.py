@@ -303,3 +303,106 @@ def booking_detail(request, id: int):
 		'booking': booking,
 	}
 	return render(request, 'bookings/booking_detail.html', context)
+
+@login_required
+def collect_documents(request, booking_id: int):
+	"""
+	Client collects and uploads required documents for a booking.
+	Only for clients and only for their own bookings in PAID or DOCUMENT_COLLECTION status.
+	"""
+	from documents.models import Document
+	
+	if not getattr(request.user, 'is_client', False):
+		messages.error(request, 'Only clients can submit documents.')
+		return redirect('accounts:dashboard')
+	
+	booking = get_object_or_404(Booking, id=booking_id)
+	
+	# Verify it's their booking
+	if booking.client.user != request.user:
+		messages.error(request, 'You do not have permission to submit documents for this booking.')
+		return redirect('accounts:client_portal')
+	
+	# Check if booking is in correct status
+	if booking.status not in ['PAID', 'DOCUMENT_COLLECTION']:
+		messages.error(request, 'This booking is not ready for document submission.')
+		return redirect('bookings:booking_detail', id=booking_id)
+	
+	if request.method == 'POST':
+		from .forms import DocumentCollectionForm
+		form = DocumentCollectionForm(booking, request.POST, request.FILES)
+		
+		if form.is_valid():
+			documents_uploaded = 0
+			documents_failed = 0
+			
+			# Process each document requirement
+			for doc_req in booking.get_required_documents():
+				field_name_number = f"doc_{doc_req.id}_number"
+				field_name_file = f"doc_{doc_req.id}_file"
+				field_name_notes = f"doc_{doc_req.id}_notes"
+				
+				ref_number = form.cleaned_data.get(field_name_number, '')
+				uploaded_file = request.FILES.get(field_name_file)
+				notes = form.cleaned_data.get(field_name_notes, '')
+				
+				if ref_number and uploaded_file:
+					try:
+						doc = Document.objects.create(
+							document_type=doc_req.document_type,
+							title=f"{doc_req.get_document_type_display()} - {ref_number}",
+							description=f"Reference: {ref_number}\n{notes}" if notes else f"Reference: {ref_number}",
+							status=Document.Status.GENERATED,
+							client=booking.client,
+							booking=booking,
+							file=uploaded_file,
+							file_size=uploaded_file.size,
+							file_format=uploaded_file.name.split('.')[-1].upper(),
+							generated_by=request.user,
+							generation_data={'reference_number': ref_number}
+						)
+						documents_uploaded += 1
+					except Exception as e:
+						documents_failed += 1
+						messages.warning(request, f"Failed to upload {doc_req.get_document_type_display()}: {str(e)}")
+			
+			# Check if all mandatory documents are now complete
+			if booking.are_all_documents_complete():
+				booking.status = 'ACTIVE'
+				booking.save()
+				messages.success(
+					request,
+					f'Documents submitted successfully! ✅ {documents_uploaded} documents uploaded. '
+					'Your service is now ACTIVE and our team will begin working on it.'
+				)
+				return redirect('bookings:booking_detail', id=booking_id)
+			else:
+				pending = booking.get_pending_documents()
+				messages.warning(
+					request,
+					f'Documents submitted! ✅ {documents_uploaded} documents uploaded. '
+					f'However, you still need to submit {len(pending)} mandatory document(s) to activate the service.'
+				)
+				return redirect('bookings:collect_documents', booking_id=booking_id)
+		else:
+			messages.error(request, 'Please correct the errors below.')
+	else:
+		from .forms import DocumentCollectionForm
+		form = DocumentCollectionForm(booking)
+	
+	# Get document status
+	required_docs = booking.get_required_documents()
+	submitted_docs = booking.get_submitted_documents()
+	pending_docs = booking.get_pending_documents()
+	
+	context = {
+		'booking': booking,
+		'form': form,
+		'required_documents': required_docs,
+		'submitted_documents': submitted_docs,
+		'pending_documents': pending_docs,
+		'documents_complete': booking.are_all_documents_complete(),
+		'page_title': f'Submit Documents - {booking.booking_id}'
+	}
+	
+	return render(request, 'bookings/collect_documents.html', context)
