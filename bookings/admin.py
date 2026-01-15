@@ -44,6 +44,7 @@ class ServiceDocumentRequirementAdmin(admin.ModelAdmin):
         }),
         ('Display & Description', {
             'fields': ('display_order', 'description')
+        }),
     )
 
 
