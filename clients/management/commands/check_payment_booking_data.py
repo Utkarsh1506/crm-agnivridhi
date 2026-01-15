@@ -18,9 +18,7 @@ class Command(BaseCommand):
                 client = Client.objects.get(id=client_id)
                 
                 # Check Payments
-                payments = Payment.objects.filter(
-                    application__booking__client=client
-                )
+                payments = Payment.objects.filter(client=client)
                 payment_total = payments.aggregate(total=Sum('amount'))['total'] or 0
                 
                 # Check Bookings
