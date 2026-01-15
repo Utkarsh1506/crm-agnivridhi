@@ -11,21 +11,26 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             # Create test user if doesn't exist
-            user, _ = User.objects.get_or_create(
-                email='test@agnivridhi.com',
-                defaults={
-                    'first_name': 'Test',
-                    'last_name': 'User',
-                    'role': 'OWNER'
-                }
+            test_email = f'test.revenue.{timezone.now().timestamp()}@agnivridhi.com'
+            user = User.objects.create(
+                email=test_email,
+                first_name='Test',
+                last_name='Revenue',
+                role='CLIENT'
             )
+            
+            # Get an admin user for created_by
+            admin_user = User.objects.filter(role='OWNER').first()
+            if not admin_user:
+                admin_user = user
 
             # Create test client with revenue data
             test_client = Client.objects.create(
+                user=user,
                 company_name=f'Test Revenue Client - {timezone.now().timestamp()}',
-                business_type='IT',
-                sector='TECHNOLOGY',
-                created_by=user,
+                business_type='PVT_LTD',
+                sector='IT_SOFTWARE',
+                created_by=admin_user,
                 total_pitched_amount=Decimal('10000.00'),
                 gst_percentage=Decimal('18.00'),
                 received_amount=Decimal('5000.00')
