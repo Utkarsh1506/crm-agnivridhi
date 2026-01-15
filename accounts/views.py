@@ -841,7 +841,7 @@ def client_portal(request):
     bookings = Booking.objects.filter(client=client).select_related('service', 'assigned_to').order_by('-created_at')
     
     # Categorize bookings
-    active_bookings = bookings.filter(status__in=['PENDING', 'PAID']).order_by('-booking_date')
+    active_bookings = bookings.filter(status__in=['PENDING', 'PAID', 'DOCUMENT_COLLECTION', 'ACTIVE']).order_by('-booking_date')
     completed_bookings = bookings.filter(status='COMPLETED')
 
     # Extract service interest (from requirements) for onboarding cards

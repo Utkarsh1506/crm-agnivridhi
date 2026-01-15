@@ -134,7 +134,7 @@
                     
                     {% if not booking.are_all_documents_complete %}
                     <div class="alert alert-light border-warning mb-2" style="font-size: 0.85rem;">
-                        <i class="bi bi-info-circle"></i> {{ booking.get_pending_documents.count }} document(s) still needed
+                        <i class="bi bi-info-circle"></i> {{ booking.get_pending_documents|length }} document(s) still needed
                     </div>
                     {% endif %}
                     
