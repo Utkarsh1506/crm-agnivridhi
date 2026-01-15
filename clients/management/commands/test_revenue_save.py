@@ -11,9 +11,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             # Create test user if doesn't exist
-            test_email = f'test.revenue.{timezone.now().timestamp()}@agnivridhi.com'
+            timestamp = str(timezone.now().timestamp()).replace('.', '')
+            test_email = f'test.revenue.{timestamp}@agnivridhi.com'
+            test_username = f'test_revenue_{timestamp}'
+            
             user = User.objects.create(
                 email=test_email,
+                username=test_username,
                 first_name='Test',
                 last_name='Revenue',
                 role='CLIENT'
@@ -27,7 +31,7 @@ class Command(BaseCommand):
             # Create test client with revenue data
             test_client = Client.objects.create(
                 user=user,
-                company_name=f'Test Revenue Client - {timezone.now().timestamp()}',
+                company_name=f'Test Revenue Client {timestamp}',
                 business_type='PVT_LTD',
                 sector='IT_SOFTWARE',
                 created_by=admin_user,
