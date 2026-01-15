@@ -14,7 +14,11 @@ class Command(BaseCommand):
         clients_updated = 0
         
         for client in Client.objects.all():
-            latest_entry = client.revenue_entries.latest('created_at')
+            try:
+                latest_entry = client.revenue_entries.latest('created_at')
+            except RevenueEntry.DoesNotExist:
+                # Skip clients without revenue entries
+                continue
             
             if latest_entry:
                 old_pitched = client.total_pitched_amount
