@@ -10,17 +10,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('\n🔄 SYNCING REVENUE DATA FROM REVENUEENTRY TO CLIENT:\n'))
 
-        # Get latest revenue entry for each client
+        # Get all clients with revenue entries
+        from django.db.models import Q
+        clients_with_entries = Client.objects.filter(revenue_entries__isnull=False).distinct()
+        
+        self.stdout.write(f'Found {clients_with_entries.count()} clients with revenue entries')
+        
         clients_updated = 0
         
-        for client in Client.objects.all():
+        for client in clients_with_entries:
             try:
                 latest_entry = client.revenue_entries.latest('created_at')
-            except RevenueEntry.DoesNotExist:
-                # Skip clients without revenue entries
-                continue
-            
-            if latest_entry:
+                
                 old_pitched = client.total_pitched_amount
                 old_received = client.received_amount
                 
@@ -36,12 +37,14 @@ class Command(BaseCommand):
                 # Save without triggering signals
                 client.save(update_fields=['total_pitched_amount', 'received_amount', 'pending_amount', 'gst_percentage'])
                 
-                if old_pitched != client.total_pitched_amount or old_received != client.received_amount:
-                    self.stdout.write(
-                        f'✅ {client.company_name}: '
-                        f'Pitched ₹{old_pitched} → ₹{client.total_pitched_amount}, '
-                        f'Received ₹{old_received} → ₹{client.received_amount}'
-                    )
-                    clients_updated += 1
+                self.stdout.write(
+                    f'✅ {client.company_name}: '
+                    f'Pitched ₹{old_pitched} → ₹{client.total_pitched_amount}, '
+                    f'Received ₹{old_received} → ₹{client.received_amount}'
+                )
+                clients_updated += 1
+                
+            except RevenueEntry.DoesNotExist:
+                pass
 
         self.stdout.write(self.style.SUCCESS(f'\n✅ SYNC COMPLETE: {clients_updated} clients updated\n'))
