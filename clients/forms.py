@@ -546,6 +546,28 @@ class ClientProfileCompletionForm(forms.ModelForm):
             if field_name in self.fields:
                 self.fields[field_name].required = True
     
+    def clean_business_description(self):
+        """Clean business_description to ensure UTF-8 compatibility"""
+        description = self.cleaned_data.get('business_description', '')
+        if description:
+            # Ensure the text is properly encoded
+            try:
+                description.encode('utf-8')
+            except UnicodeEncodeError:
+                raise forms.ValidationError('Please remove any invalid characters from the business description.')
+        return description
+    
+    def clean_funding_purpose(self):
+        """Clean funding_purpose to ensure UTF-8 compatibility"""
+        purpose = self.cleaned_data.get('funding_purpose', '')
+        if purpose:
+            # Ensure the text is properly encoded
+            try:
+                purpose.encode('utf-8')
+            except UnicodeEncodeError:
+                raise forms.ValidationError('Please remove any invalid characters from the funding purpose.')
+        return purpose
+    
     def save(self, commit=True):
         """Save the profile and update status if profile is complete"""
         client = super().save(commit=False)
