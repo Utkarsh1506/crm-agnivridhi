@@ -5,7 +5,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clients', '0008_add_gst_fields'),
+        ('clients', '0009_alter_client_sector'),
     ]
 
     operations = [
