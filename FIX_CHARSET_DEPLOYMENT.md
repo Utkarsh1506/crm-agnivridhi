@@ -7,9 +7,10 @@ This occurs when trying to save Unicode characters (like emojis or special chara
 
 ## Solution Applied
 
-### 1. Created Migration (0009_fix_utf8mb4_charset.py)
+### 1. Created Migration (0010_fix_utf8mb4_charset.py)
 - Converts `business_description`, `funding_purpose`, `notes`, and `rejection_reason` columns to UTF-8MB4
 - This ensures full Unicode support including emojis
+- Depends on migration 0009_alter_client_sector
 
 ### 2. Added Form Validation
 - Added `clean_business_description()` and `clean_funding_purpose()` methods to `ClientProfileCompletionForm`
@@ -17,12 +18,8 @@ This occurs when trying to save Unicode characters (like emojis or special chara
 
 ## Deployment Steps for PythonAnywhere
 
-### Step 1: Push Changes to Git
-```bash
-git add .
-git commit -m "Fix: Add UTF-8MB4 charset migration for text fields"
-git push origin main
-```
+### Step 1: Push Changes to Git ✅
+Already completed and pushed to GitHub.
 
 ### Step 2: Deploy on PythonAnywhere
 
@@ -50,7 +47,8 @@ git push origin main
    
    You should see:
    ```
-   [X] 0009_fix_utf8mb4_charset
+   [X] 0009_alter_client_sector
+   [X] 0010_fix_utf8mb4_charset
    ```
 
 6. **Reload the web app:**
@@ -91,7 +89,7 @@ ALTER TABLE clients_client
 
 ## Files Modified
 
-1. [clients/migrations/0009_fix_utf8mb4_charset.py](clients/migrations/0009_fix_utf8mb4_charset.py) - New migration
+1. [clients/migrations/0010_fix_utf8mb4_charset.py](clients/migrations/0010_fix_utf8mb4_charset.py) - New migration
 2. [clients/forms.py](clients/forms.py) - Added validation methods
 
 ## Technical Details
@@ -105,7 +103,7 @@ ALTER TABLE clients_client
 If you need to rollback this migration:
 
 ```bash
-python manage.py migrate clients 0008_add_gst_fields
+python manage.py migrate clients 0009_alter_client_sector
 ```
 
 Note: Rollback will change charset back to utf8, which may cause data loss for any emojis or 4-byte Unicode characters.
