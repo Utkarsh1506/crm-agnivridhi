@@ -269,10 +269,9 @@
                 <span>
                     <i class="bi bi-file-earmark-pdf text-danger"></i>
                     {{ doc.title }}
+                    <br><small class="text-muted">Document No: {{ doc.document_number|default:"-" }}</small>
                 </span>
-                <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-download"></i> Download
-                </a>
+                <span class="badge bg-info">Number Recorded</span>
             </li>
             {% endfor %}
         </ul>

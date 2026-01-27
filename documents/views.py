@@ -328,6 +328,11 @@ def document_download(request, pk):
     if user.is_client and document.client.user != user:
         raise Http404("Document not found")
     
+    # If there is no stored file, inform user and stop
+    if not document.file:
+        messages.error(request, "File download is no longer available. Only document numbers are stored now.")
+        return redirect('documents:document_list') if hasattr(request.user, 'role') else redirect('dashboard')
+
     # Record download
     document.record_download(user)
     

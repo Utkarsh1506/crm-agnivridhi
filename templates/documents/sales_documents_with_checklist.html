@@ -53,9 +53,7 @@
 
 <div class="alert alert-info mb-4">
     <i class="bi bi-info-circle"></i> 
-    <strong>Documents Tab:</strong> Client ke required documents ki checklist banayein aur track karein ki client ne kya upload kiya hai.
-    <br>
-    <strong>Client Uploads Tab:</strong> Professional documents (DPR, Pitch Deck, etc.) aap khud upload karein.
+    Ab sirf document numbers/reference codes store hote hain. Koi file upload nahi hoti. Checklist aur client documents mein document number dekh kar verify karein.
 </div>
 
 {% if client_data %}
@@ -103,9 +101,9 @@
                             <th width="40">Status</th>
                             <th>Document Type</th>
                             <th>Required?</th>
-                            <th>Uploaded Document</th>
+                            <th>Document Number</th>
                             <th>Notes</th>
-                            <th>Actions</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -128,11 +126,10 @@
                             </td>
                             <td>
                                 {% if item.uploaded_document %}
-                                    <a href="{% url 'documents:document_download' item.uploaded_document.pk %}" class="text-success">
-                                        <i class="bi bi-file-earmark-check"></i> {{ item.uploaded_document.title }}
-                                    </a>
+                                    <strong>{{ item.uploaded_document.document_number|default:"-" }}</strong><br>
+                                    <small class="text-muted">{{ item.uploaded_document.title }}</small>
                                 {% else %}
-                                    <span class="text-muted">Not uploaded</span>
+                                    <span class="text-muted">Not provided</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -144,9 +141,7 @@
                             </td>
                             <td>
                                 {% if item.uploaded_document %}
-                                    <a href="{% url 'documents:document_download' item.uploaded_document.pk %}" class="btn btn-sm btn-outline-success">
-                                        <i class="bi bi-download"></i> Download
-                                    </a>
+                                    <span class="badge bg-success">Number Provided</span>
                                 {% else %}
                                     <span class="badge bg-warning text-dark">Pending</span>
                                 {% endif %}
@@ -179,9 +174,8 @@
                         <tr>
                             <th>Title</th>
                             <th>Type</th>
+                            <th>Document No.</th>
                             <th>Uploaded On</th>
-                            <th>Size</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -189,13 +183,8 @@
                         <tr>
                             <td><i class="bi bi-file-earmark-pdf text-danger"></i> {{ doc.title }}</td>
                             <td><span class="badge bg-secondary">{{ doc.get_document_type_display }}</span></td>
+                            <td>{{ doc.document_number|default:"-" }}</td>
                             <td>{{ doc.created_at|date:"d M Y, H:i" }}</td>
-                            <td>{{ doc.get_file_size_display }}</td>
-                            <td>
-                                <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-download"></i> Download
-                                </a>
-                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
