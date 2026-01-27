@@ -41,7 +41,7 @@ def client_document_upload(request):
     """Allow clients to upload their own documents"""
     client = request.user.client_profile
     if request.method == 'POST':
-        form = DocumentUploadForm(request.POST, request.FILES)
+        form = DocumentUploadForm(request.POST)
         if form.is_valid():
             doc: Document = form.save(commit=False)
             doc.client = client
@@ -49,7 +49,7 @@ def client_document_upload(request):
             # Mark as generated/available once uploaded
             doc.status = Document.Status.GENERATED
             doc.save()
-            messages.success(request, 'Document uploaded successfully.')
+            messages.success(request, f'Document "{doc.title}" added successfully.')
             return redirect('documents:client_documents_list')
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -355,13 +355,13 @@ def sales_upload_for_client(request, client_id=None):
             return redirect('documents:sales_client_uploads_list')
     
     if request.method == 'POST':
-        form = SalesDocumentUploadForm(request.POST, request.FILES, user=request.user)
+        form = SalesDocumentUploadForm(request.POST, user=request.user)
         if form.is_valid():
             doc: Document = form.save(commit=False)
             doc.generated_by = request.user
             doc.status = Document.Status.GENERATED
             doc.save()
-            messages.success(request, f'Document uploaded successfully for {doc.client.company_name}.')
+            messages.success(request, f'Document added successfully for {doc.client.company_name}.')
             return redirect('documents:sales_client_uploads_list')
         else:
             messages.error(request, 'Please correct the errors below.')
