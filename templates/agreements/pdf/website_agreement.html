@@ -157,6 +157,10 @@
     </style>
 </head>
 <body>
+    <!-- Footer elements for running headers -->
+    <div class="footer-left">Service Provider -</div>
+    <div class="footer-right">Service Receiver -</div>
+    
     <!-- Title -->
     <div class="title-page">
         <h1 class="main-title">WEBSITE DEVELOPMENT SERVICE AGREEMENT</h1>
@@ -367,17 +371,6 @@
             <p><strong>Signature:</strong> ___________________</p>
             <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
         </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer-container">
-        <div style="display: flex; align-items: center;">
-            <div class="footer-stamp">
-                <img src="{{ STATIC_URL }}stamp.png" alt="Agnivridhi Stamp" />
-            </div>
-            <span class="footer-label-left">Service Provider -</span>
-        </div>
-        <span class="footer-label-right">Service Receiver -</span>
     </div>
 
 </body>

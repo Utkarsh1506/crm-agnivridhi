@@ -7,7 +7,7 @@
     <style>
         @page {
             size: A4;
-            margin: 2cm 2.5cm;
+            margin: 2cm 2.5cm 3.5cm 2.5cm;
         }
         body {
             font-family: 'Calibri', Arial, Helvetica, sans-serif;
@@ -138,45 +138,40 @@
             font-weight: bold;
             color: #000;
         }
-        .footer-container {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            height: 60px;
-            z-index: 1000;
-        }
-        .footer-stamp {
-            width: 50px;
-            height: 50px;
-        }
-        .footer-stamp img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .footer-label-left {
-            font-weight: bold;
-            font-size: 9pt;
-            color: #000;
-            margin-left: 10px;
-        }
-        .footer-label-right {
-            font-weight: bold;
-            font-size: 9pt;
-            color: #000;
+        
+        /* Footer styling */
+        #footer-content {
+            display: none;
         }
         @page {
-            margin-bottom: 80px;
+            @bottom-left {
+                content: element(footer-left);
+                vertical-align: bottom;
+            }
+            @bottom-right {
+                content: element(footer-right);
+                vertical-align: bottom;
+            }
+        }
+        .footer-left {
+            position: running(footer-left);
+            font-weight: bold;
+            font-size: 9pt;
+            color: #000;
+        }
+        .footer-right {
+            position: running(footer-right);
+            font-weight: bold;
+            font-size: 9pt;
+            color: #000;
         }
     </style>
 </head>
 <body>
+    <!-- Footer elements for running headers -->
+    <div class="footer-left">Service Provider -</div>
+    <div class="footer-right">Service Receiver -</div>
+    
     <!-- Title -->
     <div class="title-page">
         <h1 class="main-title">CONSULTANCY SERVICE AGREEMENT</h1>
@@ -469,17 +464,6 @@
             <p><strong>Signature:</strong> ___________________</p>
             <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
         </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer-container">
-        <div style="display: flex; align-items: center;">
-            <div class="footer-stamp">
-                <img src="{{ STATIC_URL }}stamp.png" alt="Agnivridhi Stamp" />
-            </div>
-            <span class="footer-label-left">Service Provider -</span>
-        </div>
-        <span class="footer-label-right">Service Receiver -</span>
     </div>
 
 </body>
