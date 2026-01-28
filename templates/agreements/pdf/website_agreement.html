@@ -118,21 +118,41 @@
         strong {
             font-weight: bold;
         }
+        .footer-container {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            height: 60px;
+            z-index: 1000;
+        }
+        .footer-stamp {
+            width: 50px;
+            height: 50px;
+        }
+        .footer-stamp img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .footer-label-left {
+            font-weight: bold;
+            font-size: 9pt;
+            color: #000;
+            margin-left: 10px;
+        }
+        .footer-label-right {
+            font-weight: bold;
+            font-size: 9pt;
+            color: #000;
+        }
         @page {
-            @bottom-left {
-                content: "Service Provider -";
-                font-weight: bold;
-                font-size: 9pt;
-                color: #000;
-                font-family: 'Calibri', Arial, sans-serif;
-            }
-            @bottom-right {
-                content: "Service Receiver -";
-                font-weight: bold;
-                font-size: 9pt;
-                color: #000;
-                font-family: 'Calibri', Arial, sans-serif;
-            }
+            margin-bottom: 80px;
         }
     </style>
 </head>
@@ -347,6 +367,17 @@
             <p><strong>Signature:</strong> ___________________</p>
             <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
         </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-container">
+        <div style="display: flex; align-items: center;">
+            <div class="footer-stamp">
+                <img src="{{ STATIC_URL }}stamp.png" alt="Agnivridhi Stamp" />
+            </div>
+            <span class="footer-label-left">Service Provider -</span>
+        </div>
+        <span class="footer-label-right">Service Receiver -</span>
     </div>
 
 </body>
