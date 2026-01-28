@@ -7,357 +7,375 @@
     <style>
         @page {
             size: A4;
-            margin: 1.5cm 1.8cm 2.5cm 1.8cm;
+            margin: 2cm 2.5cm 2.5cm 2.5cm;
         }
         body {
-            font-family: 'Segoe UI', Calibri, Arial, Helvetica, sans-serif;
-            font-size: 9.5pt;
-            line-height: 1.35;
-            color: #1a1a1a;
+            font-family: 'Calibri', 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #000000;
             text-align: justify;
-            position: relative;
         }
-        .title-page {
+        p {
+            margin: 8px 0;
+        }
+        .title {
             text-align: center;
-            margin: 15px 0 12px 0;
-        }
-        h1.main-title {
-            font-size: 14pt;
-            font-weight: 700;
-            color: #1a3a52;
-            margin: 0;
-            padding: 0;
-            letter-spacing: 0.3pt;
+            font-weight: bold;
+            font-size: 13pt;
+            margin-bottom: 15px;
+            margin-top: 10px;
         }
         .intro {
+            margin-bottom: 12px;
             text-align: justify;
-            margin-bottom: 10px;
-            line-height: 1.35;
-            font-size: 9.5pt;
         }
         .intro p {
-            margin: 0;
+            margin: 6px 0;
         }
         .parties {
-            margin-left: 20px;
-            margin-bottom: 3px;
-            line-height: 1.3;
-            font-size: 9.5pt;
+            margin-left: 25px;
+            margin-bottom: 8px;
         }
         .parties p {
-            margin: 4px 0;
+            margin: 5px 0;
         }
         .and-text {
             text-align: center;
-            margin: 4px 0;
-            font-size: 9.5pt;
-            font-weight: 600;
+            margin: 8px 0;
+            font-weight: bold;
+            font-size: 11pt;
         }
         .whereas {
             margin-bottom: 12px;
             text-align: justify;
-            line-height: 1.35;
-            font-size: 9.5pt;
         }
         .whereas p {
-            margin: 0;
+            margin: 8px 0;
         }
         .clause {
-            margin-bottom: 10px;
-            page-break-inside: avoid;
+            margin-bottom: 12px;
         }
-        .clause-title {
-            font-weight: 700;
-            margin-bottom: 5px;
-            color: #1a3a52;
-            font-size: 9.5pt;
-            text-decoration: underline;
+        .clause-heading {
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 11pt;
         }
         .sub-clause {
-            margin-left: 15px;
-            margin-bottom: 0;
+            margin-left: 20px;
         }
         .sub-clause p {
-            margin: 4px 0;
-            font-size: 9.5pt;
-            line-height: 1.35;
+            margin: 6px 0;
         }
         ul {
-            margin-left: 28px;
-            margin-top: 2px;
-            margin-bottom: 6px;
-            padding: 0;
+            margin-left: 35px;
+            margin-top: 5px;
+            margin-bottom: 8px;
         }
         ul li {
-            margin-bottom: 3px;
-            line-height: 1.3;
-            font-size: 9.5pt;
+            margin-bottom: 5px;
         }
         .amount {
-            font-weight: 700;
+            font-weight: bold;
             color: #c41e3a;
         }
         .signature-section {
-            margin-top: 25px;
+            margin-top: 30px;
             page-break-before: always;
         }
         .witness-line {
             text-align: center;
-            font-weight: 700;
-            margin-bottom: 20px;
-            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 25px;
+            font-size: 11pt;
         }
         .signature-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
         }
         .signature-table td {
             vertical-align: top;
             width: 50%;
-            padding: 12px 10px;
-            border: 1.5px solid #1a3a52;
-            font-size: 9.5pt;
+            padding: 15px;
+            border: 2px solid #000000;
+            font-size: 11pt;
+            text-align: center;
         }
-        .sig-line {
-            margin-bottom: 4px;
-            font-size: 9.5pt;
+        .sig-box {
+            margin-top: 60px;
+            margin-bottom: 10px;
+        }
+        .sig-box p {
+            margin: 0;
         }
         .undertaking {
             page-break-before: always;
             margin-top: 15px;
         }
-        .undertaking h2 {
+        .undertaking-title {
             text-align: center;
-            font-size: 11pt;
-            margin-bottom: 12px;
-            color: #1a3a52;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #1a3a52;
-            font-weight: 700;
+            font-weight: bold;
+            font-size: 12pt;
+            margin-bottom: 15px;
         }
         strong {
-            font-weight: 700;
-            color: #1a3a52;
-        }
-        
-        .page-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 25px;
-            padding: 5px 15px;
-            font-size: 8pt;
-            font-weight: 600;
-            color: #666;
-            background-color: transparent;
-        }
-        .page-footer table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .page-footer td {
-            padding: 0;
-            vertical-align: bottom;
-        }
-        .page-footer .left {
-            text-align: left;
-        }
-        .page-footer .right {
-            text-align: right;
-        }
-        .content {
-            padding-bottom: 40px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <!-- Page Footer -->
-    <div class="page-footer">
-        <table>
-            <tr>
-                <td class="left">Service Provider -</td>
-                <td class="right">Service Receiver -</td>
-            </tr>
-        </table>
+    <div class="title">CONSULTANCY SERVICE AGREEMENT</div>
+    
+    <div class="intro">
+        <p>This <strong>CONSULTANCY SERVICE AGREEMENT</strong> ("the Agreement") is entered into on this <strong>{{ agreement.date_of_agreement|date:"jS" }} day of {{ agreement.date_of_agreement|date:"F Y" }}</strong> by and between:</p>
     </div>
     
-    <div class="content">
-    <!-- Title -->
-    <div class="title-page">
-        <h1 class="main-title">CONSULTANCY SERVICE AGREEMENT</h1>
-    </div>
-
-    <!-- Introduction -->
-    <div class="intro">
-        <p>This <strong>CONSULTANCY SERVICE AGREEMENT</strong> ("Agreement") is executed on <strong>{{ agreement.date_of_agreement|date:"jS F Y" }}</strong> between:</p>
-    </div>
-
-    <!-- Parties -->
     <div class="parties">
-        <p><strong>1) Service Provider:</strong> <strong>Agnivridhi India</strong>, Sector 132, Noida, Uttar Pradesh;</p>
-        <p><strong>2) Service Receiver:</strong> <strong>{{ agreement.service_receiver_name }}</strong>, at <strong>{{ agreement.service_receiver_address }}</strong>.</p>
+        <p><strong>1) Agnivridhi India</strong>, hereinafter referred to as the Service Provider, having its principal place of business at A-116, Udytech Trade Centre, Sector 132, Noida, Uttar Pradesh;</p>
     </div>
-
-    <!-- Whereas Clause -->
+    
+    <div class="and-text"><strong>and</strong></div>
+    
+    <div class="parties">
+        <p><strong>2) {{ agreement.service_receiver_name }}</strong>, hereinafter referred to as the Service Receiver, having its place of business at {{ agreement.service_receiver_address }}.</p>
+    </div>
+    
     <div class="whereas">
-        <p><strong>WHEREAS,</strong> the Service Provider provides consultancy for {{ agreement.service_description|default:"STARTUP GROWTH PROGRAM" }}, assisting in form filling and documentation.</p>
+        <p><strong>WHEREAS,</strong> the Service Provider agrees to provide consultancy services for assisting the Service Receiver in availing benefits under various schemes through the completion of the necessary documentation as required under the scheme;</p>
     </div>
+    
+    <p><strong>NOW THEREFORE,</strong> in consideration of the mutual covenants and agreements contained herein, the parties agree as follows:</p>
 
-    <!-- Clause 1 -->
+    
     <div class="clause">
-        <div class="clause-title">1) DEFINITIONS</div>
+        <div class="clause-heading"><u>1. DEFINITIONS</u></div>
         <div class="sub-clause">
-            <p><strong>a) Agreement:</strong> This agreement and amendments mutually agreed upon in writing.</p>
-            <p><strong>b) Service Provider:</strong> Party providing consultancy services for payment.</p>
-            <p><strong>c) Service Receiver:</strong> Party availing consultancy services.</p>
+            <p><strong>a) Agreement:</strong> Refers to this Agreement and all annexures or amendments made in writing and mutually agreed upon by both parties.</p>
+            <p><strong>b) Service Provider:</strong> The party providing the consultancy services in exchange for payment.</p>
+            <p><strong>c) Service Receiver:</strong> The party receiving and availing the consultancy services.</p>
+            <p><strong>d) Scheme:</strong> Any Government or Financial Institution scheme under which the Service Receiver seeks assistance.</p>
         </div>
     </div>
 
-    <!-- Clause 2 -->
     <div class="clause">
-        <div class="clause-title">2) COVENANTS OF SERVICE PROVIDER</div>
+        <div class="clause-heading"><u>2. SCOPE OF SERVICE PROVIDER</u></div>
         <div class="sub-clause">
-            <p><strong>a)</strong> Prepare all required documents for {{ agreement.service_description|default:"application filing" }} based on information provided.</p>
-            <p><strong>b)</strong> Maintain strict confidentiality of all information and documents; shall not disclose to any third party.</p>
+            <p><strong>a)</strong> The Service Provider shall prepare all the necessary documents for filing the application under the concerned scheme based on the information and documents provided by the Service Receiver.</p>
+            <p><strong>b)</strong> The Service Provider shall maintain strict confidentiality of all information and documents; shall not disclose them to any third party without written consent.</p>
+            <p><strong>c)</strong> Upon request, the Service Provider may assist in submission of the application on behalf of the Service Receiver.</p>
         </div>
     </div>
 
-    <!-- Clause 3 -->
     <div class="clause">
-        <div class="clause-title">3) COVENANTS OF SERVICE RECEIVER</div>
+        <div class="clause-heading"><u>3. COVENANTS OF THE SERVICE RECEIVER</u></div>
         <div class="sub-clause">
-            <p><strong>a)</strong> Acknowledges that registration/application process is subject to change per applicable norms.</p>
-            <p><strong>b)</strong> Processing Fee: <span class="amount">Rs. {{ agreement.total_amount_pitched|floatformat:0 }}/-</span></p>
+            <p><strong>a) Acknowledgment:</strong> The Service Receiver acknowledges that the registration and application process is subject to change as per the applicable regulations and norms of the concerned authority.</p>
+            <p><strong>b) Processing Fee:</strong> The Service Receiver agrees to a Processing fee of <span class="amount">Rs. {{ agreement.total_amount_pitched|floatformat:0 }}/-</span> as per the following structure:</p>
             <ul>
-                <li><strong>Stage 1:</strong> <span class="amount">Rs. {{ agreement.received_amount_stage1|floatformat:0 }}/-</span> (Token money at signing)</li>
-                {% if agreement.has_pending_amount %}<li><strong>Stage 2:</strong> <span class="amount">Rs. {{ agreement.pending_amount_stage2|floatformat:0 }}/-</span> (Work initiation)</li>{% endif %}
-                <li><strong>{% if agreement.has_pending_amount %}Stage 3{% else %}Stage 2{% endif %}:</strong> {{ agreement.commission_percentage }}% success fee (post-disbursement)</li>
+                <li><strong>Stage 1:</strong> <span class="amount">Rs. {{ agreement.received_amount_stage1|floatformat:0 }}/-</span> (Token money, payable at the time of signing this Agreement)</li>
+                {% if agreement.has_pending_amount %}<li><strong>Stage 2:</strong> <span class="amount">Rs. {{ agreement.pending_amount_stage2|floatformat:0 }}/-</span> (Due at initiation of work)</li>{% endif %}
+                <li><strong>{% if agreement.has_pending_amount %}Stage 3{% else %}Stage 2{% endif %}:</strong> {{ agreement.commission_percentage }}% (As success fee post-disbursement)</li>
             </ul>
-            <p><strong>c)</strong> Provide all required documents for processing application.</p>
-            <p><strong>d) Refund Clause:</strong> All payments non-refundable once services commence. Refunds only if Service Provider fails to deliver work. Bank rejections/delays not grounds for refund.</p>
-            <p><strong>e)</strong> All payments only to Agnivridhi India's official bank account.</p>
+            <p><strong>c) Provision of Documents:</strong> The Service Receiver shall provide all required documents for processing the application.</p>
+            <p><strong>d) Refund Clause:</strong> All payments made are non-refundable once services commence. Refunds shall only be made if the Service Provider fails to deliver the work. Bank rejections, delays or policy changes shall not be grounds for refund.</p>
+            <p><strong>e) Payment Mode:</strong> All payments shall be made only to Agnivridhi India's official bank account.</p>
         </div>
     </div>
 
-    <!-- Clause 4 -->
     <div class="clause">
-        <div class="clause-title">4) SCHEME DETAILS & PROCESS</div>
-        <p>Process includes: Application preparation → Submission to Bank/Financial Institution → Coordination for approval/disbursement.</p>
-    </div>
-
-    <!-- Clause 5 -->
-    <div class="clause">
-        <div class="clause-title">5) ELIGIBILITY CRITERIA</div>
-        <p>Eligibility depends on documents/project details provided. Agnivridhi India not responsible for rejection due to incorrect, false, or incomplete information.</p>
-    </div>
-
-    <!-- Clause 6 -->
-    <div class="clause">
-        <div class="clause-title">6) WAIVER BENEFITS & INTEREST SUBSIDY</div>
-        <p>Interest waivers/moratorium/subsidy governed by scheme guidelines. Company not liable if later modified, delayed, or cancelled by authority.</p>
-    </div>
-
-    <!-- Clause 7 -->
-    <div class="clause">
-        <div class="clause-title">7) DURATION & TIMELINE</div>
-        <p>Loan/grant duration and approval timeline depend on concerned Bank/Authority. Agnivridhi India has no control. Delays cannot be grounds for refund/compensation.</p>
-    </div>
-
-    <!-- Clause 8 -->
-    <div class="clause">
-        <div class="clause-title">8) DOCUMENTATION & PROCEDURES</div>
-        <p>All required documents (KYC, financials, collateral, etc.) must be submitted within requested timeframe. Project Report and Financial Projections prepared by Agnivridhi India.</p>
-    </div>
-
-    <!-- Clause 9 -->
-    <div class="clause">
-        <div class="clause-title">9) COMPANY DUTIES</div>
-        <p>Agnivridhi India shall: Guide in documentation, Coordinate with Client and authorities, Submit application, Follow up for status, provide consultation support only (no guaranteed sanction).</p>
-    </div>
-
-    <!-- Clause 10 -->
-    <div class="clause">
-        <div class="clause-title">10) CLIENT DUTIES</div>
-        <p>Client must: Provide accurate information/documents, Respond promptly to communications, Bear all government/bank fees. Failure to cooperate may result in termination without refund.</p>
-    </div>
-
-    <!-- Clause 11 -->
-    <div class="clause">
-        <div class="clause-title">11) DEPARTMENT & SANCTION</div>
-        <p>Sanctioning authority: Concerned Bank/NBFC/Government Department per selected scheme. Sanction Letter issued officially. Agnivridhi India role ends at submission/coordination.</p>
-    </div>
-
-    <!-- Clause 12 -->
-    <div class="clause">
-        <div class="clause-title">12) TIMEFRAME</div>
-        <p>Estimated duration: 30-180 working days. Agnivridhi India not responsible for delay/rejection by external agencies.</p>
-    </div>
-
-    <!-- Clause 13-26 -->
-    <div class="clause">
-        <div class="clause-title">13) LIABILITY DISCLAIMER</div>
-        <p>Not liable for: Delay/rejection by banks/government, Policy changes, Financial loss due to delays.</p>
+        <div class="clause-heading"><u>4. SCHEME DETAILS & PROCESS</u></div>
+        <div class="sub-clause">
+            <p>The process shall include: Preparation of application and supporting documents → Submission to the concerned Bank/Financial Institution → Coordination for obtaining approval and disbursement of funds.</p>
+        </div>
     </div>
 
     <div class="clause">
-        <div class="clause-title">14) TERM</div>
-        <p>Agreement expires if Service Receiver fails to provide documents within 30 days. Valid for 3 months from execution, unless terminated earlier.</p>
+        <div class="clause-heading"><u>5. ELIGIBILITY AND RESPONSIBILITY</u></div>
+        <div class="sub-clause">
+            <p>The eligibility of the Service Receiver is dependent on the documents and project details provided by them. Agnivridhi India shall not be held responsible for rejection by any authority due to incorrect, false or incomplete information provided by the Service Receiver.</p>
+        </div>
     </div>
 
     <div class="clause">
-        <div class="clause-title">15) TERMINATION</div>
-        <p><strong>a)</strong> Either party may terminate with 30-day written notice. <strong>b)</strong> Immediate termination if breach. <strong>c)</strong> Terminatio doesn't affect claim for services rendered.</p>
+        <div class="clause-heading"><u>6. BENEFITS & SUBSIDIES</u></div>
+        <div class="sub-clause">
+            <p>Any interest waivers, moratorium periods, or interest subsidies are governed by the scheme guidelines. The Company shall not be liable if these are later modified, delayed or cancelled by the concerned authority.</p>
+        </div>
     </div>
 
     <div class="clause">
-        <div class="clause-title">16-26) GENERAL PROVISIONS</div>
-        <p><strong>16) Relationship:</strong> No employment/agency/partnership. <strong>17) Third Parties:</strong> No rights to third parties. <strong>18) Modification:</strong> Only in writing, signed by both. <strong>19) Severability:</strong> Invalid clause doesn't affect rest. <strong>20) Enforcement:</strong> Failure to enforce doesn't waive future rights. <strong>21) Effective Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}. <strong>22) Governing Law:</strong> Disputes resolved through discussion, then arbitration under Arbitration Act 1996, Delhi. <strong>23) Notices:</strong> Via registered post/email. <strong>24) Entire Agreement:</strong> This document supersedes all prior communications. <strong>25) Counterparts:</strong> May be signed in counterparts. <strong>26) Acceptance:</strong> Both parties confirm reading, understanding, and accepting all terms.</p>
+        <div class="clause-heading"><u>7. DURATION AND TIMELINE</u></div>
+        <div class="sub-clause">
+            <p>The duration of the loan/grant and the timeline for approval are dependent on the concerned Bank or Government Authority. Agnivridhi India has no control over these factors. Any delays in approval cannot be grounds for refund or compensation.</p>
+        </div>
     </div>
 
-    <!-- Signature Section -->
+    <div class="clause">
+        <div class="clause-heading"><u>8. DOCUMENTATION AND PROCEDURES</u></div>
+        <div class="sub-clause">
+            <p>All required documents including KYC, financial statements, collateral documents, etc., must be submitted within the requested timeframe. The Project Report and Financial Projections shall be prepared by Agnivridhi India based on the information provided by the Service Receiver.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>9. SERVICE PROVIDER'S DUTIES</u></div>
+        <div class="sub-clause">
+            <p>Agnivridhi India shall:</p>
+            <ul>
+                <li>Guide the Service Receiver in preparation of documents</li>
+                <li>Coordinate with the Service Receiver and concerned authorities</li>
+                <li>Submit the application within the agreed timeline</li>
+                <li>Follow up for status updates</li>
+                <li>Provide consultation support</li>
+            </ul>
+            <p>However, Agnivridhi India cannot guarantee approval or sanction of the application.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>10. SERVICE RECEIVER'S DUTIES</u></div>
+        <div class="sub-clause">
+            <p>The Service Receiver must:</p>
+            <ul>
+                <li>Provide accurate and truthful information and documents</li>
+                <li>Respond promptly to all communications from Agnivridhi India</li>
+                <li>Bear all government fees, bank charges and other applicable costs</li>
+                <li>Maintain regular contact with Agnivridhi India</li>
+            </ul>
+            <p>Failure to cooperate or provide false information may result in immediate termination of this Agreement without refund.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>11. SANCTIONING AUTHORITY AND ROLE</u></div>
+        <div class="sub-clause">
+            <p>The final sanctioning authority is the concerned Bank, NBFC or Government Department based on the selected scheme. The sanction letter, if issued, shall be issued officially by the sanctioning authority. The role of Agnivridhi India shall end at the submission and coordination stage.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>12. TIMEFRAME FOR PROCESSING</u></div>
+        <div class="sub-clause">
+            <p>The estimated duration for processing shall be between 30 to 180 working days depending on the scheme and the authority. Agnivridhi India shall not be responsible for any delays or rejections caused by external agencies.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>13. LIABILITY AND DISCLAIMER</u></div>
+        <div class="sub-clause">
+            <p>Agnivridhi India shall not be liable for:</p>
+            <ul>
+                <li>Delay or rejection of application by banks/government authorities</li>
+                <li>Changes in government policies or scheme guidelines</li>
+                <li>Financial loss incurred by the Service Receiver due to delays in approval</li>
+                <li>Non-receipt of funds due to any reason</li>
+                <li>Forced fund utilization or repayment obligations</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>14. VALIDITY OF AGREEMENT</u></div>
+        <div class="sub-clause">
+            <p>This Agreement shall expire if the Service Receiver fails to provide the required documents within 30 days of the date of this Agreement. The Agreement is valid for a period of 3 months from the date of execution, unless terminated earlier by either party.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>15. TERMINATION</u></div>
+        <div class="sub-clause">
+            <p><strong>a)</strong> Either party may terminate this Agreement by providing 30 days written notice to the other party.</p>
+            <p><strong>b)</strong> Either party may terminate immediately if the other party is in material breach of this Agreement.</p>
+            <p><strong>c)</strong> Termination of this Agreement shall not affect any claim for services rendered or work completed prior to termination.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>16-20. GENERAL PROVISIONS</u></div>
+        <div class="sub-clause">
+            <p><strong>16) Relationship:</strong> Nothing in this Agreement creates an employment relationship, agency, partnership or joint venture between the parties.</p>
+            <p><strong>17) Third Party Rights:</strong> This Agreement is for the benefit of the parties and their respective successors. No third party has any rights or obligations under this Agreement.</p>
+            <p><strong>18) Amendment:</strong> This Agreement may only be modified or amended by written document signed by both parties.</p>
+            <p><strong>19) Severability:</strong> If any provision of this Agreement is found to be invalid, it shall not affect the validity or enforceability of the remaining provisions.</p>
+            <p><strong>20) Waiver:</strong> Failure of either party to enforce any provision of this Agreement shall not constitute a waiver of such provision or the right to enforce it in future.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>21. GOVERNING LAW AND DISPUTE RESOLUTION</u></div>
+        <div class="sub-clause">
+            <p>This Agreement shall be governed by and construed in accordance with the laws of India. Any disputes arising out of or relating to this Agreement shall be resolved through mutual discussion. If no settlement is reached within 30 days, the disputes shall be resolved through arbitration under the Arbitration and Conciliation Act, 1996, with the place of arbitration being Delhi.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>22. NOTICES</u></div>
+        <div class="sub-clause">
+            <p>All notices shall be given in writing by registered post or email to the addresses mentioned in this Agreement.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>23. ENTIRE AGREEMENT</u></div>
+        <div class="sub-clause">
+            <p>This Agreement constitutes the entire agreement between the parties and supersedes all prior negotiations, representations and agreements, whether written or oral.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>24. COUNTERPARTS</u></div>
+        <div class="sub-clause">
+            <p>This Agreement may be signed in counterparts, each of which shall be deemed an original and all of which together shall constitute one instrument.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading"><u>25. ACKNOWLEDGMENT AND ACCEPTANCE</u></div>
+        <div class="sub-clause">
+            <p>Both parties confirm that they have read, understood and accept all the terms and conditions of this Agreement.</p>
+        </div>
+    </div>
+
     <div class="signature-section">
-        <p class="witness-line">IN WITNESS WHEREOF, the parties have executed this Agreement</p>
+        <p class="witness-line"><strong>IN WITNESS WHEREOF, the parties have executed this Agreement</strong></p>
         
         <table class="signature-table">
             <tr>
-                <td style="text-align: left;">
-                    <p class="sig-line"><strong>AGNIVRIDHI INDIA PVT LTD</strong></p>
-                    <p class="sig-line"><strong>By:</strong> Director</p>
-                    <p class="sig-line"><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
-                    <div style="margin-top: 50px;">
-                        <p style="margin-top: 35px;">___________________</p>
+                <td>
+                    <p><strong>AGNIVRIDHI INDIA PVT LTD</strong></p>
+                    <p style="margin-top: 8px;"><strong>By: Director</strong></p>
+                    <div class="sig-box">
+                        <p>___________________</p>
                     </div>
+                    <p style="margin-top: 30px;"><strong>Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></p>
                 </td>
-                <td style="text-align: left;">
-                    <p class="sig-line"><strong>SERVICE RECEIVER</strong></p>
-                    <p class="sig-line"><strong>Name:</strong> {{ agreement.service_receiver_name }}</p>
-                    <p class="sig-line"><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
-                    <div style="margin-top: 50px;">
-                        <p style="margin-top: 35px;">___________________</p>
+                <td>
+                    <p><strong>SERVICE RECEIVER</strong></p>
+                    <p style="margin-top: 8px;"><strong>Name: {{ agreement.service_receiver_name }}</strong></p>
+                    <div class="sig-box">
+                        <p>___________________</p>
                     </div>
+                    <p style="margin-top: 30px;"><strong>Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></p>
                 </td>
             </tr>
         </table>
     </div>
 
-    <!-- Undertaking Section -->
     <div class="undertaking">
-        <h2>UNDERTAKING</h2>
+        <div class="undertaking-title"><u>UNDERTAKING</u></div>
         <div class="sub-clause">
-            <p><strong>I hereby undertake:</strong></p>
-            <p><strong>i)</strong> Full compliance with Clause 3. Failure results in immediate termination without refund.</p>
-            <p><strong>ii)</strong> Official communications through Legal@agnivridhiindia.com or written letters only. WhatsApp/calls not binding.</p>
-            <p><strong>iii)</strong> Providing false/misleading information voids this Agreement; fee non-refundable.</p>
-            <p><strong>iv)</strong> I have read, understood, and accepted all terms on www.agnivridhiindia.com and in this Agreement.</p>
+            <p><strong>I hereby undertake that:</strong></p>
+            <p><strong>i)</strong> I shall ensure full compliance with the terms mentioned in Clause 3. Failure to comply shall result in immediate termination of this Agreement without any refund.</p>
+            <p><strong>ii)</strong> All official communications from Agnivridhi India shall be through Legal@agnivridhiindia.com or through written letters only. Communication through WhatsApp, calls or any other medium shall not be considered as binding.</p>
+            <p><strong>iii)</strong> I undertake that I have provided true and correct information. Providing any false or misleading information shall render this Agreement void and all fees paid shall be non-refundable.</p>
+            <p><strong>iv)</strong> I hereby confirm that I have read, understood and accepted all the terms and conditions mentioned on the website www.agnivridhiindia.com and in this Agreement.</p>
         </div>
         <div style="margin-top: 40px;">
-            <p><strong>Signature:</strong> ___________________  <strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
+            <p><strong>Signature: ___________________     Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></p>
         </div>
     </div>
-    
-    </div> <!-- Close content -->
+
+</body>
 
 </body>
 </html>
