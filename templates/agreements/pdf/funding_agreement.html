@@ -29,6 +29,7 @@
         .intro {
             margin-bottom: 12px;
             text-align: justify;
+            page-break-inside: avoid;
         }
         .intro p {
             margin: 6px 0;
@@ -36,6 +37,7 @@
         .parties {
             margin-left: 25px;
             margin-bottom: 8px;
+            page-break-inside: avoid;
         }
         .parties p {
             margin: 5px 0;
@@ -49,12 +51,14 @@
         .whereas {
             margin-bottom: 12px;
             text-align: justify;
+            page-break-inside: avoid;
         }
         .whereas p {
             margin: 8px 0;
         }
         .clause {
             margin-bottom: 12px;
+            page-break-inside: avoid;
         }
         .clause-heading {
             font-weight: bold;
@@ -63,6 +67,7 @@
         }
         .sub-clause {
             margin-left: 20px;
+            page-break-inside: avoid;
         }
         .sub-clause p {
             margin: 6px 0;
@@ -71,6 +76,7 @@
             margin-left: 35px;
             margin-top: 5px;
             margin-bottom: 8px;
+            page-break-inside: avoid;
         }
         ul li {
             margin-bottom: 5px;
@@ -92,25 +98,22 @@
         .signature-table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 15px;
         }
         .signature-table td {
-            vertical-align: top;
-            width: 50%;
-            padding: 15px;
+            vertical-align: middle;
+            padding: 12px 15px;
             border: 2px solid #000000;
             font-size: 11pt;
-            text-align: center;
+            text-align: left;
         }
-        .sig-box {
-            margin-top: 60px;
-            margin-bottom: 10px;
-        }
-        .sig-box p {
-            margin: 0;
+        .signature-table tr:first-child td {
+            padding: 15px;
         }
         .undertaking {
             page-break-before: always;
             margin-top: 15px;
+            page-break-inside: avoid;
         }
         .undertaking-title {
             text-align: center;
@@ -337,26 +340,28 @@
     </div>
 
     <div class="signature-section">
-        <p class="witness-line"><strong>IN WITNESS WHEREOF, the parties have executed this Agreement</strong></p>
+        <p class="witness-line"><strong>IN WITNESS WHEREOF,</strong> the undersigned have executed this Agreement on the day and year first written above.</p>
         
         <table class="signature-table">
             <tr>
-                <td>
-                    <p><strong>AGNIVRIDHI INDIA PVT LTD</strong></p>
-                    <p style="margin-top: 8px;"><strong>By: Director</strong></p>
-                    <div class="sig-box">
-                        <p>___________________</p>
-                    </div>
-                    <p style="margin-top: 30px;"><strong>Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></p>
-                </td>
-                <td>
-                    <p><strong>SERVICE RECEIVER</strong></p>
-                    <p style="margin-top: 8px;"><strong>Name: {{ agreement.service_receiver_name }}</strong></p>
-                    <div class="sig-box">
-                        <p>___________________</p>
-                    </div>
-                    <p style="margin-top: 30px;"><strong>Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></p>
-                </td>
+                <td><strong>Signed and delivered for and on behalf of</strong></td>
+                <td><strong>I have read and understood the provisions of this Agreement & hereby accept the same.</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Name: Agnivridhi India Private Limited</strong></td>
+                <td><strong>Name: {{ agreement.service_receiver_name }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Title: Authorized Representative</strong></td>
+                <td><strong>Title: {{ agreement.service_receiver_designation|default:"Director" }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></td>
+                <td><strong>Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding-top: 40px; padding-bottom: 40px;"><strong>Signature:</strong><br/><br/><br/>___________________</td>
+                <td style="padding-top: 40px; padding-bottom: 40px;"><strong>Signature:</strong><br/><br/><br/>___________________</td>
             </tr>
         </table>
     </div>
