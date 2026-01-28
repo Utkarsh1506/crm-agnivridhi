@@ -7,52 +7,63 @@
     <style>
         @page {
             size: A4;
-            margin: 2cm 2.5cm 3.5cm 2.5cm;
+            margin: 2cm 2.5cm 4cm 2.5cm;
+            @bottom-left {
+                content: element(footer-left);
+            }
+            @bottom-right {
+                content: element(footer-right);
+            }
         }
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 10pt;
-            line-height: 1.5;
+            line-height: 1.6;
             color: #000;
             text-align: justify;
             position: relative;
         }
-        .watermark {
+        .footer-content {
             position: fixed;
             bottom: 0;
-            right: 20px;
-            opacity: 0.15;
-            width: 150px;
-            height: auto;
+            left: 0;
+            right: 0;
+            height: 80px;
+            display: table;
+            width: 100%;
+            border-top: 1px solid #000;
+            padding-top: 10px;
         }
-        .header {
+        .footer-left {
+            display: table-cell;
+            width: 50%;
             text-align: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #000;
+            vertical-align: middle;
+            padding: 10px;
         }
-        .company-name {
-            font-size: 18pt;
+        .footer-right {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            vertical-align: middle;
+            padding: 10px;
             font-weight: bold;
-            color: #000;
-            margin: 10px 0;
+            font-size: 11pt;
         }
-        .company-details {
-            font-size: 9pt;
-            color: #000;
-            line-height: 1.4;
+        .footer-left img {
+            width: 80px;
+            height: auto;
+            opacity: 0.8;
         }
-        .agreement-number {
-            text-align: right;
-            font-size: 9pt;
+        .footer-text {
             font-weight: bold;
-            margin: 10px 0;
-            color: #000;
+            font-size: 10pt;
+            margin-top: 5px;
         }
         .title-page {
             text-align: center;
-            margin: 20px 0 25px 0;
-            padding: 15px;
+            margin: 30px 0 30px 0;
+            padding: 20px;
             border: 2px solid #000;
         }
         h1.main-title {
@@ -78,7 +89,7 @@
             padding-left: 12px;
         }
         .clause {
-            margin-bottom: 18px;
+            margin-bottom: 16px;
             page-break-inside: avoid;
         }
         .clause-title {
@@ -106,23 +117,28 @@
             font-family: Arial, sans-serif;
         }
         .signature-section {
-            margin-top: 60px;
+            margin-top: 50px;
             page-break-before: always;
         }
         .witness-line {
             text-align: center;
             font-weight: bold;
             margin-bottom: 40px;
-            font-size: 11pt;
+            font-size: 12pt;
         }
         .signature-table {
             width: 100%;
+            border-collapse: collapse;
             margin-top: 30px;
         }
         .signature-table td {
             vertical-align: top;
             width: 50%;
-            padding: 10px 20px;
+            padding: 20px;
+            border: 1px solid #000;
+        }
+        .sig-line {
+            margin-bottom: 10px;
         }
         .signature-box {
             margin-top: 50px;
@@ -146,22 +162,17 @@
     </style>
 </head>
 <body>
-    <!-- Watermark Stamp -->
-    <div class="watermark">
-        <img src="{{ logo_path }}" alt="Agnivridhi Stamp" style="width: 100%; height: auto;">
-    </div>
-
-    <!-- Header with Company Details -->
-    <div class="header">
-        <div class="company-name">AGNIVRIDHI INDIA PRIVATE LIMITED</div>
-        <div class="company-details">
-            A-116, Urbtech Trade Centre, Sector 132, Noida, Uttar Pradesh - 201304<br>
-            Email: legal@agnivridhiindia.com | Website: www.agnivridhiindia.com
+    <!-- Footer on every page -->
+    <div class="footer-content">
+        <div class="footer-left">
+            <img src="{{ logo_path }}" alt="Service Provider Logo">
+            <div class="footer-text">Service Provider</div>
+        </div>
+        <div class="footer-right">
+            Service Receiver
         </div>
     </div>
-    
-    <div class="agreement-number">Agreement No: {{ agreement.agreement_number }}</div>
-    
+
     <!-- Title -->
     <div class="title-page">
         <h1 class="main-title">CONSULTANCY SERVICE AGREEMENT</h1>
@@ -407,16 +418,18 @@
         <table class="signature-table">
             <tr>
                 <td>
-                    <p><strong>Name:</strong> Agnivridhi India Private Limited</p>
-                    <p><strong>Title:</strong> Authorized Representative</p>
-                    <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
-                    <p style="margin-top: 80px;"><strong>Signature:</strong> _____________________</p>
+                    <p class="sig-line"><strong>For AGNIVRIDHI INDIA PRIVATE LIMITED</strong></p>
+                    <p class="sig-line"><strong>Name:</strong> Authorized Signatory</p>
+                    <p class="sig-line"><strong>Designation:</strong> Director</p>
+                    <p class="sig-line"><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
+                    <p style="margin-top: 60px;"><strong>Signature & Stamp:</strong> _____________________</p>
                 </td>
                 <td>
-                    <p><strong>Name:</strong> {{ agreement.service_receiver_name }}</p>
-                    <p><strong>Title:</strong> {{ agreement.service_receiver_designation|default:"Director" }}</p>
-                    <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
-                    <p style="margin-top: 80px;"><strong>Signature:</strong> _____________________</p>
+                    <p class="sig-line"><strong>SERVICE RECEIVER</strong></p>
+                    <p class="sig-line"><strong>Name:</strong> {{ agreement.service_receiver_name }}</p>
+                    <p class="sig-line"><strong>Designation:</strong> {{ agreement.service_receiver_designation }}</p>
+                    <p class="sig-line"><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
+                    <p style="margin-top: 60px;"><strong>Signature & Stamp:</strong> _____________________</p>
                 </td>
             </tr>
         </table>
