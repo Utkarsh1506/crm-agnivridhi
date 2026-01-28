@@ -35,12 +35,16 @@ def generate_agreement_number(agreement_type):
     return f"{prefix}-{today}-{seq:03d}"
 
 
-# ============= SALES/EMPLOYEE VIEWS =============
+# ============= ADMIN/MANAGER/OWNER VIEWS =============
 
-@sales_required
 def agreement_list(request):
-    """List all agreements for sales/employee"""
-    agreements = Agreement.objects.filter(created_by=request.user).select_related(
+    """List all agreements for admin/manager/owner"""
+    # Check if user is admin, manager, or owner
+    if not (request.user.is_authenticated and (request.user.role in ['ADMIN', 'MANAGER'] or request.user.is_owner)):
+        return HttpResponseForbidden("Only Admins, Managers, and Owners can access agreements.")
+    
+    # Admins and owners see all agreements, managers see all agreements
+    agreements = Agreement.objects.all().select_related(
         'client', 'employee', 'created_by'
     ).order_by('-created_at')
     
@@ -73,9 +77,12 @@ def agreement_list(request):
     return render(request, 'agreements/agreement_list.html', context)
 
 
-@sales_required
 def agreement_create(request):
-    """Create new agreement"""
+    """Create new agreement - Only for admin, manager, and owner"""
+    # Check if user is admin, manager, or owner
+    if not (request.user.is_authenticated and (request.user.role in ['ADMIN', 'MANAGER'] or request.user.is_owner)):
+        return HttpResponseForbidden("Only Admins, Managers, and Owners can create agreements.")
+    
     if request.method == 'POST':
         form = AgreementForm(request.POST, user=request.user)
         if form.is_valid():
@@ -106,28 +113,26 @@ def agreement_create(request):
     })
 
 
-@sales_required
 def agreement_detail(request, pk):
     """View agreement details"""
-    agreement = get_object_or_404(Agreement, pk=pk)
+    # Check if user is admin, manager, or owner
+    if not (request.user.is_authenticated and (request.user.role in ['ADMIN', 'MANAGER'] or request.user.is_owner)):
+        return HttpResponseForbidden("Only Admins, Managers, and Owners can view agreements.")
     
-    # Check permissions
-    if agreement.created_by != request.user and not request.user.role in ['admin', 'manager']:
-        return HttpResponseForbidden("You don't have permission to view this agreement.")
+    agreement = get_object_or_404(Agreement, pk=pk)
     
     return render(request, 'agreements/agreement_detail.html', {
         'agreement': agreement
     })
 
 
-@sales_required
 def agreement_edit(request, pk):
     """Edit existing agreement"""
-    agreement = get_object_or_404(Agreement, pk=pk)
+    # Check if user is admin, manager, or owner
+    if not (request.user.is_authenticated and (request.user.role in ['ADMIN', 'MANAGER'] or request.user.is_owner)):
+        return HttpResponseForbidden("Only Admins, Managers, and Owners can edit agreements.")
     
-    # Check permissions
-    if agreement.created_by != request.user and not request.user.role in ['admin', 'manager']:
-        return HttpResponseForbidden("You don't have permission to edit this agreement.")
+    agreement = get_object_or_404(Agreement, pk=pk)
     
     if request.method == 'POST':
         form = AgreementForm(request.POST, instance=agreement, user=request.user)
@@ -151,14 +156,13 @@ def agreement_edit(request, pk):
     })
 
 
-@sales_required
 def agreement_delete(request, pk):
     """Delete agreement"""
-    agreement = get_object_or_404(Agreement, pk=pk)
+    # Check if user is admin, manager, or owner
+    if not (request.user.is_authenticated and (request.user.role in ['ADMIN', 'MANAGER'] or request.user.is_owner)):
+        return HttpResponseForbidden("Only Admins, Managers, and Owners can delete agreements.")
     
-    # Check permissions
-    if agreement.created_by != request.user and not request.user.role in ['admin', 'manager']:
-        return HttpResponseForbidden("You don't have permission to delete this agreement.")
+    agreement = get_object_or_404(Agreement, pk=pk)
     
     if request.method == 'POST':
         agreement_number = agreement.agreement_number
@@ -175,17 +179,16 @@ def agreement_delete(request, pk):
     })
 
 
-@sales_required
 def agreement_pdf(request, pk):
     """Generate and download PDF for agreement"""
+    # Check if user is admin, manager, or owner
+    if not (request.user.is_authenticated and (request.user.role in ['ADMIN', 'MANAGER'] or request.user.is_owner)):
+        return HttpResponseForbidden("Only Admins, Managers, and Owners can download agreement PDFs.")
+    
     from xhtml2pdf import pisa
     from io import BytesIO
     
     agreement = get_object_or_404(Agreement, pk=pk)
-    
-    # Check permissions
-    if agreement.created_by != request.user and not request.user.role in ['admin', 'manager']:
-        return HttpResponseForbidden("You don't have permission to view this agreement.")
     
     # Select template based on agreement type
     if agreement.agreement_type == 'funding':
