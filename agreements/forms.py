@@ -28,13 +28,12 @@ class AgreementForm(forms.ModelForm):
         label='Address'
     )
     
-    service_receiver_designation = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'e.g., Director, Proprietor, CEO'
+    service_receiver_designation = forms.ChoiceField(
+        choices=Agreement.DESIGNATION_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-control'
         }),
-        initial='Director',
+        initial='Representative',
         label='Designation'
     )
     
