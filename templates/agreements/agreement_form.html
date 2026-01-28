@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-file-contract"></i> {{ title }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Agreement Type -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Agreement Type *</label>
+                                {{ form.agreement_type }}
+                                {% if form.agreement_type.errors %}
+                                    <div class="text-danger">{{ form.agreement_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Date of Agreement *</label>
+                                {{ form.date_of_agreement }}
+                                {% if form.date_of_agreement.errors %}
+                                    <div class="text-danger">{{ form.date_of_agreement.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Service Receiver Details -->
+                        <h5 class="text-primary mb-3">Service Receiver Details</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">{{ form.service_receiver_name.label }} *</label>
+                                {{ form.service_receiver_name }}
+                                {% if form.service_receiver_name.errors %}
+                                    <div class="text-danger">{{ form.service_receiver_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">{{ form.service_receiver_address.label }} *</label>
+                                {{ form.service_receiver_address }}
+                                {% if form.service_receiver_address.errors %}
+                                    <div class="text-danger">{{ form.service_receiver_address.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Service Details -->
+                        <h5 class="text-primary mb-3">Service Details</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">{{ form.service_description.label }} *</label>
+                                {{ form.service_description }}
+                                {% if form.service_description.errors %}
+                                    <div class="text-danger">{{ form.service_description.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Financial Details -->
+                        <h5 class="text-primary mb-3">Financial Details</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">{{ form.total_amount_pitched.label }} *</label>
+                                {{ form.total_amount_pitched }}
+                                {% if form.total_amount_pitched.errors %}
+                                    <div class="text-danger">{{ form.total_amount_pitched.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">{{ form.received_amount_stage1.label }} *</label>
+                                {{ form.received_amount_stage1 }}
+                                {% if form.received_amount_stage1.errors %}
+                                    <div class="text-danger">{{ form.received_amount_stage1.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">{{ form.pending_amount_stage2.label }}</label>
+                                {{ form.pending_amount_stage2 }}
+                                <small class="text-muted d-block">{{ form.pending_amount_stage2.help_text }}</small>
+                                {% if form.pending_amount_stage2.errors %}
+                                    <div class="text-danger">{{ form.pending_amount_stage2.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">{{ form.commission_percentage.label }} *</label>
+                                {{ form.commission_percentage }}
+                                <small class="text-muted d-block">{{ form.commission_percentage.help_text }}</small>
+                                {% if form.commission_percentage.errors %}
+                                    <div class="text-danger">{{ form.commission_percentage.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Commission Stage</label>
+                                {{ form.commission_stage }}
+                                {% if form.commission_stage.errors %}
+                                    <div class="text-danger">{{ form.commission_stage.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Related Parties -->
+                        <h5 class="text-primary mb-3">Related Parties (Optional)</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">{{ form.client.label }}</label>
+                                {{ form.client }}
+                                <small class="text-muted d-block">{{ form.client.help_text }}</small>
+                                {% if form.client.errors %}
+                                    <div class="text-danger">{{ form.client.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">{{ form.employee.label }}</label>
+                                {{ form.employee }}
+                                <small class="text-muted d-block">{{ form.employee.help_text }}</small>
+                                {% if form.employee.errors %}
+                                    <div class="text-danger">{{ form.employee.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Notes -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">{{ form.notes.label }}</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger">{{ form.notes.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'agreements:agreement_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {% if agreement %}Update{% else %}Create{% endif %} Agreement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Website Development Service Agreement - {{ agreement.agreement_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm 2.5cm;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #000;
+            text-align: justify;
+        }
+        .title-page {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1.main-title {
+            font-size: 18pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 30px 0 20px 0;
+        }
+        .intro {
+            text-align: justify;
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        .parties {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        .whereas {
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        .clause {
+            margin-bottom: 20px;
+        }
+        .clause-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .sub-clause {
+            margin-left: 20px;
+            margin-bottom: 8px;
+        }
+        ul {
+            margin-left: 40px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+        ul li {
+            margin-bottom: 5px;
+        }
+        .signature-section {
+            margin-top: 60px;
+            page-break-inside: avoid;
+        }
+        .signature-table {
+            width: 100%;
+            margin-top: 40px;
+        }
+        .signature-table td {
+            vertical-align: top;
+            width: 50%;
+            padding: 10px;
+        }
+        .signature-box {
+            margin-top: 60px;
+        }
+        .undertaking {
+            page-break-before: always;
+            margin-top: 30px;
+        }
+        .undertaking h2 {
+            text-align: center;
+            text-decoration: underline;
+            font-size: 14pt;
+            margin-bottom: 20px;
+        }
+        strong {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Title -->
+    <div class="title-page">
+        <h1 class="main-title">DEVELOPMENT SERVICE AGREEMENT</h1>
+    </div>
+
+    <!-- Introduction -->
+    <div class="intro">
+        <p>This <strong>Website Development & Services Agreement</strong> ("Agreement") is entered into on this <strong>{{ agreement.date_of_agreement|date:"jS" }} day of {{ agreement.date_of_agreement|date:"F Y" }}</strong>, by and between:</p>
+    </div>
+
+    <!-- Parties -->
+    <div class="parties">
+        <p>•	<strong>Agnivridhi India</strong>, hereinafter referred to as the <strong>Service Provider</strong>, having its principal place of business at <strong>A-116, Urbtech Trade Centre, Sector 132, Noida, Uttar Pradesh</strong>;</p>
+        <p style="margin-top: 10px;">and</p>
+        <p style="margin-top: 10px;">•	<strong>{{ agreement.service_receiver_name }}</strong> hereinafter referred to as the <strong>Service Receiver</strong>, having its principal place of business at <strong>{{ agreement.service_receiver_address }}</strong>.</p>
+    </div>
+
+    <!-- Whereas Clause -->
+    <div class="whereas">
+        <p><strong>WHEREAS</strong>, the Service Provider agrees to provide website development, design, and related digital services to the Service Receiver, including creation, modification, hosting assistance, and maintenance support as per the selected package.</p>
+    </div>
+
+    <!-- Clause 1 -->
+    <div class="clause">
+        <div class="clause-title">1) Definitions</div>
+        <div class="sub-clause">
+            <p>a) <strong>Agreement:</strong> Refers to this document and any mutually approved amendments.</p>
+            <p>b) <strong>Service Provider:</strong> The company offering website-related services.</p>
+            <p>c) <strong>Service Receiver:</strong> The client availing website development services.</p>
+            <p>d) <strong>Website Services:</strong> Includes UI/UX design, website development, basic SEO setup, content integration, hosting support, maintenance (if opted), and other digital services mutually agreed upon.</p>
+        </div>
+    </div>
+
+    <!-- Clause 2 -->
+    <div class="clause">
+        <div class="clause-title">2) Obligations of the Service Provider</div>
+        <div class="sub-clause">
+            <p>a) The Service Provider shall develop the Website according to the information, content, and requirements provided by the Service Receiver.</p>
+            <p>b) The Service Provider shall ensure the website design, structure, and functionality are delivered as per the selected service package.</p>
+            <p>c) All information, data, or documents shared by the Service Receiver will be kept confidential and not disclosed to any third party except authorized personnel.</p>
+        </div>
+    </div>
+
+    <!-- Clause 3 -->
+    <div class="clause">
+        <div class="clause-title">3) Obligations of the Service Receiver</div>
+        <div class="sub-clause">
+            <p>a) The Service Receiver shall provide all required content, images, business details, domain access, hosting credentials, and necessary information for timely completion of the project.</p>
+            
+            <p>b) The Service Receiver agrees to pay a total Website Service Fee of <strong>₹{{ agreement.total_amount_pitched|floatformat:0 }}/-</strong> as follows:</p>
+            <ul>
+                <li><strong>Stage 1:</strong> ₹{{ agreement.received_amount_stage1|floatformat:0 }}/- as token money, payable at the time of signing this Agreement.</li>
+                {% if agreement.has_pending_amount %}
+                <li><strong>Stage 2:</strong> ₹{{ agreement.pending_amount_stage2|floatformat:0 }}/- payable upon project completion and delivery.</li>
+                {% endif %}
+            </ul>
+
+            <p>c) The Service Receiver shall review and approve website drafts within the stipulated timeframe to avoid delays.</p>
+            
+            <p>d) <strong>Refund Clause:</strong></p>
+            <ul>
+                <li>If the Service Provider fails to deliver the website due to their own fault, the amount paid shall be refunded after deducting service charges for work completed.</li>
+                <li>If the Service Receiver fails to provide necessary documents, delays approvals, or provides false/incomplete information, the fees shall be non-refundable.</li>
+            </ul>
+
+            <p>e) Services will commence only after signing this Agreement and receiving the initial token payment.</p>
+        </div>
+    </div>
+
+    <!-- Clause 4 -->
+    <div class="clause">
+        <div class="clause-title">4. Scheme Details & Process</div>
+        <p>This Agreement remains valid for three (3) months, during which the website shall be completed unless delayed due to pending inputs or approvals from the Service Receiver.</p>
+    </div>
+
+    <!-- Clause 5 -->
+    <div class="clause">
+        <div class="clause-title">5. Termination</div>
+        <div class="sub-clause">
+            <p>a) Either party may terminate this Agreement with 30 days' prior written notice.</p>
+            <p>b) The Service Provider may terminate with immediate effect if the Service Receiver fails to comply with Agreement terms.</p>
+            <p>c) Termination does not affect the Service Provider's right to receive payment for work already completed.</p>
+        </div>
+    </div>
+
+    <!-- Clause 6 -->
+    <div class="clause">
+        <div class="clause-title">6. Relationship Between Parties</div>
+        <p>This Agreement does not constitute an employment, partnership, or agency relationship.</p>
+    </div>
+
+    <!-- Clause 7 -->
+    <div class="clause">
+        <div class="clause-title">7. Third Party Rights</div>
+        <p>No third party shall have rights under this Agreement.</p>
+    </div>
+
+    <!-- Clause 8 -->
+    <div class="clause">
+        <div class="clause-title">8) Modification</div>
+        <p>Changes must be agreed upon in writing and signed by both parties.</p>
+    </div>
+
+    <!-- Clause 9 -->
+    <div class="clause">
+        <div class="clause-title">9) Severability</div>
+        <p>If any clause is found invalid, remaining clauses continue to be enforceable.</p>
+    </div>
+
+    <!-- Clause 10 -->
+    <div class="clause">
+        <div class="clause-title">10) Waiver</div>
+        <p>Failure to enforce any clause does not constitute a future waiver of that clause.</p>
+    </div>
+
+    <!-- Clause 11 -->
+    <div class="clause">
+        <div class="clause-title">11) Effective Date</div>
+        <p>This Agreement is effective from {{ agreement.date_of_agreement|date:"d/m/Y" }}.</p>
+    </div>
+
+    <!-- Clause 12 -->
+    <div class="clause">
+        <div class="clause-title">12) Governing Law</div>
+        <p>This Agreement shall be governed by Indian law and subject to jurisdiction of Delhi courts.</p>
+    </div>
+
+    <!-- Clause 13 -->
+    <div class="clause">
+        <div class="clause-title">13) Arbitration</div>
+        <p>Any disputes shall be resolved by arbitration in Delhi under the Arbitration and Conciliation Act, 1996.</p>
+    </div>
+
+    <!-- Clause 14 -->
+    <div class="clause">
+        <div class="clause-title">14) Notices</div>
+        <p>All notices shall be sent via email or registered post to the addresses shared.</p>
+    </div>
+
+    <!-- Clause 15 -->
+    <div class="clause">
+        <div class="clause-title">15) Entire Agreement</div>
+        <p>This Agreement supersedes all prior discussions or proposals.</p>
+    </div>
+
+    <!-- Clause 16 -->
+    <div class="clause">
+        <div class="clause-title">16) Counterparts</div>
+        <p>This Agreement may be signed in multiple copies, all forming a single document.</p>
+    </div>
+
+    <!-- Clause 17 -->
+    <div class="clause">
+        <div class="clause-title">17) Disclaimer</div>
+        <p>The Service Provider will make reasonable efforts to deliver the website as per agreed requirements, but does not guarantee:</p>
+        <div class="sub-clause">
+            <p>a) Sales, leads, or business outcomes</p>
+            <p>b) Ranking or SEO results</p>
+            <p>c) Third-party server uptime, hosting performance, or domain-related issues</p>
+            <p>d) The Service Receiver understands that final performance also depends on hosting providers, domain registrars, third-party integrations, and content provided.</p>
+        </div>
+    </div>
+
+    <!-- Signature Section -->
+    <div class="signature-section">
+        <table class="signature-table">
+            <tr>
+                <td style="text-align: left;">
+                    <p style="margin-bottom: 5px;"><strong>Signed and delivered for and on behalf of</strong></p>
+                    <div class="signature-box">
+                        <p><strong>Name:</strong> Agnivridhi India Private Limited</p>
+                        <p><strong>Title:</strong> Authorized Representative</p>
+                        <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
+                        <p style="margin-top: 40px;"><strong>Signature:</strong> ___________________</p>
+                    </div>
+                </td>
+                <td style="text-align: left;">
+                    <p style="margin-bottom: 5px;"><strong>I have read and understood the provisions of this Agreement & hereby accept the same.</strong></p>
+                    <div class="signature-box">
+                        <p><strong>Name:</strong> {{ agreement.service_receiver_name }}</p>
+                        <p><strong>Title:</strong> Director</p>
+                        <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
+                        <p style="margin-top: 40px;"><strong>Signature:</strong> ___________________</p>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <p style="text-align: center; margin-top: 30px;"><strong>IN WITNESS WHEREOF</strong>, the undersigned have executed this Agreement on the day and year first written above.</p>
+    </div>
+
+    <!-- Undertaking Section -->
+    <div class="undertaking">
+        <h2>UNDERTAKING</h2>
+        <p>I, the proprietor/authorized representative of <strong>{{ agreement.service_receiver_name }}</strong>, hereby confirm:</p>
+        
+        <div class="sub-clause">
+            <p><strong>i.</strong> I shall comply with all clauses under Section (3) of this Agreement.</p>
+            
+            <p><strong>ii.</strong> I acknowledge that providing incomplete or incorrect information may delay the project and that fees may become non-refundable.</p>
+            
+            <p><strong>iii.</strong> I have read, understood, and accepted all terms and conditions, including those published on the Service Provider's website.</p>
+        </div>
+
+        <div style="margin-top: 60px;">
+            <p><strong>Signature:</strong> ___________________</p>
+            <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+
+</body>
+</html>
