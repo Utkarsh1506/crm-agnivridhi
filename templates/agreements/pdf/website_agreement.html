@@ -7,7 +7,7 @@
     <style>
         @page {
             size: A4;
-            margin: 2cm 2.5cm 4cm 2.5cm;
+            margin: 2cm 2.5cm;
         }
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -16,42 +16,6 @@
             color: #000;
             text-align: justify;
             position: relative;
-        }
-        .footer-content {
-            position: fixed;
-            bottom: 10px;
-            left: 0;
-            right: 0;
-            height: 70px;
-            display: table;
-            width: 100%;
-            border-top: 1px solid #000;
-            padding-top: 10px;
-        }
-        .footer-left {
-            float: left;
-            width: 48%;
-            text-align: center;
-            vertical-align: middle;
-            padding: 10px;
-        }
-        .footer-right {
-            float: right;
-            width: 48%;
-            text-align: center;
-            vertical-align: middle;
-            padding: 10px;
-            font-weight: bold;
-            font-size: 11pt;
-        }
-        .footer-left img {
-            width: 80px;
-            height: auto;
-        }
-        .footer-text {
-            font-weight: bold;
-            font-size: 10pt;
-            margin-top: 5px;
         }
         .title-page {
             text-align: center;
@@ -157,17 +121,6 @@
     </style>
 </head>
 <body>
-    <!-- Footer on every page -->
-    <div class="footer-content">
-        <div class="footer-left">
-            <img src="{{ logo_path }}" alt="Service Provider Logo">
-            <div class="footer-text">Service Provider</div>
-        </div>
-        <div class="footer-right">
-            Service Receiver
-        </div>
-    </div>
-
     <!-- Title -->
     <div class="title-page">
         <h1 class="main-title">WEBSITE DEVELOPMENT SERVICE AGREEMENT</h1>
