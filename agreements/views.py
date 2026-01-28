@@ -194,9 +194,15 @@ def agreement_pdf(request, pk):
         template_name = 'agreements/pdf/website_agreement.html'
     
     # Render HTML
+    import os
+    from django.conf import settings
+    
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'agni_logo.png')
+    
     html_string = render_to_string(template_name, {
         'agreement': agreement,
-        'today': timezone.now().date()
+        'today': timezone.now().date(),
+        'logo_path': logo_path
     })
     
     # Generate PDF

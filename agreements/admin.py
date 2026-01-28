@@ -24,7 +24,7 @@ class AgreementAdmin(admin.ModelAdmin):
             'fields': ('agreement_number', 'agreement_type', 'date_of_agreement')
         }),
         ('Service Receiver Details', {
-            'fields': ('service_receiver_name', 'service_receiver_address')
+            'fields': ('service_receiver_name', 'service_receiver_address', 'service_receiver_designation')
         }),
         ('Service Details', {
             'fields': ('service_description',)
