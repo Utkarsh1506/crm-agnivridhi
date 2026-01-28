@@ -61,6 +61,16 @@
                                 {% endif %}
                             </div>
                         </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">{{ form.service_receiver_designation.label }} *</label>
+                                {{ form.service_receiver_designation }}
+                                {% if form.service_receiver_designation.errors %}
+                                    <div class="text-danger">{{ form.service_receiver_designation.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">e.g., Director, Proprietor, CEO</small>
+                            </div>
+                        </div>
 
                         <hr>
 
