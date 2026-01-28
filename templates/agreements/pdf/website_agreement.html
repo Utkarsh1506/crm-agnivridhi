@@ -7,8 +7,7 @@
     <style>
         @page {
             size: A4;
-            margin: 2cm 2.5cm;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595 842"><text x="50%" y="50%" font-size="60" fill="%23f0f0f0" opacity="0.15" text-anchor="middle" transform="rotate(-45 297.5 421)">AGNIVRIDHI INDIA</text></svg>');
+            margin: 2cm 2.5cm 3.5cm 2.5cm;
         }
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -18,21 +17,29 @@
             text-align: justify;
             position: relative;
         }
+        .watermark {
+            position: fixed;
+            bottom: 0;
+            right: 20px;
+            opacity: 0.15;
+            width: 150px;
+            height: auto;
+        }
         .header {
             text-align: center;
             margin-bottom: 25px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #2c5aa0;
+            border-bottom: 2px solid #000;
         }
         .company-name {
-            font-size: 20pt;
+            font-size: 18pt;
             font-weight: bold;
-            color: #2c5aa0;
+            color: #000;
             margin: 10px 0;
         }
         .company-details {
             font-size: 9pt;
-            color: #555;
+            color: #000;
             line-height: 1.4;
         }
         .agreement-number {
@@ -40,22 +47,20 @@
             font-size: 9pt;
             font-weight: bold;
             margin: 10px 0;
-            color: #2c5aa0;
+            color: #000;
         }
         .title-page {
             text-align: center;
             margin: 20px 0 25px 0;
             padding: 15px;
-            background-color: #f8f9fa;
-            border: 2px solid #2c5aa0;
-            border-radius: 5px;
+            border: 2px solid #000;
         }
         h1.main-title {
             font-size: 16pt;
             font-weight: bold;
-            color: #2c5aa0;
+            color: #000;
             margin: 10px 0;
-            letter-spacing: 1px;
+            text-decoration: underline;
         }
         .intro {
             text-align: justify;
@@ -70,9 +75,7 @@
         .whereas {
             margin-bottom: 18px;
             text-align: justify;
-            background-color: #f8f9fa;
-            padding: 12px;
-            border-left: 3px solid #2c5aa0;
+            padding-left: 12px;
         }
         .clause {
             margin-bottom: 18px;
@@ -81,7 +84,7 @@
         .clause-title {
             font-weight: bold;
             margin-bottom: 8px;
-            color: #2c5aa0;
+            color: #000;
             font-size: 10.5pt;
         }
         .sub-clause {
@@ -103,19 +106,23 @@
             font-family: Arial, sans-serif;
         }
         .signature-section {
-            margin-top: 50px;
-            page-break-inside: avoid;
+            margin-top: 60px;
+            page-break-before: always;
+        }
+        .witness-line {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 40px;
+            font-size: 11pt;
         }
         .signature-table {
             width: 100%;
             margin-top: 30px;
-            border-collapse: collapse;
         }
         .signature-table td {
             vertical-align: top;
             width: 50%;
-            padding: 15px;
-            border: 1px solid #ddd;
+            padding: 10px 20px;
         }
         .signature-box {
             margin-top: 50px;
@@ -128,24 +135,22 @@
             text-align: center;
             font-size: 13pt;
             margin-bottom: 20px;
-            color: #2c5aa0;
+            color: #000;
             padding-bottom: 10px;
-            border-bottom: 2px solid #2c5aa0;
+            border-bottom: 2px solid #000;
+            text-decoration: underline;
         }
         strong {
             font-weight: bold;
         }
-        .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 2px solid #2c5aa0;
-            text-align: center;
-            font-size: 9pt;
-            color: #555;
-        }
     </style>
 </head>
 <body>
+    <!-- Watermark Stamp -->
+    <div class="watermark">
+        <img src="{{ STATIC_URL }}agni_logo.png" alt="Agnivridhi Stamp" style="width: 100%; height: auto;">
+    </div>
+
     <!-- Header with Company Details -->
     <div class="header">
         <div class="company-name">AGNIVRIDHI INDIA PRIVATE LIMITED</div>
@@ -322,30 +327,24 @@
 
     <!-- Signature Section -->
     <div class="signature-section">
+        <p class="witness-line">IN WITNESS WHEREOF, the parties have executed this Agreement</p>
+        
         <table class="signature-table">
             <tr>
                 <td>
-                    <p style="margin-bottom: 5px; font-weight: bold;">Signed and delivered for and on behalf of</p>
-                    <div class="signature-box">
-                        <p><strong>Name:</strong> Agnivridhi India Private Limited</p>
-                        <p><strong>Title:</strong> Authorized Representative</p>
-                        <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
-                        <p style="margin-top: 40px;"><strong>Signature:</strong> ___________________</p>
-                    </div>
+                    <p><strong>Name:</strong> Agnivridhi India Private Limited</p>
+                    <p><strong>Title:</strong> Authorized Representative</p>
+                    <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
+                    <p style="margin-top: 80px;"><strong>Signature:</strong> _____________________</p>
                 </td>
                 <td>
-                    <p style="margin-bottom: 5px; font-weight: bold;">I have read and understood the provisions of this Agreement & hereby accept the same.</p>
-                    <div class="signature-box">
-                        <p><strong>Name:</strong> {{ agreement.service_receiver_name }}</p>
-                        <p><strong>Title:</strong> Director</p>
-                        <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
-                        <p style="margin-top: 40px;"><strong>Signature:</strong> ___________________</p>
-                    </div>
+                    <p><strong>Name:</strong> {{ agreement.service_receiver_name }}</p>
+                    <p><strong>Title:</strong> {{ agreement.service_receiver_designation|default:"Director" }}</p>
+                    <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
+                    <p style="margin-top: 80px;"><strong>Signature:</strong> _____________________</p>
                 </td>
             </tr>
         </table>
-
-        <p style="text-align: center; margin-top: 30px; font-weight: bold;">IN WITNESS WHEREOF, the undersigned have executed this Agreement on the day and year first written above.</p>
     </div>
 
     <!-- Undertaking Section -->
@@ -365,14 +364,6 @@
             <p><strong>Signature:</strong> ___________________</p>
             <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
         </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        <p><strong>AGNIVRIDHI INDIA PRIVATE LIMITED</strong></p>
-        <p>A-116, Urbtech Trade Centre, Sector 132, Noida, Uttar Pradesh - 201304</p>
-        <p>Email: legal@agnivridhiindia.com | Website: www.agnivridhiindia.com</p>
-        <p style="margin-top: 10px; font-size: 8pt;">Document generated on: {% now "d/m/Y H:i" %}</p>
     </div>
 
 </body>

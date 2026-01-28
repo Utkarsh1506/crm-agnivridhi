@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('clients', '0011_alter_client_sector'),
-        ('employees', '0003_rename_employee_employee_id_idx_employee_employe_d91251_idx_and_more'),
+        ('employees', '0002_replace_qr_with_barcode'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

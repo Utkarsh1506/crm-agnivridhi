@@ -26,6 +26,11 @@ class Agreement(models.Model):
     # Service Receiver Details
     service_receiver_name = models.CharField(max_length=255, help_text="Name of Service Receiver")
     service_receiver_address = models.TextField(help_text="Complete Address")
+    service_receiver_designation = models.CharField(
+        max_length=100, 
+        default="Director",
+        help_text="Designation of Service Receiver (e.g., Director, Proprietor)"
+    )
     
     # Agreement Details
     date_of_agreement = models.DateField(help_text="Date of Agreement")

@@ -28,6 +28,16 @@ class AgreementForm(forms.ModelForm):
         label='Address'
     )
     
+    service_receiver_designation = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Director, Proprietor, CEO'
+        }),
+        initial='Director',
+        label='Designation'
+    )
+    
     date_of_agreement = forms.DateField(
         widget=forms.DateInput(attrs={
             'class': 'form-control',
@@ -131,6 +141,7 @@ class AgreementForm(forms.ModelForm):
             'agreement_type',
             'service_receiver_name',
             'service_receiver_address',
+            'service_receiver_designation',
             'date_of_agreement',
             'service_description',
             'total_amount_pitched',
