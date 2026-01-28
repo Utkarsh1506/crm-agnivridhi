@@ -64,6 +64,7 @@
             font-weight: bold;
             margin-bottom: 6px;
             font-size: 11pt;
+            text-decoration: none;
         }
         .sub-clause {
             margin-left: 20px;
@@ -124,64 +125,84 @@
         strong {
             font-weight: bold;
         }
+        .page-footer {
+            position: fixed;
+            bottom: 30px;
+            left: 2.5cm;
+            right: 2.5cm;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+        .page-footer table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .page-footer td {
+            padding: 0;
+            font-size: 10pt;
+        }
+        .page-footer .left {
+            text-align: left;
+            width: 50%;
+        }
+        .page-footer .right {
+            text-align: right;
+            width: 50%;
+        }
     </style>
 </head>
 <body>
+    <div class="page-footer">
+        <table>
+            <tr>
+                <td class="left">Service Provider _____________</td>
+                <td class="right">Service Receiver _____________</td>
+            </tr>
+        </table>
+    </div>
     <div class="title">CONSULTANCY SERVICE AGREEMENT</div>
     
     <div class="intro">
-        <p>This <strong>CONSULTANCY SERVICE AGREEMENT</strong> ("the Agreement") is entered into on this <strong>{{ agreement.date_of_agreement|date:"jS" }} day of {{ agreement.date_of_agreement|date:"F Y" }}</strong> by and between:</p>
+        <p>This <strong>CONSULTANCY SERVICE AGREEMENT</strong> (the "Agreement") <strong>is entered into on this {{ agreement.date_of_agreement|date:"jS" }} day of {{ agreement.date_of_agreement|date:"F Y" }}</strong>, by and between:</p>
     </div>
     
-    <div class="parties">
-        <p><strong>1) Agnivridhi India</strong>, hereinafter referred to as the Service Provider, having its principal place of business at A-116, Udytech Trade Centre, Sector 132, Noida, Uttar Pradesh;</p>
-    </div>
-    
-    <div class="and-text"><strong>and</strong></div>
-    
-    <div class="parties">
-        <p><strong>2) {{ agreement.service_receiver_name }}</strong>, hereinafter referred to as the Service Receiver, having its place of business at {{ agreement.service_receiver_address }}.</p>
-    </div>
+    <ul style="list-style-type: none; margin-left: 15px; margin-bottom: 10px;">
+        <li style="margin-bottom: 8px;">• <strong>Agnivridhi India</strong>, hereinafter referred to as the Service Provider, having its principal place of business at A-116, Udytech Trade Centre, Sector 132, Noida, Uttar Pradesh;</li>
+        <li style="margin: 8px 0; margin-left: 15px;">and</li>
+        <li style="margin-bottom: 8px;">• <strong>{{ agreement.service_receiver_name }}</strong>, hereinafter referred to as the Service Receiver, having its principal place of business at {{ agreement.service_receiver_address }}.</li>
+    </ul>
     
     <div class="whereas">
-        <p><strong>WHEREAS,</strong> the Service Provider agrees to provide consultancy services for assisting the Service Receiver in availing benefits under various schemes through the completion of the necessary documentation as required under the scheme;</p>
+        <p><strong>WHEREAS,</strong> the Service Provider agrees to provide consultancy services for assisting the Service Receiver in availing benefits under the <strong>PVT FUNDING</strong> including assistance in form filling and completion of the necessary documentation as required under the scheme.</p>
     </div>
-    
-    <p><strong>NOW THEREFORE,</strong> in consideration of the mutual covenants and agreements contained herein, the parties agree as follows:</p>
 
     
     <div class="clause">
-        <div class="clause-heading"><u>1. DEFINITIONS</u></div>
+        <div class="clause-heading">1) Definitions</div>
         <div class="sub-clause">
             <p><strong>a) Agreement:</strong> Refers to this Agreement and all annexures or amendments made in writing and mutually agreed upon by both parties.</p>
             <p><strong>b) Service Provider:</strong> The party providing the consultancy services in exchange for payment.</p>
             <p><strong>c) Service Receiver:</strong> The party receiving and availing the consultancy services.</p>
-            <p><strong>d) Scheme:</strong> Any Government or Financial Institution scheme under which the Service Receiver seeks assistance.</p>
         </div>
     </div>
 
     <div class="clause">
-        <div class="clause-heading"><u>2. SCOPE OF SERVICE PROVIDER</u></div>
+        <div class="clause-heading">2) Covenants of the Service Provider</div>
         <div class="sub-clause">
-            <p><strong>a)</strong> The Service Provider shall prepare all the necessary documents for filing the application under the concerned scheme based on the information and documents provided by the Service Receiver.</p>
-            <p><strong>b)</strong> The Service Provider shall maintain strict confidentiality of all information and documents; shall not disclose them to any third party without written consent.</p>
-            <p><strong>c)</strong> Upon request, the Service Provider may assist in submission of the application on behalf of the Service Receiver.</p>
+            <p><strong>a)</strong> The Service Provider shall prepare all the necessary documents for filing the application under the <strong>PVT FUNDING</strong> claim based on the information and data received from the Service Receiver. Upon request, the Service Provider may also submit the application on behalf of the Service Receiver.</p>
+            <p><strong>b)</strong> The Service Provider agrees to maintain strict confidentiality of all information and documents provided by the Service Receiver and shall not disclose them to any third party except authorized personnel.</p>
         </div>
     </div>
 
     <div class="clause">
-        <div class="clause-heading"><u>3. COVENANTS OF THE SERVICE RECEIVER</u></div>
+        <div class="clause-heading">3) Covenants of the Service Receiver</div>
         <div class="sub-clause">
-            <p><strong>a) Acknowledgment:</strong> The Service Receiver acknowledges that the registration and application process is subject to change as per the applicable regulations and norms of the concerned authority.</p>
-            <p><strong>b) Processing Fee:</strong> The Service Receiver agrees to a Processing fee of <span class="amount">Rs. {{ agreement.total_amount_pitched|floatformat:0 }}/-</span> as per the following structure:</p>
-            <ul>
-                <li><strong>Stage 1:</strong> <span class="amount">Rs. {{ agreement.received_amount_stage1|floatformat:0 }}/-</span> (Token money, payable at the time of signing this Agreement)</li>
-                {% if agreement.has_pending_amount %}<li><strong>Stage 2:</strong> <span class="amount">Rs. {{ agreement.pending_amount_stage2|floatformat:0 }}/-</span> (Due at initiation of work)</li>{% endif %}
-                <li><strong>{% if agreement.has_pending_amount %}Stage 3{% else %}Stage 2{% endif %}:</strong> {{ agreement.commission_percentage }}% (As success fee post-disbursement)</li>
+            <p><strong>a)</strong> The Service Receiver acknowledges that the registration and application process is subject to change as per applicable norms and has no objection if delays arise due to such changes.</p>
+            <p><strong>b)</strong> The Service Receiver agrees to pay a <strong>Processing fee of <span class="amount">₹{{ agreement.total_amount_pitched|floatformat:0 }}/-</span></strong> as per the following structure:</p>
+            <ul style="margin-left: 35px; margin-top: 8px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;"><strong>Stage 1:</strong> <span class="amount">₹{{ agreement.received_amount_stage1|floatformat:0 }}/-</span>, as token money, payable at the time of signing this Agreement.</li>
+                {% if agreement.has_pending_amount %}<li style="margin-bottom: 6px;"><strong>Stage 2:</strong> {{ agreement.commission_percentage }}% as success fee of the funded amount, payable after the disbursement.</li>{% else %}<li style="margin-bottom: 6px;"><strong>Stage 2:</strong> {{ agreement.commission_percentage }}% as success fee of the funded amount, payable after the disbursement.</li>{% endif %}
             </ul>
-            <p><strong>c) Provision of Documents:</strong> The Service Receiver shall provide all required documents for processing the application.</p>
-            <p><strong>d) Refund Clause:</strong> All payments made are non-refundable once services commence. Refunds shall only be made if the Service Provider fails to deliver the work. Bank rejections, delays or policy changes shall not be grounds for refund.</p>
-            <p><strong>e) Payment Mode:</strong> All payments shall be made only to Agnivridhi India's official bank account.</p>
         </div>
     </div>
 
