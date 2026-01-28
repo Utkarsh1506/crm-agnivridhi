@@ -139,39 +139,51 @@
             color: #000;
         }
         
-        /* Footer styling */
-        #footer-content {
-            display: none;
-        }
-        @page {
-            @bottom-left {
-                content: element(footer-left);
-                vertical-align: bottom;
-            }
-            @bottom-right {
-                content: element(footer-right);
-                vertical-align: bottom;
-            }
-        }
-        .footer-left {
-            position: running(footer-left);
-            font-weight: bold;
+        /* Page footer using frame */
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            padding: 10px 20px;
             font-size: 9pt;
-            color: #000;
-        }
-        .footer-right {
-            position: running(footer-right);
             font-weight: bold;
-            font-size: 9pt;
             color: #000;
+            background-color: transparent;
+        }
+        .page-footer table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .page-footer td {
+            padding: 0;
+            vertical-align: bottom;
+        }
+        .page-footer .left {
+            text-align: left;
+        }
+        .page-footer .right {
+            text-align: right;
+        }
+        /* Add padding to content to avoid overlap with footer */
+        .content {
+            padding-bottom: 60px;
         }
     </style>
 </head>
 <body>
-    <!-- Footer elements for running headers -->
-    <div class="footer-left">Service Provider -</div>
-    <div class="footer-right">Service Receiver -</div>
+    <!-- Page Footer -->
+    <div class="page-footer">
+        <table>
+            <tr>
+                <td class="left">Service Provider -</td>
+                <td class="right">Service Receiver -</td>
+            </tr>
+        </table>
+    </div>
     
+    <div class="content">
     <!-- Title -->
     <div class="title-page">
         <h1 class="main-title">CONSULTANCY SERVICE AGREEMENT</h1>
@@ -465,6 +477,8 @@
             <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
         </div>
     </div>
+    
+    </div> <!-- Close content -->
 
 </body>
 </html>

@@ -157,10 +157,17 @@
     </style>
 </head>
 <body>
-    <!-- Footer elements for running headers -->
-    <div class="footer-left">Service Provider -</div>
-    <div class="footer-right">Service Receiver -</div>
+    <!-- Page Footer -->
+    <div class="page-footer">
+        <table>
+            <tr>
+                <td class="left">Service Provider -</td>
+                <td class="right">Service Receiver -</td>
+            </tr>
+        </table>
+    </div>
     
+    <div class="content">
     <!-- Title -->
     <div class="title-page">
         <h1 class="main-title">WEBSITE DEVELOPMENT SERVICE AGREEMENT</h1>
@@ -372,6 +379,8 @@
             <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
         </div>
     </div>
+    
+    </div> <!-- Close content -->
 
 </body>
 </html>
