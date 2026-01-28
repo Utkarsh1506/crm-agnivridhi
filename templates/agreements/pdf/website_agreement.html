@@ -2,48 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Website Development Service Agreement - {{ agreement.agreement_number }}</title>
     <style>
         @page {
             size: A4;
             margin: 2cm 2.5cm;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595 842"><text x="50%" y="50%" font-size="60" fill="%23f0f0f0" opacity="0.15" text-anchor="middle" transform="rotate(-45 297.5 421)">AGNIVRIDHI INDIA</text></svg>');
         }
         body {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 11pt;
-            line-height: 1.6;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
             color: #000;
             text-align: justify;
+            position: relative;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #2c5aa0;
+        }
+        .company-name {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin: 10px 0;
+        }
+        .company-details {
+            font-size: 9pt;
+            color: #555;
+            line-height: 1.4;
+        }
+        .agreement-number {
+            text-align: right;
+            font-size: 9pt;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #2c5aa0;
         }
         .title-page {
             text-align: center;
-            margin-bottom: 30px;
+            margin: 20px 0 25px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 2px solid #2c5aa0;
+            border-radius: 5px;
         }
         h1.main-title {
-            font-size: 18pt;
+            font-size: 16pt;
             font-weight: bold;
-            text-decoration: underline;
-            margin: 30px 0 20px 0;
+            color: #2c5aa0;
+            margin: 10px 0;
+            letter-spacing: 1px;
         }
         .intro {
             text-align: justify;
             margin-bottom: 15px;
-            line-height: 1.8;
+            line-height: 1.6;
         }
         .parties {
-            margin-left: 30px;
+            margin-left: 25px;
             margin-bottom: 15px;
+            line-height: 1.6;
         }
         .whereas {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             text-align: justify;
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-left: 3px solid #2c5aa0;
         }
         .clause {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+            page-break-inside: avoid;
         }
         .clause-title {
             font-weight: bold;
             margin-bottom: 8px;
+            color: #2c5aa0;
+            font-size: 10.5pt;
         }
         .sub-clause {
             margin-left: 20px;
@@ -55,23 +94,31 @@
             margin-bottom: 10px;
         }
         ul li {
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+        .amount {
+            font-weight: bold;
+            color: #000;
+            font-family: Arial, sans-serif;
         }
         .signature-section {
-            margin-top: 60px;
+            margin-top: 50px;
             page-break-inside: avoid;
         }
         .signature-table {
             width: 100%;
-            margin-top: 40px;
+            margin-top: 30px;
+            border-collapse: collapse;
         }
         .signature-table td {
             vertical-align: top;
             width: 50%;
-            padding: 10px;
+            padding: 15px;
+            border: 1px solid #ddd;
         }
         .signature-box {
-            margin-top: 60px;
+            margin-top: 50px;
         }
         .undertaking {
             page-break-before: always;
@@ -79,19 +126,40 @@
         }
         .undertaking h2 {
             text-align: center;
-            text-decoration: underline;
-            font-size: 14pt;
+            font-size: 13pt;
             margin-bottom: 20px;
+            color: #2c5aa0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2c5aa0;
         }
         strong {
             font-weight: bold;
         }
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #2c5aa0;
+            text-align: center;
+            font-size: 9pt;
+            color: #555;
+        }
     </style>
 </head>
 <body>
+    <!-- Header with Company Details -->
+    <div class="header">
+        <div class="company-name">AGNIVRIDHI INDIA PRIVATE LIMITED</div>
+        <div class="company-details">
+            A-116, Urbtech Trade Centre, Sector 132, Noida, Uttar Pradesh - 201304<br>
+            Email: legal@agnivridhiindia.com | Website: www.agnivridhiindia.com
+        </div>
+    </div>
+    
+    <div class="agreement-number">Agreement No: {{ agreement.agreement_number }}</div>
+    
     <!-- Title -->
     <div class="title-page">
-        <h1 class="main-title">DEVELOPMENT SERVICE AGREEMENT</h1>
+        <h1 class="main-title">WEBSITE DEVELOPMENT SERVICE AGREEMENT</h1>
     </div>
 
     <!-- Introduction -->
@@ -138,11 +206,11 @@
         <div class="sub-clause">
             <p>a) The Service Receiver shall provide all required content, images, business details, domain access, hosting credentials, and necessary information for timely completion of the project.</p>
             
-            <p>b) The Service Receiver agrees to pay a total Website Service Fee of <strong>₹{{ agreement.total_amount_pitched|floatformat:0 }}/-</strong> as follows:</p>
+            <p>b) The Service Receiver agrees to pay a total Website Service Fee of <span class="amount">Rs. {{ agreement.total_amount_pitched|floatformat:0 }}/-</span> as follows:</p>
             <ul>
-                <li><strong>Stage 1:</strong> ₹{{ agreement.received_amount_stage1|floatformat:0 }}/- as token money, payable at the time of signing this Agreement.</li>
+                <li><strong>Stage 1:</strong> <span class="amount">Rs. {{ agreement.received_amount_stage1|floatformat:0 }}/-</span> as token money, payable at the time of signing this Agreement.</li>
                 {% if agreement.has_pending_amount %}
-                <li><strong>Stage 2:</strong> ₹{{ agreement.pending_amount_stage2|floatformat:0 }}/- payable upon project completion and delivery.</li>
+                <li><strong>Stage 2:</strong> <span class="amount">Rs. {{ agreement.pending_amount_stage2|floatformat:0 }}/-</span> payable upon project completion and delivery.</li>
                 {% endif %}
             </ul>
 
@@ -256,8 +324,8 @@
     <div class="signature-section">
         <table class="signature-table">
             <tr>
-                <td style="text-align: left;">
-                    <p style="margin-bottom: 5px;"><strong>Signed and delivered for and on behalf of</strong></p>
+                <td>
+                    <p style="margin-bottom: 5px; font-weight: bold;">Signed and delivered for and on behalf of</p>
                     <div class="signature-box">
                         <p><strong>Name:</strong> Agnivridhi India Private Limited</p>
                         <p><strong>Title:</strong> Authorized Representative</p>
@@ -265,8 +333,8 @@
                         <p style="margin-top: 40px;"><strong>Signature:</strong> ___________________</p>
                     </div>
                 </td>
-                <td style="text-align: left;">
-                    <p style="margin-bottom: 5px;"><strong>I have read and understood the provisions of this Agreement & hereby accept the same.</strong></p>
+                <td>
+                    <p style="margin-bottom: 5px; font-weight: bold;">I have read and understood the provisions of this Agreement & hereby accept the same.</p>
                     <div class="signature-box">
                         <p><strong>Name:</strong> {{ agreement.service_receiver_name }}</p>
                         <p><strong>Title:</strong> Director</p>
@@ -277,7 +345,7 @@
             </tr>
         </table>
 
-        <p style="text-align: center; margin-top: 30px;"><strong>IN WITNESS WHEREOF</strong>, the undersigned have executed this Agreement on the day and year first written above.</p>
+        <p style="text-align: center; margin-top: 30px; font-weight: bold;">IN WITNESS WHEREOF, the undersigned have executed this Agreement on the day and year first written above.</p>
     </div>
 
     <!-- Undertaking Section -->
@@ -297,6 +365,14 @@
             <p><strong>Signature:</strong> ___________________</p>
             <p><strong>Date:</strong> {{ agreement.date_of_agreement|date:"d/m/Y" }}</p>
         </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>AGNIVRIDHI INDIA PRIVATE LIMITED</strong></p>
+        <p>A-116, Urbtech Trade Centre, Sector 132, Noida, Uttar Pradesh - 201304</p>
+        <p>Email: legal@agnivridhiindia.com | Website: www.agnivridhiindia.com</p>
+        <p style="margin-top: 10px; font-size: 8pt;">Document generated on: {% now "d/m/Y H:i" %}</p>
     </div>
 
 </body>
