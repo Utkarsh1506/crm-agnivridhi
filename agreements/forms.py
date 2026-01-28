@@ -173,8 +173,14 @@ class AgreementForm(forms.ModelForm):
         # Filter clients based on user role
         if user:
             if hasattr(user, 'role'):
-                if user.role in ['sales', 'employee']:
+                # Admin, Manager, and Owner can see all approved clients
+                if user.role in ['ADMIN', 'MANAGER'] or user.is_owner:
+                    self.fields['client'].queryset = Client.objects.filter(
+                        is_approved=True
+                    ).order_by('company_name')
+                else:
+                    # Sales/Employee see only their clients
                     self.fields['client'].queryset = Client.objects.filter(
                         assigned_sales=user,
                         is_approved=True
-                    )
+                    ).order_by('company_name')

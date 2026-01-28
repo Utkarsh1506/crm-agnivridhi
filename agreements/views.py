@@ -61,11 +61,8 @@ def agreement_list(request):
         except (ValueError, TypeError):
             logger.warning(f"Invalid client_id {client_id} by user {request.user.pk}")
     
-    # Get clients for filter dropdown
-    clients = Client.objects.filter(
-        Q(assigned_sales=request.user) | Q(created_by=request.user),
-        is_approved=True
-    ).order_by('company_name')
+    # Get clients for filter dropdown - show all approved clients for admin/manager/owner
+    clients = Client.objects.filter(is_approved=True).order_by('company_name')
     
     context = {
         'agreements': agreements,
