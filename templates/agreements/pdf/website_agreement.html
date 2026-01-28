@@ -8,12 +8,6 @@
         @page {
             size: A4;
             margin: 2cm 2.5cm 4cm 2.5cm;
-            @bottom-left {
-                content: element(footer-left);
-            }
-            @bottom-right {
-                content: element(footer-right);
-            }
         }
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -25,25 +19,25 @@
         }
         .footer-content {
             position: fixed;
-            bottom: 0;
+            bottom: 10px;
             left: 0;
             right: 0;
-            height: 80px;
+            height: 70px;
             display: table;
             width: 100%;
             border-top: 1px solid #000;
             padding-top: 10px;
         }
         .footer-left {
-            display: table-cell;
-            width: 50%;
+            float: left;
+            width: 48%;
             text-align: center;
             vertical-align: middle;
             padding: 10px;
         }
         .footer-right {
-            display: table-cell;
-            width: 50%;
+            float: right;
+            width: 48%;
             text-align: center;
             vertical-align: middle;
             padding: 10px;
@@ -53,7 +47,6 @@
         .footer-left img {
             width: 80px;
             height: auto;
-            opacity: 0.8;
         }
         .footer-text {
             font-weight: bold;
