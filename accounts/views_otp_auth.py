@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from accounts.clerk_auth import clerk_service
+from accounts.clerk_otp_service import clerk_service
 from clients.models import Client
 import json
 

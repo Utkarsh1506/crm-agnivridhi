@@ -200,7 +200,11 @@ LOGOUT_REDIRECT_URL = '/login/'
 CLIENT_LOGIN_URL = os.getenv('CLIENT_LOGIN_URL', 'https://agnivridhicrm.pythonanywhere.com/login/')
 
 
-# Email Configuration (Hostinger SMTP)
+# Clerk Configuration (OTP Authentication)
+CLERK_PUBLIC_KEY = os.getenv('CLERK_PUBLIC_KEY', '')
+CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', '')
+
+# Email Configuration (Hostinger SMTP) - Now optional with Clerk
 # Can be overridden via environment variables on production servers
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.hostinger.com')
