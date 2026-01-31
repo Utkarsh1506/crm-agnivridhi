@@ -14,32 +14,53 @@ logger = logging.getLogger(__name__)
 class ClerkOTPService:
     """Service to handle Clerk-based OTP authentication via REST API"""
     
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+    
     def __init__(self):
-        self.clerk_api_key = os.getenv('CLERK_SECRET_KEY') or settings.CLERK_SECRET_KEY
-        if not self.clerk_api_key:
-            logger.warning("CLERK_SECRET_KEY not configured - Clerk OTP will not work")
-            self.clerk_api_key = None
+        if self._initialized:
+            return
+        
+        # Get API key from environment or settings (will try multiple sources)
+        self.clerk_api_key = os.getenv('CLERK_SECRET_KEY') or getattr(settings, 'CLERK_SECRET_KEY', '')
+        
+        if not self.clerk_api_key or self.clerk_api_key == '':
+            logger.warning("CLERK_SECRET_KEY not configured - attempting to reload from environment")
+            # Try one more time to get from environment
+            self.clerk_api_key = os.getenv('CLERK_SECRET_KEY', '')
         
         self.api_base = 'https://api.clerk.com/v1'
         self.headers = {
             'Authorization': f'Bearer {self.clerk_api_key}',
             'Content-Type': 'application/json'
         }
-        logger.info("ClerkOTPService initialized")
+        logger.info(f"ClerkOTPService initialized - Key present: {bool(self.clerk_api_key)}")
+        self._initialized = True
     
     def send_otp(self, email):
         """
         Send OTP to client email via Clerk REST API
         Returns: {success: bool, message: str, sign_in_id: str}
         """
+        # Refresh API key in case environment changed
+        self.clerk_api_key = os.getenv('CLERK_SECRET_KEY') or getattr(settings, 'CLERK_SECRET_KEY', '')
+        
         if not self.clerk_api_key:
-            logger.error("CLERK_SECRET_KEY not configured")
+            logger.error("CLERK_SECRET_KEY not configured - checked at send_otp time")
             return {
                 'success': False,
                 'message': 'OTP service not configured. Please contact support.',
                 'sign_in_id': None,
                 'otp': None
             }
+        
+        # Update headers with fresh key
+        self.headers['Authorization'] = f'Bearer {self.clerk_api_key}'
         
         try:
             logger.info(f"Sending OTP to {email} via Clerk API")
@@ -100,8 +121,11 @@ class ClerkOTPService:
         Verify OTP code via Clerk REST API
         Returns: {success: bool, message: str, is_valid: bool, user_id: str}
         """
+        # Refresh API key in case environment changed
+        self.clerk_api_key = os.getenv('CLERK_SECRET_KEY') or getattr(settings, 'CLERK_SECRET_KEY', '')
+        
         if not self.clerk_api_key:
-            logger.error("CLERK_SECRET_KEY not configured")
+            logger.error("CLERK_SECRET_KEY not configured - checked at verify_otp time")
             return {
                 'success': False,
                 'message': 'OTP service not configured',
@@ -109,6 +133,9 @@ class ClerkOTPService:
                 'user_id': None,
                 'session_id': None
             }
+        
+        # Update headers with fresh key
+        self.headers['Authorization'] = f'Bearer {self.clerk_api_key}'
         
         try:
             logger.info(f"Verifying OTP for sign-in: {sign_in_id}")
@@ -258,9 +285,25 @@ class ClerkOTPService:
             }
 
 
-# Initialize service
+# Lazy initialization function - creates service on first access
+def get_clerk_service():
+    """Get or create the Clerk OTP service instance"""
+    global clerk_service
+    if clerk_service is None:
+        try:
+            clerk_service = ClerkOTPService()
+        except Exception as e:
+            logger.error(f"Failed to initialize Clerk service: {str(e)}")
+            clerk_service = ClerkOTPService()  # Create with empty key
+    return clerk_service
+
+
+# Initialize as None - will be created on first use
+clerk_service = None
+
+# Create initial instance for backward compatibility
 try:
     clerk_service = ClerkOTPService()
-except ValueError as e:
-    logger.warning(f"Clerk not configured: {str(e)}")
-    clerk_service = None
+except Exception as e:
+    logger.warning(f"Clerk service initialization warning: {str(e)}")
+    clerk_service = ClerkOTPService()
