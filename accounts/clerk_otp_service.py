@@ -7,10 +7,8 @@ import os
 import logging
 import requests
 from django.conf import settings
-from django.contrib.auth import get_user_model
 
 logger = logging.getLogger(__name__)
-User = get_user_model()
 
 
 class ClerkOTPService:
@@ -197,6 +195,9 @@ class ClerkOTPService:
             }
         
         try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
             logger.info(f"Getting or creating user for clerk_user_id: {clerk_user_id}, email: {email}")
             
             # Get user from Clerk
