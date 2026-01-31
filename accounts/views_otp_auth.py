@@ -55,7 +55,7 @@ class ClientEmailLoginView(View):
             request.session['login_email'] = email
             request.session['otp_attempts'] = 0
             
-            return redirect('client_verify_otp')
+            return redirect('accounts:client_verify_otp')
         
         except Client.DoesNotExist:
             messages.error(request, 'No account found with this email. Please contact support.')
@@ -73,7 +73,7 @@ class ClientVerifyOTPView(View):
         
         if not email:
             messages.error(request, 'Session expired. Please login again.')
-            return redirect('client_email_login')
+            return redirect('accounts:client_email_login')
         
         return render(request, self.template_name, {'email': email})
     
@@ -83,7 +83,7 @@ class ClientVerifyOTPView(View):
         
         if not email:
             messages.error(request, 'Session expired. Please login again.')
-            return redirect('client_email_login')
+            return redirect('accounts:client_email_login')
         
         if not otp:
             messages.error(request, 'Please enter the OTP.')
@@ -94,7 +94,7 @@ class ClientVerifyOTPView(View):
         if attempts >= 3:
             messages.error(request, 'Too many failed attempts. Please request a new OTP.')
             del request.session['login_email']
-            return redirect('client_email_login')
+            return redirect('accounts:client_email_login')
         
         # Verify OTP
         otp_result = clerk_service.verify_otp(email, otp)
@@ -130,7 +130,7 @@ class ClientVerifyOTPView(View):
         
         except Client.DoesNotExist:
             messages.error(request, 'Client account not found.')
-            return redirect('client_email_login')
+            return redirect('accounts:client_email_login')
 
 
 class ClientLogoutView(View):
@@ -142,7 +142,7 @@ class ClientLogoutView(View):
         from django.contrib.auth import logout
         logout(request)
         messages.success(request, 'You have been logged out successfully.')
-        return redirect('client_email_login')
+        return redirect('accounts:client_email_login')
 
 
 # API endpoints for AJAX requests

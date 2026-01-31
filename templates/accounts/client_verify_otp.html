@@ -27,7 +27,7 @@
                     {% endif %}
 
                     <!-- Form -->
-                    <form method="POST" action="{% url 'client_verify_otp' %}">
+                    <form method="POST" action="{% url 'accounts:client_verify_otp' %}">
                         {% csrf_token %}
                         
                         <!-- OTP Field -->
@@ -67,7 +67,7 @@
                     <!-- Resend OTP -->
                     <div class="text-center">
                         <p class="text-muted small mb-2">Didn't receive a code?</p>
-                        <a href="{% url 'client_email_login' %}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'accounts:client_email_login' %}" class="btn btn-sm btn-outline-primary">
                             ← Try a different email
                         </a>
                     </div>
