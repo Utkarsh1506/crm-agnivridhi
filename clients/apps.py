@@ -7,3 +7,4 @@ class ClientsConfig(AppConfig):
     
     def ready(self):
         import clients.signals
+        import clients.clerk_signals

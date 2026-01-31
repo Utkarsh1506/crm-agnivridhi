@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .message {
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+        }
+        .login-box {
+            background-color: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .login-box h3 {
+            color: #667eea;
+            margin-top: 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .login-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 40px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 15px 0;
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+        .login-button:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: white;
+        }
+        .credentials {
+            background-color: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .credentials label {
+            font-weight: 600;
+            color: #333;
+        }
+        .features {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .features h3 {
+            color: #333;
+            font-size: 16px;
+            margin-top: 0;
+        }
+        .features ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .features li {
+            margin: 8px 0;
+            color: #555;
+        }
+        .security-note {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .security-note strong {
+            color: #2e7d32;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #eee;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .support-link {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .divider {
+            border-top: 1px solid #eee;
+            margin: 25px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎉 Welcome to {{ company_name }}!</h1>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">Hello {{ client_name }},</div>
+
+            <div class="message">
+                Great news! Your account with <strong>{{ company_name }}</strong> has been approved and is now active. 
+                You can now log in to your dashboard to:
+            </div>
+
+            <!-- Features -->
+            <div class="features">
+                <h3>What you can do:</h3>
+                <ul>
+                    <li>✅ View your funding applications and status</li>
+                    <li>✅ Track your payments and transactions</li>
+                    <li>✅ Download agreements and important documents</li>
+                    <li>✅ Communicate with your relationship manager</li>
+                    <li>✅ Schedule consultations and meetings</li>
+                </ul>
+            </div>
+
+            <!-- Login Instructions -->
+            <div class="login-box">
+                <h3>Quick Start</h3>
+                <p style="margin-bottom: 10px;">Click the button below to log in:</p>
+                <a href="{{ login_url }}" class="login-button">
+                    → Log In to Your Account
+                </a>
+                <p style="margin: 10px 0 0 0; font-size: 13px; color: #666;">
+                    Or visit: <code>{{ login_url }}</code>
+                </p>
+            </div>
+
+            <!-- Email Info -->
+            <div class="credentials">
+                <label>Login Email:</label><br>
+                <code style="color: #667eea; font-weight: 600;">{{ email }}</code>
+                <p style="margin: 10px 0 0 0; font-size: 12px; color: #777;">
+                    We'll send you a one-time code via this email to verify your identity
+                </p>
+            </div>
+
+            <!-- Security Note -->
+            <div class="security-note">
+                <strong>🔒 Security Reminder:</strong> 
+                We will NEVER ask for your password via email. 
+                You will always receive a one-time verification code to log in securely.
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Additional Info -->
+            <div class="message">
+                If you have any questions or need assistance with your account, 
+                please don't hesitate to reach out to our support team at 
+                <a href="mailto:{{ support_email }}" class="support-link">{{ support_email }}</a>
+            </div>
+
+            <div class="message" style="font-weight: 600; color: #667eea;">
+                We're excited to work with you! Let's achieve great things together. 🚀
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>{{ company_name }}</strong></p>
+            <p>📧 Support: <a href="mailto:{{ support_email }}" class="support-link">{{ support_email }}</a></p>
+            <p>This is an automated message. Please don't reply to this email.</p>
+            <p>© {{ company_name }} 2024. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

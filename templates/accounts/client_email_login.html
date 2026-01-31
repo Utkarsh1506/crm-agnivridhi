@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Client Login - Agnivridhi CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid login-container" style="height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="row w-100" style="max-width: 450px;">
+        <div class="col-12">
+            <div class="card shadow-lg border-0" style="border-radius: 10px;">
+                <div class="card-body p-5">
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <h2 class="font-weight-bold" style="color: #333;">Welcome Back</h2>
+                        <p class="text-muted">Sign in to your account</p>
+                    </div>
+
+                    <!-- Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Form -->
+                    <form method="POST" action="{% url 'client_email_login' %}">
+                        {% csrf_token %}
+                        
+                        <!-- Email Field -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-bold">Email Address</label>
+                            <input 
+                                type="email" 
+                                class="form-control form-control-lg" 
+                                id="email" 
+                                name="email"
+                                placeholder="Enter your email address"
+                                required
+                                style="border-radius: 8px; border: 1px solid #ddd;"
+                            >
+                            <small class="form-text text-muted d-block mt-2">
+                                Enter the email address associated with your account. We'll send you a one-time code to verify your identity.
+                            </small>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button 
+                            type="submit" 
+                            class="btn btn-primary btn-lg w-100 fw-bold"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; padding: 12px;"
+                        >
+                            Send OTP Code
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <div class="my-4" style="border-top: 1px solid #ddd;"></div>
+
+                    <!-- Footer Info -->
+                    <div class="text-center">
+                        <p class="text-muted small mb-0">
+                            Don't have an account? <br>
+                            <small>Contact your service provider for registration</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Note -->
+            <div class="mt-4 text-center">
+                <p class="text-white-50 small">
+                    🔒 Your account is secure. We'll never ask for your password.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary {
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}

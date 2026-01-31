@@ -292,6 +292,34 @@ USE_X_FORWARDED_HOST = os.getenv('USE_X_FORWARDED_HOST', 'False') == 'True'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if os.getenv('SECURE_PROXY_SSL_HEADER', 'False') == 'True' else None
 
 
+# Caching Configuration for OTP and temporary data
+# Using Django's default in-memory cache (LocMemCache) for development
+# For production, configure Redis or Memcached via environment variables
+CACHES = {
+    'default': {
+        'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
+        'LOCATION': os.getenv('CACHE_LOCATION', 'agnivridhi-cache'),
+        'OPTIONS': {
+            'MAX_ENTRIES': int(os.getenv('CACHE_MAX_ENTRIES', '10000')),
+        },
+        'TIMEOUT': int(os.getenv('CACHE_TIMEOUT', '300')),  # 5 minutes default
+    }
+}
+
+# Alternative: For Redis-based caching (uncomment and set REDIS_URL in .env)
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0'),
+#     }
+# }
+
+# Clerk Authentication Settings (OTP-based client login)
+# Environment variables: CLERK_API_KEY, SITE_URL, COMPANY_NAME
+CLERK_API_KEY = os.getenv('CLERK_API_KEY', '')
+SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
+COMPANY_NAME = os.getenv('COMPANY_NAME', 'Agnivridhi India')
+
 # Custom error handlers
 # These allow custom branded error pages with user context
 handler403 = 'accounts.views.custom_403_view'

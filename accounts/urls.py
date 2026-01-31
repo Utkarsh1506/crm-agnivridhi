@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_otp_auth
 
 # -----------------------------------------------------------------------------
 # Django app namespace (prep for namespaced includes)
@@ -18,9 +19,27 @@ app_name = 'accounts'
 #
 # Keep the generic `application_list` and other deprecated generic endpoints
 # as redirectors to role-specific pages to maintain privacy and a clear URL map.
+# 
+# Client OTP Authentication Routes (New):
+#  - /client-login/              -> Email entry for OTP
+#  - /client-verify-otp/         -> OTP verification
+#  - /client-logout/             -> Client logout
+# 
+# Client API endpoints:
+#  - /api/send-otp/              -> Send OTP via email
+#  - /api/verify-otp/            -> Verify OTP and create session
 # -----------------------------------------------------------------------------
 
 urlpatterns = [
+    # Client OTP Authentication
+    path('client-login/', views_otp_auth.ClientEmailLoginView.as_view(), name='client_email_login'),
+    path('client-verify-otp/', views_otp_auth.ClientVerifyOTPView.as_view(), name='client_verify_otp'),
+    path('client-logout/', views_otp_auth.ClientLogoutView.as_view(), name='client_logout'),
+    
+    # Client API endpoints
+    path('api/send-otp/', views_otp_auth.send_otp_api, name='send_otp_api'),
+    path('api/verify-otp/', views_otp_auth.verify_otp_api, name='verify_otp_api'),
+    
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
