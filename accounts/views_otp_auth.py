@@ -21,7 +21,11 @@ class ClientEmailLoginView(View):
     template_name = 'accounts/client_email_login.html'
     
     def get(self, request):
-        return render(request, self.template_name)
+        context = {}
+        # Check if email was passed from login redirect
+        if 'client_login_email' in request.session:
+            context['email'] = request.session.pop('client_login_email')
+        return render(request, self.template_name, context)
     
     def post(self, request):
         email = request.POST.get('email', '').strip().lower()
@@ -118,7 +122,7 @@ class ClientVerifyOTPView(View):
             if 'otp_attempts' in request.session:
                 del request.session['otp_attempts']
             
-            messages.success(request, f'Welcome back, {client.name}!')
+            messages.success(request, f'Welcome back, {client.company_name}!')
             
             # Redirect to client dashboard or referrer
             next_url = request.GET.get('next', 'client_dashboard')

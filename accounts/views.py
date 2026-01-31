@@ -75,6 +75,7 @@ def client_required(view_func):
 def login_view(request):
     """
     Custom login view with role-based redirect
+    Clients can use email for OTP login
     """
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
@@ -82,6 +83,19 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        
+        # Check if username looks like an email and if it's a client email
+        from clients.models import Client
+        if '@' in username:
+            try:
+                client = Client.objects.get(contact_email=username.lower())
+                # If client exists and is approved, redirect to OTP login
+                if client.is_approved:
+                    request.session['client_login_email'] = username.lower()
+                    messages.info(request, 'Redirecting to email-based OTP login for clients.')
+                    return redirect('accounts:client_email_login')
+            except Client.DoesNotExist:
+                pass
         
         user = authenticate(request, username=username, password=password)
         
