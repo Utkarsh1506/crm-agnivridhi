@@ -111,14 +111,29 @@ class ClerkAuthService:
             """
             
             # Send email
-            send_mail(
-                subject=subject,
-                message=plain_message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[email],
-                html_message=html_message,
-                fail_silently=False,
-            )
+            try:
+                send_mail(
+                    subject=subject,
+                    message=plain_message,
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+            except Exception as email_error:
+                # Log the specific email error
+                print(f"[EMAIL ERROR] SMTP failed for {email}: {str(email_error)}")
+                # Still return success with OTP cached (for development/testing)
+                # In production, you might want to fail completely
+                if settings.DEBUG:
+                    print(f"[DEBUG] OTP cached anyway: {otp}")
+                    return {
+                        'success': True,
+                        'message': f'OTP generated (email may fail): {otp}',
+                        'otp': otp
+                    }
+                else:
+                    raise  # Re-raise in production to trigger outer exception handler
             
             # Also log for debugging (only in DEBUG mode)
             if settings.DEBUG:
@@ -131,10 +146,12 @@ class ClerkAuthService:
             }
         except Exception as e:
             # Log the error for debugging
+            import traceback
             print(f"[ERROR] Failed to send OTP to {email}: {str(e)}")
+            print(f"[TRACEBACK] {traceback.format_exc()}")
             return {
                 'success': False,
-                'message': f'Failed to send OTP: {str(e)}',
+                'message': str(e),
                 'otp': None
             }
     

@@ -46,7 +46,10 @@ class ClientEmailLoginView(View):
             otp_result = clerk_service.send_otp(email)
             
             if not otp_result['success']:
-                messages.error(request, 'Failed to send OTP. Please try again.')
+                error_msg = otp_result.get('message', 'Failed to send OTP')
+                messages.error(request, f'Failed to send OTP: {error_msg}')
+                # Log the error for debugging
+                print(f"[OTP ERROR] Failed to send OTP to {email}: {error_msg}")
                 return render(request, self.template_name)
             
             messages.success(request, f'OTP sent to {email}')
