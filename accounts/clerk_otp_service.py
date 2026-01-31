@@ -27,19 +27,25 @@ class ClerkOTPService:
             return
         
         # Get API key from environment or settings (will try multiple sources)
+        # This pattern handles PythonAnywhere where .env might not exist initially
         self.clerk_api_key = os.getenv('CLERK_SECRET_KEY') or getattr(settings, 'CLERK_SECRET_KEY', '')
         
         if not self.clerk_api_key or self.clerk_api_key == '':
-            logger.warning("CLERK_SECRET_KEY not configured - attempting to reload from environment")
-            # Try one more time to get from environment
-            self.clerk_api_key = os.getenv('CLERK_SECRET_KEY', '')
+            logger.warning("⚠️ CLERK_SECRET_KEY not configured at initialization - will attempt to load from environment at runtime")
+            # Don't fail here - keys might be loaded later from PythonAnywhere environment
+            self.clerk_api_key = ''
         
         self.api_base = 'https://api.clerk.com/v1'
         self.headers = {
-            'Authorization': f'Bearer {self.clerk_api_key}',
+            'Authorization': f'Bearer {self.clerk_api_key}' if self.clerk_api_key else 'Bearer ',
             'Content-Type': 'application/json'
         }
-        logger.info(f"ClerkOTPService initialized - Key present: {bool(self.clerk_api_key)}")
+        
+        if self.clerk_api_key:
+            logger.info(f"✅ ClerkOTPService initialized successfully - API key loaded (length: {len(self.clerk_api_key)})")
+        else:
+            logger.warning(f"⚠️ ClerkOTPService initialized but CLERK_SECRET_KEY is empty - service will fail until configured")
+        
         self._initialized = True
     
     def send_otp(self, email):
@@ -47,11 +53,13 @@ class ClerkOTPService:
         Send OTP to client email via Clerk REST API
         Returns: {success: bool, message: str, sign_in_id: str}
         """
-        # Refresh API key in case environment changed
+        # Refresh API key in case environment changed (handles PythonAnywhere env var loading)
         self.clerk_api_key = os.getenv('CLERK_SECRET_KEY') or getattr(settings, 'CLERK_SECRET_KEY', '')
         
         if not self.clerk_api_key:
-            logger.error("CLERK_SECRET_KEY not configured - checked at send_otp time")
+            logger.error("❌ CLERK_SECRET_KEY is empty at send_otp time - environment variables not configured")
+            logger.error(f"   Expected in: environment variables or settings.CLERK_SECRET_KEY")
+            logger.error(f"   This typically means .env file is missing or environment variables not set on PythonAnywhere")
             return {
                 'success': False,
                 'message': 'OTP service not configured. Please contact support.',
@@ -63,7 +71,7 @@ class ClerkOTPService:
         self.headers['Authorization'] = f'Bearer {self.clerk_api_key}'
         
         try:
-            logger.info(f"Sending OTP to {email} via Clerk API")
+            logger.info(f"📧 Sending OTP to {email} via Clerk API")
             
             # Create sign-in attempt with email code strategy
             # Clerk automatically sends the OTP code to the email
@@ -80,7 +88,7 @@ class ClerkOTPService:
             if response.status_code == 201:
                 data = response.json()
                 sign_in_id = data.get('id')
-                logger.info(f"OTP sent successfully to {email}, sign_in_id: {sign_in_id}")
+                logger.info(f"✅ OTP sent successfully to {email}, sign_in_id: {sign_in_id}")
                 
                 return {
                     'success': True,
@@ -90,7 +98,7 @@ class ClerkOTPService:
                 }
             else:
                 error_msg = response.text
-                logger.error(f"Clerk API error (status {response.status_code}): {error_msg}")
+                logger.error(f"❌ Clerk API error (status {response.status_code}): {error_msg}")
                 return {
                     'success': False,
                     'message': f'Failed to send OTP: {response.status_code}',
@@ -99,7 +107,8 @@ class ClerkOTPService:
                 }
         
         except requests.RequestException as e:
-            logger.error(f"Request error sending OTP to {email}: {str(e)}", exc_info=True)
+            logger.error(f"❌ Request error sending OTP to {email}: {str(e)}", exc_info=True)
+            logger.error(f"   This might mean Clerk API is unreachable from your location")
             return {
                 'success': False,
                 'message': f'Failed to send OTP: Network error',
@@ -108,7 +117,7 @@ class ClerkOTPService:
             }
         
         except Exception as e:
-            logger.error(f"Unexpected error sending OTP to {email}: {str(e)}", exc_info=True)
+            logger.error(f"❌ Unexpected error sending OTP to {email}: {str(e)}", exc_info=True)
             return {
                 'success': False,
                 'message': 'An unexpected error occurred. Please try again.',
@@ -125,7 +134,7 @@ class ClerkOTPService:
         self.clerk_api_key = os.getenv('CLERK_SECRET_KEY') or getattr(settings, 'CLERK_SECRET_KEY', '')
         
         if not self.clerk_api_key:
-            logger.error("CLERK_SECRET_KEY not configured - checked at verify_otp time")
+            logger.error("❌ CLERK_SECRET_KEY is empty at verify_otp time - environment variables not configured")
             return {
                 'success': False,
                 'message': 'OTP service not configured',
@@ -138,7 +147,7 @@ class ClerkOTPService:
         self.headers['Authorization'] = f'Bearer {self.clerk_api_key}'
         
         try:
-            logger.info(f"Verifying OTP for sign-in: {sign_in_id}")
+            logger.info(f"🔐 Verifying OTP for sign-in: {sign_in_id}")
             
             # Verify the OTP code via Clerk API
             response = requests.patch(
@@ -158,7 +167,7 @@ class ClerkOTPService:
                 if status == 'complete':
                     user_id = data.get('created_user_id')
                     session_id = data.get('created_session_id')
-                    logger.info(f"OTP verified successfully, user_id: {user_id}")
+                    logger.info(f"✅ OTP verified successfully, user_id: {user_id}")
                     
                     return {
                         'success': True,
@@ -168,7 +177,7 @@ class ClerkOTPService:
                         'session_id': session_id
                     }
                 else:
-                    logger.warning(f"OTP verification incomplete, status: {status}")
+                    logger.warning(f"⚠️ OTP verification incomplete, status: {status}")
                     return {
                         'success': False,
                         'message': 'OTP verification failed. Please try again.',
@@ -178,7 +187,7 @@ class ClerkOTPService:
                     }
             else:
                 error_msg = response.text
-                logger.error(f"Clerk API error (status {response.status_code}): {error_msg}")
+                logger.error(f"❌ Clerk API error (status {response.status_code}): {error_msg}")
                 return {
                     'success': False,
                     'message': 'Invalid OTP code',
@@ -188,7 +197,7 @@ class ClerkOTPService:
                 }
         
         except requests.RequestException as e:
-            logger.error(f"Request error verifying OTP: {str(e)}", exc_info=True)
+            logger.error(f"❌ Request error verifying OTP: {str(e)}", exc_info=True)
             return {
                 'success': False,
                 'message': 'Verification failed: Network error',
