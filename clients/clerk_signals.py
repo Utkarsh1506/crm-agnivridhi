@@ -37,7 +37,7 @@ def setup_clerk_auth_on_approval(sender, instance, created, update_fields, **kwa
     
     try:
         # Log approval
-        logger.info(f"Client {instance.id} ({instance.name}) approved. Enabling Clerk OTP authentication.")
+        logger.info(f"Client {instance.id} ({instance.company_name}) approved. Enabling Clerk OTP authentication.")
         
         # Send welcome email with login instructions
         send_clerk_auth_welcome_email(instance)
@@ -61,7 +61,7 @@ def send_clerk_auth_welcome_email(client):
         subject = f"Your Account is Approved - {settings.COMPANY_NAME}"
         
         context = {
-            'client_name': client.name,
+            'client_name': client.company_name,
             'login_url': f"{settings.SITE_URL}/accounts/client-login/",
             'email': email,
             'company_name': settings.COMPANY_NAME,
