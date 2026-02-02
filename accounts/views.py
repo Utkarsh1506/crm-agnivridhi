@@ -75,6 +75,9 @@ def client_required(view_func):
 def login_view(request):
     """
     Custom login view with role-based redirect
+    Supports:
+    1. Username + Password for staff/admin
+    2. Email-only login for approved clients (direct login)
     """
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
@@ -83,6 +86,27 @@ def login_view(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         
+        # Check if this is email-based client login (no password provided)
+        if '@' in username and not password:
+            from clients.models import Client
+            try:
+                client = Client.objects.get(contact_email=username.lower())
+                
+                if not client.is_approved:
+                    messages.error(request, 'Your account is not yet approved. Please contact support.')
+                    return render(request, 'accounts/login.html')
+                
+                # Direct login for approved client (no password needed)
+                user = client.user
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
+                return redirect('accounts:client_portal')
+                
+            except Client.DoesNotExist:
+                messages.error(request, 'No approved client found with this email.')
+                return render(request, 'accounts/login.html')
+        
+        # Standard username + password authentication for staff/admin
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
