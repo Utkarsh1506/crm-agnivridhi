@@ -95,7 +95,16 @@ class Document(models.Model):
     # File Details
     file = models.FileField(
         upload_to='documents/%Y/%m/',
-        help_text=_('Uploaded/generated document file')
+        null=True,
+        blank=True,
+        help_text=_('Uploaded/generated document file (optional)')
+    )
+    
+    document_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_('Manual document number/reference')
     )
     
     file_size = models.IntegerField(

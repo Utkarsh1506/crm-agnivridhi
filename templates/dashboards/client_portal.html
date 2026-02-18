@@ -346,14 +346,9 @@
                             <div>
                                 <i class="bi bi-file-pdf-fill text-danger"></i> {{ doc.title }}
                                 <br><small class="text-muted">{{ doc.created_at|date:"M d, Y" }}</small>
+                                <br><small class="text-muted">Document No: {{ doc.document_number|default:"-" }}</small>
                             </div>
-                            {% if doc.file %}
-                            <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-download"></i> Download
-                            </a>
-                            {% else %}
-                            <span class="text-muted small">No file</span>
-                            {% endif %}
+                            <span class="badge bg-info">Number Recorded</span>
                         </div>
                         {% endfor %}
                     </div>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Consultancy Service Agreement - {{ agreement.agreement_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm 2.5cm 2.5cm 2.5cm;
+        }
+        body {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.4;
+            color: #000000;
+            text-align: justify;
+        }
+        p {
+            margin: 6px 0;
+        }
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 20px;
+            margin-top: 15px;
+            letter-spacing: 0.5pt;
+        }
+        .intro {
+            margin-bottom: 10px;
+            text-align: justify;
+            page-break-inside: avoid;
+        }
+        .intro p {
+            margin: 5px 0;
+        }
+        .parties {
+            margin-left: 25px;
+            margin-bottom: 8px;
+            page-break-inside: avoid;
+        }
+        .parties p {
+            margin: 5px 0;
+        }
+        .and-text {
+            text-align: center;
+            margin: 8px 0;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+        .whereas {
+            margin-bottom: 10px;
+            text-align: justify;
+            page-break-inside: avoid;
+        }
+        .whereas p {
+            margin: 6px 0;
+        }
+        .clause {
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+        }
+        .clause-heading {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 10.5pt;
+            text-decoration: none;
+        }
+        .sub-clause {
+            margin-left: 20px;
+            page-break-inside: avoid;
+        }
+        .sub-clause p {
+            margin: 5px 0;
+        }
+        ul {
+            margin-left: 35px;
+            margin-top: 4px;
+            margin-bottom: 6px;
+            page-break-inside: avoid;
+        }
+        ul li {
+            margin-bottom: 4px;
+        }
+        .amount {
+            font-weight: bold;
+            color: #c41e3a;
+        }
+        .signature-section {
+            margin-top: 30px;
+            page-break-before: always;
+        }
+        .witness-line {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 25px;
+            font-size: 11pt;
+        }
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .signature-table td {
+            vertical-align: middle;
+            padding: 12px 15px;
+            border: 2px solid #000000;
+            font-size: 11pt;
+            text-align: left;
+        }
+        .signature-table tr:first-child td {
+            padding: 15px;
+        }
+        .undertaking {
+            page-break-before: always;
+            margin-top: 15px;
+            page-break-inside: avoid;
+        }
+        .undertaking-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12pt;
+            margin-bottom: 15px;
+        }
+        strong {
+            font-weight: bold;
+        }
+        .page-footer {
+            position: fixed;
+            bottom: 30px;
+            left: 2.5cm;
+            right: 2.5cm;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+        .page-footer table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .page-footer td {
+            padding: 0;
+            font-size: 10pt;
+        }
+        .page-footer .left {
+            text-align: left;
+            width: 50%;
+        }
+        .page-footer .right {
+            text-align: right;
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-footer">
+        <table>
+            <tr>
+                <td class="left">Service Provider _____________</td>
+                <td class="right">Service Receiver _____________</td>
+            </tr>
+        </table>
+    </div>
+    <div class="title">CONSULTANCY SERVICE AGREEMENT</div>
+    
+    <div class="intro">
+        <p>This <strong>CONSULTANCY SERVICE AGREEMENT</strong> (the "Agreement") <strong>is entered into on this {{ agreement.date_of_agreement|date:"jS" }} day of {{ agreement.date_of_agreement|date:"F Y" }}</strong>, by and between:</p>
+    </div>
+    
+    <ul style="list-style-type: none; margin-left: 15px; margin-bottom: 10px;">
+        <li style="margin-bottom: 8px;">• <strong>Agnivridhi India</strong>, hereinafter referred to as the Service Provider, having its principal place of business at A-116, Udytech Trade Centre, Sector 132, Noida, Uttar Pradesh;</li>
+        <li style="margin: 8px 0; margin-left: 15px;">and</li>
+        <li style="margin-bottom: 8px;">• <strong>{{ agreement.service_receiver_name }}</strong>, hereinafter referred to as the Service Receiver, having its principal place of business at {{ agreement.service_receiver_address }}.</li>
+    </ul>
+    
+    <div class="whereas">
+        <p><strong>WHEREAS,</strong> the Service Provider agrees to provide consultancy services for assisting the Service Receiver in availing benefits under the <strong>PVT FUNDING</strong> including assistance in form filling and completion of the necessary documentation as required under the scheme.</p>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">1) Definitions</div>
+        <div class="sub-clause">
+            <p><strong>a) Agreement:</strong> Refers to this Agreement and all annexures or amendments made in writing and mutually agreed upon by both parties.</p>
+            <p><strong>b) Service Provider:</strong> The party providing the consultancy services in exchange for payment.</p>
+            <p><strong>c) Service Receiver:</strong> The party receiving and availing the consultancy services.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">2) Covenants of the Service Provider</div>
+        <div class="sub-clause">
+            <p><strong>a)</strong> The Service Provider shall prepare all the necessary documents for filing the application under the <strong>PVT FUNDING</strong> claim based on the information and data received from the Service Receiver. Upon request, the Service Provider may also submit the application on behalf of the Service Receiver.</p>
+            <p><strong>b)</strong> The Service Provider agrees to maintain strict confidentiality of all information and documents provided by the Service Receiver and shall not disclose them to any third party except authorized personnel.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">3) Covenants of the Service Receiver</div>
+        <div class="sub-clause">
+            <p><strong>a)</strong> The Service Receiver acknowledges that the registration and application process is subject to change as per applicable norms and has no objection if delays arise due to such changes.</p>
+            <p><strong>b)</strong> The Service Receiver agrees to pay a <strong>Processing fee of <span class="amount">₹{{ agreement.total_amount_pitched|floatformat:0 }}/-</span></strong> as per the following structure:</p>
+            <ul style="margin-left: 35px; margin-top: 8px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;"><strong>Stage 1:</strong> <span class="amount">₹{{ agreement.received_amount_stage1|floatformat:0 }}/-</span>, as token money, payable at the time of signing this Agreement.</li>
+                {% if agreement.has_pending_amount %}<li style="margin-bottom: 6px;"><strong>Stage 2:</strong> {{ agreement.commission_percentage }}% as success fee of the funded amount, payable after the disbursement.</li>{% else %}<li style="margin-bottom: 6px;"><strong>Stage 2:</strong> {{ agreement.commission_percentage }}% as success fee of the funded amount, payable after the disbursement.</li>{% endif %}
+            </ul>
+            <p><strong>c)</strong> The Service Receiver shall provide all required documents requested by the Service Provider for processing the application.</p>
+            <p><strong>d) Refund Clause:</strong></p>
+            <ul style="margin-left: 35px; margin-top: 5px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;">All payments made to <strong>Agnivridhi India</strong> are <strong>strictly non-refundable</strong> once services have commenced.</li>
+                <li style="margin-bottom: 6px;"><strong>Refunds</strong> shall be made <strong>only if the Service Provider fails to initiate or deliver</strong> the consultancy work after receiving complete client documentation.</li>
+                <li style="margin-bottom: 6px;"><strong>Delays or rejections by the bank or authority</strong> will <strong>not constitute grounds for refund.</strong> Services can only commence after signing this Agreement.</li>
+            </ul>
+            <p><strong>e)</strong> All payments must be made only to <strong>Agnivridhi India's official bank account.</strong></p>
+            <p><strong>f)</strong> The Company shall not be responsible for any payment made which is not mentioned in this agreement payment terms.</p>
+            <p><strong>g)</strong> Such payments will not be recognized or refunded by the Company.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">4. Scheme Details & Process</div>
+        <div class="sub-clause">
+            <p>The loan process shall include:</p>
+            <ul style="margin-left: 35px; margin-top: 5px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;">Application preparation under the selected <strong>Government Scheme/ Any Other Schemes.</strong></li>
+                <li style="margin-bottom: 6px;">Submission to the authorized <strong>Bank / Financial Institution/or any other Body.</strong></li>
+                <li style="margin-bottom: 6px;">Coordination with the concerned department for approval and disbursement.</li>
+            </ul>
+            <p>The process flow will follow government protocol from <strong>Scheme → Bank → Beneficiary.</strong></p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">5. Eligibility Criteria</div>
+        <div class="sub-clause">
+            <p>Eligibility will depend on the documents and project details provided by the Client. <strong>Agnivridhi India</strong> will not be responsible for rejection due to incorrect, false, or incomplete documents or information supplied by the Client.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">6. Waiver Benefits & Interest Subsidy</div>
+        <div class="sub-clause">
+            <p>Any interest waiver, moratorium, or subsidy under the chosen scheme shall be governed by official scheme guidelines. The Company will not be liable if such waivers are later modified, delayed, or cancelled by the authority.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">7. Duration & Processing Timeline</div>
+        <div class="sub-clause">
+            <p>The <strong>loan/grant duration or approval timeline</strong> depends solely on the concerned <strong>Bank / Financial Institution /Private Body/ Government Authority.</strong> Agnivridhi India has no control over this period. Delays or extended processing time cannot be grounds for refusal or compensation claims.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">8. Documentation & Procedures</div>
+        <div class="sub-clause">
+            <p>All required documents (KYC, financials, collateral details, etc.) must be submitted by the Client within the requested time frame.</p>
+            <p>The <strong>Project Report and Financial Projections</strong> shall be prepared by <strong>Agnivridhi India</strong> within its scope of services.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">9. Company Duties & Responsibilities</div>
+        <div class="sub-clause">
+            <p><strong>Agnivridhi India shall:</strong></p>
+            <ul style="margin-left: 35px; margin-top: 5px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;">Guide the Client in preparing all <strong>documentation.</strong></li>
+                <li style="margin-bottom: 6px;">Coordinate between the Client, and <strong>relevant authorities.</strong></li>
+                <li style="margin-bottom: 6px;">Submit the application under the <strong>chosen scheme.</strong></li>
+                <li style="margin-bottom: 6px;">Follow up for status updates until loan <strong>sanction/disbursement.</strong></li>
+            </ul>
+            <p>The Company's responsibility is limited to <strong>consultation, documentation, and coordination only.</strong></p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">10. Client Duties & Responsibilities</div>
+        <div class="sub-clause">
+            <p><strong>The Client must:</strong></p>
+            <ul style="margin-left: 35px; margin-top: 5px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;">Provide accurate information and <strong>documents.</strong></li>
+                <li style="margin-bottom: 6px;">Respond promptly to all <strong>communications.</strong></li>
+                <li style="margin-bottom: 6px;">Bear all <strong>government, bank, and third-party fees</strong> directly if applicable.</li>
+            </ul>
+            <p>Failure to cooperate may result in delay or termination of service <strong>without refund.</strong></p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">11. Department & Sanction Process</div>
+        <div class="sub-clause">
+            <p>The <strong>Sanction Letter</strong> will be issued by the concerned <strong>Bank / NBFC / Government Department/ Private Bodies</strong> as per the selected scheme.</p>
+            <p>The <strong>Sanction Letter</strong> will be issued officially by that authority and communicated directly to the Client.</p>
+            <p><strong>Agnivridhi India's</strong> role ends upon <strong>submission, coordination, and approval assistance.</strong></p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">12. Time Limitation & Workflow</div>
+        <div class="sub-clause">
+            <p>The estimated duration for documentation, <strong>submission,</strong> and <strong>sanction</strong> may vary from <strong>30 to 180 working days,</strong> depending on authority response time.</p>
+            <p>Agnivridhi India shall not be held responsible for any delay or rejection caused by <strong>external agencies.</strong></p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">13. Liability Disclaimer</div>
+        <div class="sub-clause">
+            <p>The Company shall not be liable for:</p>
+            <ul style="margin-left: 35px; margin-top: 5px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;">Any delay, rejection, or modification by <strong>banks/government bodies/the financial institution.</strong></li>
+                <li style="margin-bottom: 6px;">Policy or scheme changes by the <strong>government/Lender.</strong></li>
+                <li style="margin-bottom: 6px;">Any financial loss incurred by the Client due to delay in <strong>sanction/disbursement.</strong></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">14. Term</div>
+        <div class="sub-clause">
+            <p>This Agreement automatically expires if the Client fails to provide <strong>required documents or information within 30 days</strong> from the date of signing.</p>
+            <p>The Service Provider shall decide which documents will be applicable.</p>
+            <p style="margin-top: 10px;">This Agreement shall be valid for a period of <strong>three (3) months</strong> from the date of execution, unless terminated earlier in accordance with the terms herein.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">15. Termination</div>
+        <div class="sub-clause">
+            <p><strong>a)</strong> Either party may terminate this Agreement by providing <strong>30 days written notice</strong> to the other party.</p>
+            <p><strong>b)</strong> The Service Provider may terminate this Agreement immediately if the Service Receiver is in material breach of any terms herein.</p>
+            <p><strong>c)</strong> Upon termination, the Service Receiver shall pay all outstanding amounts for services rendered up to the date of termination.</p>
+            <p><strong>d)</strong> Termination shall not affect any rights or obligations that have accrued prior to the date of termination.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">16. Confidentiality</div>
+        <div class="sub-clause">
+            <p>Both parties agree to maintain confidentiality of all proprietary information, business plans, financial data, and documents exchanged during the course of this Agreement.</p>
+            <p>This obligation shall survive the termination or expiry of this Agreement for a period of <strong>two (2) years.</strong></p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">17. Indemnity</div>
+        <div class="sub-clause">
+            <p>The Service Receiver agrees to indemnify and hold harmless the Service Provider from any claims, losses, damages, or expenses arising from:</p>
+            <ul style="margin-left: 35px; margin-top: 5px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;">False or misleading information provided by the Service Receiver.</li>
+                <li style="margin-bottom: 6px;">Breach of any terms of this Agreement by the Service Receiver.</li>
+                <li style="margin-bottom: 6px;">Any action or inaction by third-party authorities, banks, or government bodies.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">18. Force Majeure</div>
+        <div class="sub-clause">
+            <p>Neither party shall be liable for any failure or delay in performance due to circumstances beyond their reasonable control, including but not limited to acts of God, war, terrorism, pandemic, government actions, natural disasters, or communication system failures.</p>
+            <p>The affected party shall notify the other party promptly and use reasonable efforts to minimize the impact of such events.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">19. Governing Law & Jurisdiction</div>
+        <div class="sub-clause">
+            <p>This Agreement shall be governed by and construed in accordance with the laws of India.</p>
+            <p>Any disputes arising out of or in connection with this Agreement shall be subject to the exclusive jurisdiction of the courts in <strong>Delhi, India.</strong></p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">20. Dispute Resolution</div>
+        <div class="sub-clause">
+            <p>In the event of any dispute, the parties shall first attempt to resolve the matter through mutual negotiation within <strong>30 days.</strong></p>
+            <p>If the dispute cannot be resolved amicably, it shall be referred to arbitration under the <strong>Arbitration and Conciliation Act, 1996.</strong> The arbitration shall be conducted by a sole arbitrator mutually agreed upon by both parties. The place of arbitration shall be <strong>Delhi, India,</strong> and the proceedings shall be conducted in English.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">21. Amendment</div>
+        <div class="sub-clause">
+            <p>No amendment, modification, or waiver of any provision of this Agreement shall be effective unless it is in writing and signed by both parties.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">22. Severability</div>
+        <div class="sub-clause">
+            <p>If any provision of this Agreement is held to be invalid, illegal, or unenforceable, the remaining provisions shall continue in full force and effect.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">23. Entire Agreement</div>
+        <div class="sub-clause">
+            <p>This Agreement constitutes the entire agreement between the parties and supersedes all prior negotiations, representations, and agreements, whether oral or written, relating to the subject matter hereof.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">24. Notices</div>
+        <div class="sub-clause">
+            <p>All notices, requests, and communications under this Agreement shall be in writing and shall be deemed to have been duly given:</p>
+            <ul style="margin-left: 35px; margin-top: 5px; margin-bottom: 8px;">
+                <li style="margin-bottom: 6px;">When delivered personally or by courier;</li>
+                <li style="margin-bottom: 6px;">Three (3) days after being sent by registered post;</li>
+                <li style="margin-bottom: 6px;">When sent by email to the official email addresses mentioned in this Agreement.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">25. Assignment</div>
+        <div class="sub-clause">
+            <p>Neither party may assign, transfer, or delegate any of its rights or obligations under this Agreement without the prior written consent of the other party.</p>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">26. Acceptance & Acknowledgment</div>
+        <div class="sub-clause">
+            <p>Both parties confirm that they have <strong>read and understood all the terms and conditions</strong> of this Agreement and voluntarily agree to be bound by it.</p>
+            <p style="margin-top: 10px;">The Service Receiver understands and acknowledges that the <strong>consultancy process involves external departments and banks,</strong> and outcomes may vary depending on their internal assessments. Agnivridhi India provides <strong>consultancy support only</strong> and does not assure any guaranteed sanction or time frame.</p>
+        </div>
+    </div>
+
+    <div class="signature-section">
+        <p class="witness-line"><strong>IN WITNESS WHEREOF,</strong> the undersigned have executed this Agreement on the day and year first written above.</p>
+        
+        <table class="signature-table">
+            <tr>
+                <td><strong>Signed and delivered for and on behalf of</strong></td>
+                <td><strong>I have read and understood the provisions of this Agreement & hereby accept the same.</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Name: Agnivridhi India Private Limited</strong></td>
+                <td><strong>Name: {{ agreement.service_receiver_name }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Title: Authorized Representative</strong></td>
+                <td><strong>Title: {{ agreement.service_receiver_designation|default:"Director" }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></td>
+                <td><strong>Date: {{ agreement.date_of_agreement|date:"d/m/Y" }}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding-top: 40px; padding-bottom: 40px;"><strong>Signature:</strong><br/><br/><br/>___________________</td>
+                <td style="padding-top: 40px; padding-bottom: 40px;"><strong>Signature:</strong><br/><br/><br/>___________________</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="undertaking">
+        <div class="undertaking-title">UNDERTAKING</div>
+        <div class="sub-clause">
+            <p><strong>I, the Director/Partner of {{ agreement.service_receiver_name }},</strong> do hereby undertake as follows:</p>
+            <p style="margin-top: 10px;"><strong>i.</strong> I shall fully comply with all the <strong>sub-clauses stated under Clause 3</strong> of this Consultancy Service Agreement. Any failure to comply shall result in <strong>immediate termination of this Agreement</strong> and forfeiture of the amount paid.</p>
+            <p style="margin-top: 10px;"><strong>ii.</strong> All official communications shall be through the <strong>company's registered email domain (Legal@agnivridhiindia.com)</strong> or via written letters. Communications or commitments made via <strong>WhatsApp, calls, or personal chats</strong> will not be considered official or binding.</p>
+            <p style="margin-top: 10px;"><strong>iii.</strong> I understand and acknowledge that providing <strong>false, misleading, or incomplete information</strong> will render this Agreement <strong>voidable at the sole discretion of the Service Provider</strong> and the fee shall be non-refundable.</p>
+            <p style="margin-top: 10px;"><strong>iv.</strong> I hereby confirm that I have <strong>read, understood, and accepted all the terms and conditions</strong> mentioned on the official website of the Service Provider at <strong>www.agnivridhiindia.com</strong>, as well as those laid out in this Agreement.</p>
+        </div>
+    </div>
+
+</body>
+</html>

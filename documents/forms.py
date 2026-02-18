@@ -5,23 +5,19 @@ from clients.models import Client
 class DocumentUploadForm(forms.ModelForm):
     class Meta:
         model = Document
-        fields = ['document_type', 'title', 'description', 'file']
+        fields = ['document_type', 'title', 'description', 'document_number']
         widgets = {
             'document_type': forms.Select(attrs={'class': 'form-select'}),
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Document title'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Optional description'}),
-            'file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter document number/reference'}),
         }
 
-    def clean_file(self):
-        f = self.cleaned_data.get('file')
-        if not f:
-            raise forms.ValidationError('Please select a file to upload.')
-        # Optional: limit file size to 25MB
-        max_mb = 25
-        if f.size > max_mb * 1024 * 1024:
-            raise forms.ValidationError(f'File too large. Max size is {max_mb} MB.')
-        return f
+    def clean_document_number(self):
+        doc_num = self.cleaned_data.get('document_number')
+        if not doc_num:
+            raise forms.ValidationError('Please enter a document number.')
+        return doc_num
 
 
 class SalesDocumentUploadForm(forms.ModelForm):
@@ -29,13 +25,13 @@ class SalesDocumentUploadForm(forms.ModelForm):
     
     class Meta:
         model = Document
-        fields = ['client', 'document_type', 'title', 'description', 'file']
+        fields = ['client', 'document_type', 'title', 'description', 'document_number']
         widgets = {
             'client': forms.Select(attrs={'class': 'form-select'}),
             'document_type': forms.Select(attrs={'class': 'form-select'}),
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Document title'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Optional description'}),
-            'file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter document number/reference'}),
         }
     
     def __init__(self, *args, user=None, **kwargs):
@@ -47,11 +43,8 @@ class SalesDocumentUploadForm(forms.ModelForm):
                 Q(assigned_sales=user) | Q(created_by=user)
             ).order_by('company_name')
     
-    def clean_file(self):
-        f = self.cleaned_data.get('file')
-        if not f:
-            raise forms.ValidationError('Please select a file to upload.')
-        max_mb = 25
-        if f.size > max_mb * 1024 * 1024:
-            raise forms.ValidationError(f'File too large. Max size is {max_mb} MB.')
-        return f
+    def clean_document_number(self):
+        doc_num = self.cleaned_data.get('document_number')
+        if not doc_num:
+            raise forms.ValidationError('Please enter a document number.')
+        return doc_num

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Upload Document - Agnivridhi CRM{% endblock %}
+{% block title %}Add Document - Agnivridhi CRM{% endblock %}
 
 {% block sidebar %}
 <nav class="col-md-3 col-lg-2 d-md-block sidebar">
@@ -17,11 +17,11 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="h2 mb-4"><i class="bi bi-upload"></i> Upload Document</h1>
+<h1 class="h2 mb-4"><i class="bi bi-file-earmark-plus"></i> Add Document</h1>
 
 <div class="card">
   <div class="card-body">
-    <form method="post" enctype="multipart/form-data" novalidate>
+    <form method="post" novalidate>
       {% csrf_token %}
       <div class="mb-3">
         <label class="form-label">Document Type</label>
@@ -45,18 +45,16 @@
         {% endif %}
       </div>
       <div class="mb-3">
-        <label class="form-label">File</label>
-        {{ form.file }}
-        <div class="form-text">Max size 25 MB. Allowed common formats (PDF, DOCX, XLSX, JPG, PNG).</div>
-        {% if form.file.errors %}
-          <div class="text-danger small">{{ form.file.errors.0 }}</div>
+        <label class="form-label">Document Number / Reference</label>
+        {{ form.document_number }}
+        <div class="form-text">Enter the document number or reference (e.g., "DOC-2025-001", "REF-ABC123").</div>
+        {% if form.document_number.errors %}
+          <div class="text-danger small">{{ form.document_number.errors.0 }}</div>
         {% endif %}
       </div>
       <div class="d-flex gap-2">
         <a href="{% url 'documents:client_documents_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-cloud-arrow-up"></i> Upload</button>
-      </div>
-    </form>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Add Document</button>
   </div>
 </div>
 {% endblock %}

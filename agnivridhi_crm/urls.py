@@ -37,6 +37,7 @@ urlpatterns = [
     path('notifications/', include(('notifications.urls', 'notifications'))),
     path('invoices/', include(('invoices.urls', 'invoices'), namespace='invoices')),
     path('employees/', include(('employees.urls', 'employees'))),  # Employee Identity & Verification System
+    path('agreements/', include(('agreements.urls', 'agreements'))),  # Agreement Generation System
     
     # API endpoints with namespace
     path('api/', include(('api.urls', 'api'))),

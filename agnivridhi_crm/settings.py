@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'activity_logs',
     'invoices',
     'employees',  # Employee Identity & Verification System
+    'agreements',  # Agreement Generation System
 ]
 
 MIDDLEWARE = [

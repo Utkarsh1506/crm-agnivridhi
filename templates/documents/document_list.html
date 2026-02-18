@@ -73,18 +73,18 @@
 <h1 class="h2 mb-4">
     <i class="bi bi-file-earmark-pdf"></i> 
     {% if user.is_sales %}
-        Client Documents
+        Client Documents (Numbers Only)
     {% else %}
-        My Documents
+        My Documents (Numbers Only)
     {% endif %}
 </h1>
 
 {% if user.is_client %}
 <div class="mb-3">
     <a href="{% url 'documents:client_document_upload' %}" class="btn btn-primary">
-        <i class="bi bi-cloud-arrow-up"></i> Upload Document
+        <i class="bi bi-clipboard-plus"></i> Add Document Number
     </a>
-    <span class="text-muted ms-2 small">Upload PDFs, DOCX, images and more (max 25 MB).</span>
+    <span class="text-muted ms-2 small">Enter document numbers/references; files are no longer stored on the system.</span>
     <hr>
     </div>
 {% endif %}
@@ -92,9 +92,9 @@
 {% if user.is_sales %}
 <div class="alert alert-info mb-4">
     <i class="bi bi-info-circle"></i> 
-    Showing documents for all clients assigned to you or created by you.
+    Showing documents for all clients assigned to you or created by you. Add document numbers only (no file uploads stored).
     <a href="{% url 'documents:sales_upload_document' %}" class="btn btn-sm btn-primary ms-3">
-        <i class="bi bi-cloud-arrow-up"></i> Upload Document
+        <i class="bi bi-clipboard-plus"></i> Add Document Number
     </a>
 </div>
 {% endif %}
@@ -116,7 +116,7 @@
                                 <th>Title</th>
                                 <th>Type</th>
                                 <th>Created</th>
-                                <th>Action</th>
+                                <th>Document No.</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -125,13 +125,7 @@
                                 <td>{{ doc.title }}</td>
                                 <td>{{ doc.get_document_type_display }}</td>
                                 <td>{{ doc.created_at|date:"d M Y" }}</td>
-                                <td>
-                                    {% if doc.file %}
-                                    <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> Download</a>
-                                    {% else %}
-                                    <span class="text-muted small">No file</span>
-                                    {% endif %}
-                                </td>
+                                <td>{{ doc.document_number|default:"-" }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -158,7 +152,7 @@
                                 <th>Type</th>
                                 <th>From</th>
                                 <th>Created</th>
-                                <th>Action</th>
+                                <th>Document No.</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -168,13 +162,7 @@
                                 <td>{{ doc.get_document_type_display }}</td>
                                 <td>{{ doc.generated_by.get_full_name|default:doc.generated_by.username|default:"Team" }}</td>
                                 <td>{{ doc.created_at|date:"d M Y" }}</td>
-                                <td>
-                                    {% if doc.file %}
-                                    <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> Download</a>
-                                    {% else %}
-                                    <span class="text-muted small">No file</span>
-                                    {% endif %}
-                                </td>
+                                <td>{{ doc.document_number|default:"-" }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -199,11 +187,10 @@
                         {% endif %}
                         <th>Document Type</th>
                         <th>Title</th>
+                        <th>Document No.</th>
                         <th>Application</th>
-                        <th>File Size</th>
                         <th>Status</th>
                         <th>Created On</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -220,6 +207,7 @@
                             {{ doc.get_document_type_display }}
                         </td>
                         <td>{{ doc.title }}</td>
+                        <td>{{ doc.document_number|default:"-" }}</td>
                         <td>
                             {% if doc.application %}
                                 <a href="{% url 'applications:application_detail' doc.application.pk %}">
@@ -229,7 +217,6 @@
                                 <span class="text-muted">-</span>
                             {% endif %}
                         </td>
-                        <td>{{ doc.get_file_size_display }}</td>
                         <td>
                             {% if doc.status == 'DRAFT' %}
                                 <span class="badge bg-secondary">Draft</span>
@@ -242,11 +229,6 @@
                             {% endif %}
                         </td>
                         <td>{{ doc.created_at|date:"d M Y" }}</td>
-                        <td>
-                            <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-download"></i> Download
-                            </a>
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
