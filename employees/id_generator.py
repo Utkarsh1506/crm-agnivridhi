@@ -37,7 +37,7 @@ class EmployeeIDGenerator:
         
         # Increment and generate ID
         sequence.last_sequence_number += 1
-        employee_id = f"{sequence.PREFIX}{sequence.last_sequence_number:0{EmployeeIDGenerator.PADDING}d}"
+        employee_id = f"{sequence.prefix}{sequence.last_sequence_number:0{EmployeeIDGenerator.PADDING}d}"
         
         # Save the updated sequence
         sequence.save()
